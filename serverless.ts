@@ -1,9 +1,9 @@
 import type { AWS } from '@serverless/typescript';
 
-import hello from '@functions/hello';
+import careers from '@functions/careers';
 
 const serverlessConfiguration: AWS = {
-  service: 'smoothstack-careers-ap',
+  service: 'smoothstack-careers-api',
   frameworkVersion: '2',
   custom: {
     webpack: {
@@ -11,13 +11,19 @@ const serverlessConfiguration: AWS = {
       includeModules: true,
     },
   },
-  plugins: ['serverless-webpack'],
+  plugins: ['serverless-webpack', 'serverless-offline'],
   provider: {
     name: 'aws',
     runtime: 'nodejs14.x',
+    memorySize: 1024,
+    timeout: 30,
+    stage: '${opt:stage, env:STAGE}',
     apiGateway: {
       minimumCompressionSize: 1024,
       shouldStartNameWithService: true,
+    },
+    iam: {
+      role: 'arn:aws:iam::${opt:aws_account, env: AWS_ACCOUNT}:role/${opt:lambda_role, env:LAMBDA_ROLE}',
     },
     environment: {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
@@ -25,7 +31,7 @@ const serverlessConfiguration: AWS = {
     lambdaHashingVersion: '20201221',
   },
   // import the function via paths
-  functions: { hello },
+  functions: { careers },
 };
 
 module.exports = serverlessConfiguration;
