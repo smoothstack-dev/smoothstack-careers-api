@@ -5,12 +5,17 @@ import { apply } from 'src/service/apply.service';
 import schema from './schema';
 
 const careers: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
-  switch (event.httpMethod) {
-    case 'POST':
-      return {
-        statusCode: 200,
-        body: await apply(event as any),
-      };
+  try {
+    switch (event.httpMethod) {
+      case 'POST':
+        return {
+          statusCode: 200,
+          body: await apply(event as any),
+        };
+    }
+  } catch (e) {
+    console.error(e.message);
+    throw e;
   }
 };
 
