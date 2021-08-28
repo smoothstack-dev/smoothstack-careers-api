@@ -1,6 +1,7 @@
 import type { AWS } from '@serverless/typescript';
 
 import careers from '@functions/careers';
+import challengeGenerator from '@functions/challengeGenerator';
 
 const serverlessConfiguration: AWS = {
   service: 'smoothstack-careers-api',
@@ -32,7 +33,7 @@ const serverlessConfiguration: AWS = {
     lambdaHashingVersion: '20201221',
   },
   // import the function via paths
-  functions: { careers },
+  functions: { careers, challengeGenerator },
 };
 
 module.exports = serverlessConfiguration;
