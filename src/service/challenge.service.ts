@@ -12,7 +12,7 @@ export const getChallengeDetails = async (name: string, token: string) => {
   return data.results.find((t: any) => t.name === name);
 };
 
-export const generateChallenge = async (challengeId: string, candidate: any, token: string): Promise<string> => {
+export const generateChallengeLink = async (challengeId: string, candidate: any, token: string): Promise<string> => {
   const url = `${BASE_URL}/${challengeId}/invite/`;
   const invitation = {
     candidates: [

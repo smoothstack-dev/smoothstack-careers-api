@@ -4,10 +4,8 @@ export default {
   handler: `${handlerPath(__dirname)}/handler.main`,
   events: [
     {
-      sns: {
-        arn: { Ref: 'ChallengeGenerationTopic' },
-        topicName: 'smoothstack-challenge-generation-sns-topic',
-      },
+      schedule: 'cron(0 11,16,19 * * ? *)',
     },
   ],
+  timeout: 60,
 };

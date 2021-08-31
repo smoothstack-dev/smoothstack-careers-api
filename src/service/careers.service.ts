@@ -1,5 +1,7 @@
 import axios from 'axios';
 import FormData from 'form-data';
+import { Candidate } from 'src/model/Candidate';
+import { JobOrder } from 'src/model/JobOrder';
 
 export const createWebResponse = async (careerId: string, application: any, resume: any): Promise<any> => {
   // these are public non-secret values
@@ -18,19 +20,39 @@ export const createWebResponse = async (careerId: string, application: any, resu
   return res.data.candidate;
 };
 
-export const getChallengeName = async (url: string, BhRestToken: string, careerId: string): Promise<string> => {
-  const careersUrl = `${url}entity/JobOrder/${careerId}`;
-  const { data } = await axios.get(careersUrl, {
+export const fetchCandidate = async (url: string, BhRestToken: string, candidateId: number): Promise<Candidate> => {
+  const candidatesUrl = `${url}entity/Candidate/${candidateId}`;
+  const { data } = await axios.get(candidatesUrl, {
     params: {
       BhRestToken,
-      fields: 'customText1',
+      fields: 'id,firstName,lastName,email,customText9',
     },
   });
 
-  return data.data.customText1.trim();
+  const { customText9, ...candidate } = data.data;
+  return {
+    ...candidate,
+    challengeLink: customText9,
+  };
 };
 
-export const saveChallengeLink = async (url: string, BhRestToken: string, candidateId: string, link: string) => {
+export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId: number): Promise<JobOrder> => {
+  const jobOrdersUrl = `${url}entity/JobOrder/${jobOrderId}`;
+  const { data } = await axios.get(jobOrdersUrl, {
+    params: {
+      BhRestToken,
+      fields: 'id,customText1',
+    },
+  });
+
+  const { customText1, ...jobOrder } = data.data;
+  return {
+    ...jobOrder,
+    challengeName: customText1,
+  };
+};
+
+export const saveChallengeLink = async (url: string, BhRestToken: string, candidateId: number, link: string) => {
   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
   const updateData = { customText9: link };
   return axios.post(candidateUrl, updateData, {
@@ -56,15 +78,11 @@ export const fetchNewSubmissions = async (url: string, BhRestToken: string): Pro
 
   const submissionArr = ids.length > 1 ? data.data : [data.data];
   const filteredSubs = submissionArr.filter((sub) => !sub.isDeleted && sub.status === 'Internally Submitted');
-  if (!filteredSubs.length) {
-    return [];
-  }
 
-  const submissions = await fetchSubmissionData(url, BhRestToken, filteredSubs);
-  return submissions;
+  return filteredSubs;
 };
 
-const fetchNewJobSubmissionsIds = async (url: string, BhRestToken: string): Promise<number[]> => {
+export const fetchNewJobSubmissionsIds = async (url: string, BhRestToken: string): Promise<number[]> => {
   const eventsUrl = `${url}event/subscription/1`;
   const { data } = await axios.get(eventsUrl, {
     params: {
@@ -75,48 +93,4 @@ const fetchNewJobSubmissionsIds = async (url: string, BhRestToken: string): Prom
 
   const newJobSubmissionIds = data.events?.map((e: any) => e.entityId);
   return newJobSubmissionIds ?? [];
-};
-
-const fetchSubmissionData = async (url: string, BhRestToken: string, submissions: any[]): Promise<any[]> => {
-  const jobOrderData = await fetchJobOrderData(
-    url,
-    BhRestToken,
-    submissions.map((s) => s.jobOrder.id)
-  );
-  const candidateData = await fetchCandidateData(
-    url,
-    BhRestToken,
-    submissions.map((s) => s.candidate.id)
-  );
-
-  const submissionData = submissions.map((s) => ({
-    jobOrder: { ...jobOrderData.find((j) => j.id === s.jobOrder.id), ...s.jobOrder },
-    candidate: { ...candidateData.find((c) => c.id === s.candidate.id), ...s.candidate },
-  }));
-
-  return submissionData;
-};
-
-const fetchJobOrderData = async (url: string, BhRestToken: string, jobOrderIds: number[]): Promise<any[]> => {
-  const jobOrdersUrl = `${url}entity/JobOrder/${jobOrderIds.join(',')}`;
-  const { data } = await axios.get(jobOrdersUrl, {
-    params: {
-      BhRestToken,
-      fields: 'id,customText1',
-    },
-  });
-
-  return jobOrderIds.length > 1 ? data.data : [data.data];
-};
-
-const fetchCandidateData = async (url: string, BhRestToken: string, candidateIds: number[]): Promise<any[]> => {
-  const candidatesUrl = `${url}entity/Candidate/${candidateIds.join(',')}`;
-  const { data } = await axios.get(candidatesUrl, {
-    params: {
-      BhRestToken,
-      fields: 'id,firstName,lastName,email,customText9',
-    },
-  });
-
-  return candidateIds.length > 1 ? data.data : [data.data];
 };
