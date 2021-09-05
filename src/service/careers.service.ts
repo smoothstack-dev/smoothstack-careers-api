@@ -56,6 +56,7 @@ export const populateCandidateFields = async (
       customDate3: fields.graduationDate,
       customText32: isGraduatingWithin4Months(new Date(fields.graduationDate)),
     }),
+    ...(fields.degreeExpected && { degreeList: fields.degreeExpected }),
     ...(fields.highestDegree && { educationDegree: fields.highestDegree }),
     customText2: fields.militaryStatus,
   };
