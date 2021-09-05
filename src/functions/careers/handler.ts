@@ -8,10 +8,7 @@ const careers: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event)
   try {
     switch (event.httpMethod) {
       case 'POST':
-        return {
-          statusCode: 200,
-          body: await apply(event as any),
-        };
+        return await apply(event as any);
     }
   } catch (e) {
     console.error(e.message);

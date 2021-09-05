@@ -1,6 +1,7 @@
 import axios from 'axios';
 import FormData from 'form-data';
 import { Candidate } from 'src/model/Candidate';
+import { CandidateExtraFields } from 'src/model/CandidateExtraFields';
 import { JobOrder } from 'src/model/JobOrder';
 
 export const createWebResponse = async (careerId: string, application: any, resume: any): Promise<any> => {
@@ -34,6 +35,66 @@ export const fetchCandidate = async (url: string, BhRestToken: string, candidate
     ...candidate,
     challengeLink: customText9,
   };
+};
+
+export const populateCandidateFields = async (
+  url: string,
+  BhRestToken: string,
+  candidateId: number,
+  fields: CandidateExtraFields
+): Promise<Candidate> => {
+  const candidateUrl = `${url}entity/Candidate/${candidateId}`;
+  const updateData = {
+    city: fields.city,
+    state: fields.state,
+    zip: fields.zip,
+    customText4: fields.workAuthorization,
+    customText25: fields.relocation,
+    customText7: fields.codingAbility,
+    customText3: fields.yearsOfExperience,
+    ...(fields.graduationDate && {
+      customDate3: fields.graduationDate,
+      customText32: isGraduatingWithin4Months(new Date(fields.graduationDate)),
+    }),
+    ...(fields.highestDegree && { educationDegree: fields.highestDegree }),
+    customText2: fields.militaryStatus,
+  };
+  const { data } = await axios.post(candidateUrl, updateData, {
+    params: {
+      BhRestToken,
+    },
+  });
+  return data.data;
+};
+
+const isGraduatingWithin4Months = (graduationDate: Date) => {
+  const today = new Date();
+  var diff = (today.getTime() - graduationDate.getTime()) / 1000;
+  diff /= 60 * 60 * 24 * 7 * 4;
+  const result = Math.abs(Math.round(diff));
+  return result <= 4 ? 'Yes' : 'No';
+};
+
+export const saveApplicationNote = async (
+  url: string,
+  BhRestToken: string,
+  candidateId: number,
+  application: any
+): Promise<void> => {
+  const noteUrl = `${url}entity/Note`;
+  const note = {
+    action: 'Application Survey',
+    comments: JSON.stringify(application, null, 2),
+    personReference: {
+      searchEntity: 'Candidate',
+      id: candidateId,
+    },
+  };
+  await axios.put(noteUrl, note, {
+    params: {
+      BhRestToken,
+    },
+  });
 };
 
 export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId: number): Promise<JobOrder> => {
