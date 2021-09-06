@@ -83,9 +83,10 @@ export const saveApplicationNote = async (
   application: any
 ): Promise<void> => {
   const noteUrl = `${url}entity/Note`;
+  const comments = generateComments(application);
   const note = {
     action: 'Application Survey',
-    comments: JSON.stringify(application, null, 2),
+    comments: Object.keys(comments).reduce((acc, q, i) => `${acc}Q${i + 1} - ${q}\nA${i + 1} - ${comments[q]}\n\n`, ''),
     personReference: {
       searchEntity: 'Candidate',
       id: candidateId,
@@ -97,6 +98,27 @@ export const saveApplicationNote = async (
     },
   });
 };
+
+const generateComments = (application: any): any => ({
+  'First Name': application.firstName,
+  'Last Name': application.lastName,
+  Email: application.email,
+  'Mobile Phone': application.phone,
+  City: application.city,
+  State: application.state,
+  'Zip Code': application.zip,
+  'Are you legally Authorized to work in the U.S?': application.workAuthorization,
+  'Willingness to relocate': application.relocation,
+  'How would you rank your coding ability? (0 - lowest, 10 - highest)': application.codingAbility,
+  'Years of Experience (Including Personal/Educational Projects)': application.yearsOfExperience,
+  'Are you currently a student?': application.currentlyStudent,
+  ...(application.graduationDate && { 'Expected Graduation Date': application.graduationDate }),
+  ...(application.degreeExpected && { 'Degree Expected': application.degreeExpected }),
+  ...(application.highestDegree && { 'Highest Degree Achieved': application.highestDegree }),
+  ...(application.major && { Major: application.major }),
+  'Military Status': application.militaryStatus,
+  ...(application.militaryBranch && { 'Military Branch': application.militaryBranch }),
+});
 
 export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId: number): Promise<JobOrder> => {
   const jobOrdersUrl = `${url}entity/JobOrder/${jobOrderId}`;
