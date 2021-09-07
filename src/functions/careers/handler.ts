@@ -1,10 +1,10 @@
-import type { ValidatedEventAPIGatewayProxyEvent } from '@libs/apiGateway';
+
 import { middyfy } from '@libs/lambda';
+import { APIGatewayEvent } from 'aws-lambda';
 import { apply } from 'src/service/apply.service';
 
-import schema from './schema';
 
-const careers: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
+const careers = async (event: APIGatewayEvent) => {
   try {
     switch (event.httpMethod) {
       case 'POST':

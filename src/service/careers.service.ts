@@ -37,6 +37,24 @@ export const fetchCandidate = async (url: string, BhRestToken: string, candidate
   };
 };
 
+export const findCandidateByEmail = async (url: string, BhRestToken: string, email: string): Promise<Candidate> => {
+  const candidateQueryUrl = `${url}search/Candidate`;
+  const { data } = await axios.get(candidateQueryUrl, {
+    params: {
+      BhRestToken,
+      fields: 'id,firstName,lastName,email,customText9',
+      query: `email:${email}`,
+      count: '1',
+    },
+  });
+
+  const { customText9, ...candidate } = data.data[0];
+  return {
+    ...candidate,
+    challengeLink: customText9,
+  };
+};
+
 export const populateCandidateFields = async (
   url: string,
   BhRestToken: string,
