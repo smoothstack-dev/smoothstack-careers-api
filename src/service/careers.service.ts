@@ -77,6 +77,7 @@ export const populateCandidateFields = async (
     ...(fields.degreeExpected && { degreeList: fields.degreeExpected }),
     ...(fields.highestDegree && { educationDegree: fields.highestDegree }),
     customText2: fields.militaryStatus,
+    customText10: fields.scheduleLink,
   };
   const { data } = await axios.post(candidateUrl, updateData, {
     params: {

@@ -1,5 +1,6 @@
 import { APIGatewayProxyEvent } from 'aws-lambda';
 import { parse } from 'aws-multipart-parser';
+import { getScheduleLink } from 'src/util/getScheduleLink';
 import { createWebResponse, populateCandidateFields, saveApplicationNote } from './careers.service';
 import { getSessionData } from './oauth/bullhorn.oauth.service';
 import { publishChallengeGenerationRequest } from './sns.service';
@@ -20,7 +21,8 @@ export const apply = async (event: APIGatewayProxyEvent) => {
   };
 
   const newCandidate = await createWebResponse(careerId, webResponseFields, resume);
-  await populateCandidateFields(restUrl, BhRestToken, newCandidate.id, extraFields as any);
+  const scheduleLink = getScheduleLink(firstName, lastName, email, phone);
+  await populateCandidateFields(restUrl, BhRestToken, newCandidate.id, { ...extraFields, scheduleLink } as any);
   await saveApplicationNote(restUrl, BhRestToken, newCandidate.id, event.queryStringParameters);
 
   await publishChallengeGenerationRequest(newCandidate.id, +careerId);
