@@ -139,6 +139,26 @@ const generateComments = (application: any): any => ({
   ...(application.militaryBranch && { 'Military Branch': application.militaryBranch }),
 });
 
+export const saveSchedulingData = async (
+  url: string,
+  BhRestToken: string,
+  candidateEmail: string,
+  status: string,
+  date?: string
+): Promise<void> => {
+  const candidate = await findCandidateByEmail(url, BhRestToken, candidateEmail);
+  const candidateUrl = `${url}entity/Candidate/${candidate.id}`;
+  const updateData = {
+    customText28: status,
+    ...(date && { customDate11: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1') }),
+  };
+  return axios.post(candidateUrl, updateData, {
+    params: {
+      BhRestToken,
+    },
+  });
+};
+
 export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId: number): Promise<JobOrder> => {
   const jobOrdersUrl = `${url}entity/JobOrder/${jobOrderId}`;
   const { data } = await axios.get(jobOrdersUrl, {
