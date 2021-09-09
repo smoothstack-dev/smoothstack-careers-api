@@ -13,5 +13,4 @@ export interface CandidateExtraFields {
   major?: string;
   militaryStatus: string;
   militaryBranch?: string;
-  scheduleLink: string;
 }

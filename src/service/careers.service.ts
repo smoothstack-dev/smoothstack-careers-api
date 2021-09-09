@@ -26,7 +26,7 @@ export const fetchCandidate = async (url: string, BhRestToken: string, candidate
   const { data } = await axios.get(candidatesUrl, {
     params: {
       BhRestToken,
-      fields: 'id,firstName,lastName,email,customText9',
+      fields: 'id,firstName,lastName,email,phone,customText9',
     },
   });
 
@@ -77,7 +77,6 @@ export const populateCandidateFields = async (
     ...(fields.degreeExpected && { degreeList: fields.degreeExpected }),
     ...(fields.highestDegree && { educationDegree: fields.highestDegree }),
     customText2: fields.militaryStatus,
-    customTextBlock2: fields.scheduleLink,
   };
   const { data } = await axios.post(candidateUrl, updateData, {
     params: {
@@ -175,9 +174,15 @@ export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId
   };
 };
 
-export const saveChallengeLink = async (url: string, BhRestToken: string, candidateId: number, link: string) => {
+export const saveChallengeLinks = async (
+  url: string,
+  BhRestToken: string,
+  candidateId: number,
+  challengeLink: string,
+  schedulingLink: string
+) => {
   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
-  const updateData = { customText9: link };
+  const updateData = { customText9: challengeLink, customTextBlock2: schedulingLink };
   return axios.post(candidateUrl, updateData, {
     params: {
       BhRestToken,

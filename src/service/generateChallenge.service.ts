@@ -1,6 +1,7 @@
 import { SNSEvent } from 'aws-lambda';
 import { ChallengeGenerationRequest } from 'src/model/ChallengeGenerationRequest';
-import { fetchCandidate, fetchJobOrder, saveChallengeLink } from './careers.service';
+import { getScheduleLink } from 'src/util/getScheduleLink';
+import { fetchCandidate, fetchJobOrder, saveChallengeLinks } from './careers.service';
 import { generateChallengeLink, getChallengeDetails } from './challenge.service';
 import { getSessionData } from './oauth/bullhorn.oauth.service';
 import { getCodilitySecrets } from './secrets.service';
@@ -17,9 +18,10 @@ export const generateChallenge = async (event: SNSEvent) => {
 
   if (!candidate.challengeLink) {
     const { id: challengeId } = await getChallengeDetails(jobOrder.challengeName, BEARER_TOKEN);
-    const link = await generateChallengeLink(challengeId, candidate, BEARER_TOKEN);
-    await saveChallengeLink(restUrl, BhRestToken, candidate.id, link);
-    console.log('Successfully generated challenge link for submission:');
+    const challengeLink = await generateChallengeLink(challengeId, candidate, BEARER_TOKEN);
+    const schedulingLink = getScheduleLink(candidate.firstName, candidate.lastName, candidate.email, candidate.phone);
+    await saveChallengeLinks(restUrl, BhRestToken, candidate.id, challengeLink, schedulingLink);
+    console.log('Successfully generated challenge links for submission:');
   } else {
     console.log('Candidate already has a challenge link. Submission not processed:');
   }
