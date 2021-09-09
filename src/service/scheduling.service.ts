@@ -12,14 +12,14 @@ export const processSchedulingEvent = async (event: SchedulingEvent) => {
   if (event.calendarID === '6003573') {
     const { restUrl, BhRestToken } = await getSessionData();
     const appointment = await fetchAppointment(event.id);
-
-    switch (event.action) {
+    const eventType = event.action.split('.')[0];
+    switch (eventType) {
       case 'scheduled':
       case 'rescheduled':
-        await saveSchedulingData(restUrl, BhRestToken, appointment.email, event.action, appointment.datetime);
+        await saveSchedulingData(restUrl, BhRestToken, appointment.email, eventType, appointment.datetime);
         break;
       case 'canceled':
-        await saveSchedulingData(restUrl, BhRestToken, appointment.email, event.action);
+        await saveSchedulingData(restUrl, BhRestToken, appointment.email, eventType);
         break;
     }
   }
