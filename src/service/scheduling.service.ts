@@ -12,7 +12,7 @@ export const processSchedulingEvent = async (event: SchedulingEvent) => {
   if (event.calendarID === '6003573') {
     const { restUrl, BhRestToken } = await getSessionData();
     const appointment = await fetchAppointment(event.id);
-    const eventType = event.action.split('.')[0];
+    const eventType = event.action.split('.')[1];
     switch (eventType) {
       case 'scheduled':
       case 'rescheduled':
