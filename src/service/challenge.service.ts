@@ -54,8 +54,7 @@ export const generateChallengeLink = async (
 
 export const processChallengeEvent = async ({ event, session }: ChallengeEvent) => {
   const { restUrl, BhRestToken } = await getSessionData();
-  console.log('event, ', event)
-  console.log('session, ', session)
+
   switch (event) {
     case 'result':
       await saveChallengeResult(restUrl, BhRestToken, session);
