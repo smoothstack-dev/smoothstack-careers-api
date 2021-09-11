@@ -5,5 +5,5 @@ import cors from '@middy/http-cors';
 import { apiGatewayResponseMiddleware } from './middleware';
 
 export const middyfy = (handler) => {
-  return middy(handler).use(middyJsonBodyParser()).use(httpUrlEncodeBodyParser()).use(cors()).use(apiGatewayResponseMiddleware());
+  return middy(handler).use(middyJsonBodyParser()).use(cors()).use(apiGatewayResponseMiddleware());
 };
