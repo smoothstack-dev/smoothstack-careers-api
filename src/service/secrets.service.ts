@@ -1,6 +1,6 @@
 import { SecretsManager } from 'aws-sdk';
 import { BullhornCredentials } from 'src/model/BullhornCredentials';
-import { CodilityCredentials } from 'src/model/CodilityCredentials';
+import { CodilitySecrets } from 'src/model/CodilitySecrets';
 import { SquareSpaceCredentials } from 'src/model/SquareSpaceCredentials';
 
 export const getBullhornSecrets = async (): Promise<BullhornCredentials> => {
@@ -13,7 +13,7 @@ export const getBullhornSecrets = async (): Promise<BullhornCredentials> => {
   return JSON.parse(res.SecretString);
 };
 
-export const getCodilitySecrets = async (): Promise<CodilityCredentials> => {
+export const getCodilitySecrets = async (): Promise<CodilitySecrets> => {
   const secretPath = 'smoothstack/codility-credentials';
   const client = new SecretsManager({
     region: 'us-east-1',

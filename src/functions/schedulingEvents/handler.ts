@@ -3,6 +3,7 @@ import { APIGatewayEvent } from 'aws-lambda';
 import { processSchedulingEvent } from '../../service/scheduling.service';
 
 const schedulingEvents = async (event: APIGatewayEvent) => {
+  console.log('Received Scheduling Event: ', event);
   try {
     switch (event.httpMethod) {
       case 'POST':

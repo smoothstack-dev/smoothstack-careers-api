@@ -2,6 +2,7 @@ import axios from 'axios';
 import FormData from 'form-data';
 import { Candidate } from 'src/model/Candidate';
 import { CandidateExtraFields } from 'src/model/CandidateExtraFields';
+import { ChallengeSession } from 'src/model/ChallengeEvent';
 import { JobOrder } from 'src/model/JobOrder';
 
 export const createWebResponse = async (careerId: string, application: any, resume: any): Promise<any> => {
@@ -151,6 +152,44 @@ export const saveSchedulingData = async (
     customText28: status,
     ...(date && { customDate11: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1') }),
   };
+
+  return axios.post(candidateUrl, updateData, {
+    params: {
+      BhRestToken,
+    },
+  });
+};
+
+export const saveChallengeResult = async (
+  url: string,
+  BhRestToken: string,
+  challengeSession: ChallengeSession
+): Promise<void> => {
+  const { candidate: candidateId, evaluation } = challengeSession;
+  const score = Math.round(evaluation.result / evaluation.max_result);
+  const candidateUrl = `${url}entity/Candidate/${candidateId}`;
+  const updateData = {
+    customText29: score,
+  };
+
+  return axios.post(candidateUrl, updateData, {
+    params: {
+      BhRestToken,
+    },
+  });
+};
+
+export const saveChallengeSimilarity = async (
+  url: string,
+  BhRestToken: string,
+  challengeSession: ChallengeSession
+): Promise<void> => {
+  const { candidate: candidateId, similarity } = challengeSession;
+  const candidateUrl = `${url}entity/Candidate/${candidateId}`;
+  const updateData = {
+    customText: similarity.text, //TODO: figure out field
+  };
+
   return axios.post(candidateUrl, updateData, {
     params: {
       BhRestToken,

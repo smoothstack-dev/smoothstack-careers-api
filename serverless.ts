@@ -5,6 +5,7 @@ import submissionChecker from '@functions/submissionChecker';
 import challengeGenerator from '@functions/challengeGenerator';
 import challengeRedirect from '@functions/challengeRedirect';
 import schedulingEvents from '@functions/schedulingEvents';
+import challengeEvents from '@functions/challengeEvents';
 
 const serverlessConfiguration: AWS = {
   service: 'smoothstack-careers-api',
@@ -44,7 +45,7 @@ const serverlessConfiguration: AWS = {
     lambdaHashingVersion: '20201221',
   },
   // import the function via paths
-  functions: { careers, submissionChecker, challengeGenerator, challengeRedirect, schedulingEvents },
+  functions: { careers, submissionChecker, challengeGenerator, challengeRedirect, schedulingEvents, challengeEvents },
   resources: {
     Resources: {
       ChallengeGenerationTopic: {
