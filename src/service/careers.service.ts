@@ -166,7 +166,7 @@ export const saveChallengeResult = async (
   challengeSession: ChallengeSession
 ): Promise<void> => {
   const { candidate: candidateId, evaluation } = challengeSession;
-  const score = Math.round(evaluation.result / evaluation.max_result);
+  const score = Math.round(evaluation.result / evaluation.max_result * 100);
   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
   const updateData = {
     customText29: score,
