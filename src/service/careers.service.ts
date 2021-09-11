@@ -165,42 +165,19 @@ export const saveChallengeResult = async (
   BhRestToken: string,
   challengeSession: ChallengeSession
 ): Promise<void> => {
-  console.log('Session ', challengeSession)
   const { candidate: candidateId, evaluation } = challengeSession;
   const score = Math.round(evaluation.result / evaluation.max_result * 100);
-  console.log('Score ', score)
   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
-  console.log('url ', candidateUrl)
   const updateData = {
     customText29: score,
   };
-  console.log('data ', updateData)
 
-  await axios.post(candidateUrl, updateData, {
+  return axios.post(candidateUrl, updateData, {
     params: {
       BhRestToken,
     },
   });
 };
-
-// export const saveChallengeResult = async (
-//   url: string,
-//   BhRestToken: string,
-//   challengeSession: ChallengeSession
-// ): Promise<void> => {
-//   const { candidate: candidateId, evaluation } = challengeSession;
-//   const score = Math.round(evaluation.result / evaluation.max_result * 100);
-//   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
-//   const updateData = {
-//     customText29: score,
-//   };
-
-//   return axios.post(candidateUrl, updateData, {
-//     params: {
-//       BhRestToken,
-//     },
-//   });
-// };
 
 export const saveChallengeSimilarity = async (
   url: string,

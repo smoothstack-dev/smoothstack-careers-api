@@ -7,7 +7,6 @@ const challengeEvents = async (event: APIGatewayEvent) => {
   try {
     switch (event.httpMethod) {
       case 'POST':
-        console.log('body ', event.body)
         await processChallengeEvent(JSON.parse(event.body));
     }
   } catch (e) {
