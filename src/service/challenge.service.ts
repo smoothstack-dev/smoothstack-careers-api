@@ -38,7 +38,7 @@ export const generateChallengeLink = async (
       },
       {
         event: 'similarity',
-        url: 'https://webhook.site/bf389f61-280d-451a-87f8-e6096179f4b9',//TODO: replace with callbackUrl
+        url: callbackUrl,
       },
     ],
   };
@@ -60,8 +60,7 @@ export const processChallengeEvent = async ({ event, session }: ChallengeEvent) 
       await saveChallengeResult(restUrl, BhRestToken, session);
       break;
     case 'similarity':
-      //TODO: Uncomment once field is determined
-      //await saveChallengeSimilarity(restUrl, BhRestToken, session);
+      await saveChallengeSimilarity(restUrl, BhRestToken, session);
       break;
   }
 };

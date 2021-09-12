@@ -166,7 +166,7 @@ export const saveChallengeResult = async (
   challengeSession: ChallengeSession
 ): Promise<void> => {
   const { candidate: candidateId, evaluation } = challengeSession;
-  const score = Math.round(evaluation.result / evaluation.max_result * 100);
+  const score = Math.round((evaluation.result / evaluation.max_result) * 100);
   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
   const updateData = {
     customText29: score,
@@ -185,16 +185,18 @@ export const saveChallengeSimilarity = async (
   challengeSession: ChallengeSession
 ): Promise<void> => {
   const { candidate: candidateId, similarity } = challengeSession;
-  const candidateUrl = `${url}entity/Candidate/${candidateId}`;
-  const updateData = {
-    customText: similarity.text, //TODO: figure out field
-  };
+  if (similarity) {
+    const candidateUrl = `${url}entity/Candidate/${candidateId}`;
+    const updateData = {
+      customText33: similarity.text,
+    };
 
-  return axios.post(candidateUrl, updateData, {
-    params: {
-      BhRestToken,
-    },
-  });
+    return axios.post(candidateUrl, updateData, {
+      params: {
+        BhRestToken,
+      },
+    });
+  }
 };
 
 export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId: number): Promise<JobOrder> => {
