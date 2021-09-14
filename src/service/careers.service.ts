@@ -1,5 +1,6 @@
 import axios from 'axios';
 import FormData from 'form-data';
+import { Appointment } from 'src/model/Appointment';
 import { Candidate } from 'src/model/Candidate';
 import { CandidateExtraFields } from 'src/model/CandidateExtraFields';
 import { ChallengeSession } from 'src/model/ChallengeEvent';
@@ -49,11 +50,36 @@ export const findCandidateByEmail = async (url: string, BhRestToken: string, ema
     },
   });
 
-  const { customText9, ...candidate } = data.data[0];
+  const { customText9, customText34, ...candidate } = data.data[0];
   return {
     ...candidate,
     challengeLink: customText9,
   };
+};
+
+export const findCandidateByAppointment = async (
+  url: string,
+  BhRestToken: string,
+  appointmentId: number
+): Promise<Candidate> => {
+  const candidateQueryUrl = `${url}search/Candidate`;
+  const { data } = await axios.get(candidateQueryUrl, {
+    params: {
+      BhRestToken,
+      fields: 'id,firstName,lastName,email,customText9',
+      query: `customText34:${appointmentId}`,
+      count: '1',
+    },
+  });
+
+  if (data.data.length) {
+    const { customText9, ...candidate } = data.data[0];
+    return {
+      ...candidate,
+      challengeLink: customText9,
+    };
+  }
+  return undefined;
 };
 
 export const populateCandidateFields = async (
@@ -139,18 +165,19 @@ const generateComments = (application: any): any => ({
   ...(application.militaryBranch && { 'Military Branch': application.militaryBranch }),
 });
 
-export const saveSchedulingData = async (
+export const saveSchedulingDataByEmail = async (
   url: string,
   BhRestToken: string,
-  candidateEmail: string,
   status: string,
-  date?: string
+  appointment: Appointment
 ): Promise<void> => {
+  const { id: appointmentId, email: candidateEmail, datetime: date } = appointment;
   const candidate = await findCandidateByEmail(url, BhRestToken, candidateEmail);
   const candidateUrl = `${url}entity/Candidate/${candidate.id}`;
   const updateData = {
     customText28: status,
-    ...(date && { customDate11: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1') }),
+    customText34: appointmentId,
+    customDate11: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
   };
 
   return axios.post(candidateUrl, updateData, {
@@ -158,6 +185,29 @@ export const saveSchedulingData = async (
       BhRestToken,
     },
   });
+};
+
+export const saveSchedulingDataByAppointmentId = async (
+  url: string,
+  BhRestToken: string,
+  status: string,
+  appointmentId: number,
+  date?: string
+): Promise<void> => {
+  const candidate = await findCandidateByAppointment(url, BhRestToken, appointmentId);
+  if (candidate) {
+    const candidateUrl = `${url}entity/Candidate/${candidate.id}`;
+    const updateData = {
+      customText28: status,
+      ...(date && { customDate11: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1') }),
+    };
+
+    return axios.post(candidateUrl, updateData, {
+      params: {
+        BhRestToken,
+      },
+    });
+  }
 };
 
 export const saveChallengeResult = async (
