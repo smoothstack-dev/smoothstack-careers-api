@@ -50,7 +50,7 @@ export const findCandidateByEmail = async (url: string, BhRestToken: string, ema
     },
   });
 
-  const { customText9, customText34, ...candidate } = data.data[0];
+  const { customText9, ...candidate } = data.data[0];
   return {
     ...candidate,
     challengeLink: customText9,
