@@ -26,7 +26,7 @@ export const processSchedulingEvent = async (event: SchedulingEvent) => {
         await saveSchedulingDataByAppointmentId(restUrl, BhRestToken, eventType, appointment.id, appointment.datetime);
         break;
       case 'canceled':
-        await saveSchedulingDataByAppointmentId(restUrl, BhRestToken, eventType, appointment.id);
+        await saveSchedulingDataByAppointmentId(restUrl, BhRestToken, eventType, appointment.id, '');
         break;
     }
   }

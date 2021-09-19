@@ -144,6 +144,31 @@ export const saveApplicationNote = async (
   });
 };
 
+export const saveSchedulingNote = async (
+  url: string,
+  BhRestToken: string,
+  candidateId: number,
+  eventType: string,
+  schedulingType: string,
+  date?: string
+): Promise<any> => {
+  const noteUrl = `${url}entity/Note`;
+  const comments = `${eventType} Appointment has been ${schedulingType} for candidate${date ? ` at: ${date}` : ''}`;
+  const note = {
+    action: 'Scheduling Action',
+    comments,
+    personReference: {
+      searchEntity: 'Candidate',
+      id: candidateId,
+    },
+  };
+  return axios.put(noteUrl, note, {
+    params: {
+      BhRestToken,
+    },
+  });
+};
+
 const generateComments = (application: any): any => ({
   'First Name': application.firstName,
   'Last Name': application.lastName,
@@ -180,11 +205,15 @@ export const saveSchedulingDataByEmail = async (
     customDate11: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
   };
 
-  return axios.post(candidateUrl, updateData, {
+  const noteAction = saveSchedulingNote(url, BhRestToken, candidate.id, 'Challenge', status, date);
+  const schedulingAction = axios.post(candidateUrl, updateData, {
     params: {
       BhRestToken,
     },
   });
+  const actions = [schedulingAction, noteAction];
+
+  await Promise.all(actions);
 };
 
 export const saveSchedulingDataByAppointmentId = async (
@@ -192,21 +221,25 @@ export const saveSchedulingDataByAppointmentId = async (
   BhRestToken: string,
   status: string,
   appointmentId: number,
-  date?: string
+  date: string
 ): Promise<void> => {
   const candidate = await findCandidateByAppointment(url, BhRestToken, appointmentId);
   if (candidate) {
     const candidateUrl = `${url}entity/Candidate/${candidate.id}`;
     const updateData = {
       customText28: status,
-      ...(date && { customDate11: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1') }),
+      customDate11: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
     };
 
-    return axios.post(candidateUrl, updateData, {
+    const noteAction = saveSchedulingNote(url, BhRestToken, candidate.id, 'Challenge', status, date);
+    const schedulingAction = axios.post(candidateUrl, updateData, {
       params: {
         BhRestToken,
       },
     });
+    const actions = [schedulingAction, noteAction];
+
+    await Promise.all(actions);
   }
 };
 
