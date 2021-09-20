@@ -153,7 +153,9 @@ export const saveSchedulingNote = async (
   date?: string
 ): Promise<any> => {
   const noteUrl = `${url}entity/Note`;
-  const formattedDate = date ? ` at: ${new Date(date).toLocaleString('en-US', { timeZone: 'America/New_York' })}` : '';
+  const formattedDate = date
+    ? ` at: ${new Date(date).toLocaleString('en-US', { timeZone: 'America/New_York', dateStyle:'short', timeStyle: 'short' })}`
+    : '';
   const comments = `${eventType} Appointment has been ${schedulingType} for candidate${formattedDate}`;
   const note = {
     action: 'Scheduling Action',
