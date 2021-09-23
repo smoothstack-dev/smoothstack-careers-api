@@ -2,25 +2,26 @@ import { middyfy } from '@libs/lambda';
 import { APIGatewayEvent } from 'aws-lambda';
 import { findCandidateByEmail } from 'src/service/careers.service';
 import { getSessionData } from 'src/service/auth/bullhorn.oauth.service';
+import { getWebinarRegistrationURL } from 'src/service/webinar.service';
 
-const challengeRedirect = async (event: APIGatewayEvent) => {
-  let challengeLink: string;
+const webinarRedirect = async (event: APIGatewayEvent) => {
+  let webinarLink: string;
   try {
     const { restUrl, BhRestToken } = await getSessionData();
     const candidate = await findCandidateByEmail(restUrl, BhRestToken, event.queryStringParameters.email);
-    challengeLink = candidate.challengeLink;
+    webinarLink = candidate.webinarLink || (await getWebinarRegistrationURL());
   } catch (e) {
-    console.error('Error generating challenge redirect: ', e.message);
-    console.log('Redirecting to Generic Challenge Link');
-    challengeLink = 'https://app.codility.com/public-link/Smoothstack-Smoothstack-Coding-Challenge_202103_new/';
+    console.error('Error generating webinar redirect: ', e.message);
+    console.log('Redirecting to Webinar registration URL');
+    webinarLink = await getWebinarRegistrationURL();
   }
   return {
     statusCode: 302,
     headers: {
-      Location: challengeLink,
+      Location: webinarLink,
     },
     body: JSON.stringify({}),
   };
 };
 
-export const main = middyfy(challengeRedirect);
+export const main = middyfy(webinarRedirect);

@@ -1,10 +1,11 @@
 import { SNSEvent } from 'aws-lambda';
 import { ChallengeGenerationRequest } from 'src/model/ChallengeGenerationRequest';
-import { getScheduleLink } from 'src/util/getScheduleLink';
-import { fetchCandidate, fetchJobOrder, saveChallengeLinks } from './careers.service';
+import { getSchedulingLink } from 'src/util/getScheduleLink';
+import { fetchCandidate, fetchJobOrder, saveCandidateLinks } from './careers.service';
 import { generateChallengeLink, getChallengeDetails } from './challenge.service';
-import { getSessionData } from './oauth/bullhorn.oauth.service';
+import { getSessionData } from './auth/bullhorn.oauth.service';
 import { getCodilitySecrets } from './secrets.service';
+import { SchedulingType } from 'src/model/SchedulingType';
 
 export const generateChallenge = async (event: SNSEvent) => {
   console.log('Received Challenge Generation Request.');
@@ -19,9 +20,29 @@ export const generateChallenge = async (event: SNSEvent) => {
   if (!candidate.challengeLink) {
     const { id: challengeId } = await getChallengeDetails(jobOrder.challengeName, BEARER_TOKEN);
     const challengeLink = await generateChallengeLink(challengeId, candidate, BEARER_TOKEN, CALLBACK_URL);
-    const schedulingLink = getScheduleLink(candidate.firstName, candidate.lastName, candidate.email, candidate.phone);
-    await saveChallengeLinks(restUrl, BhRestToken, candidate.id, challengeLink, schedulingLink);
-    console.log('Successfully generated challenge links for submission:');
+    const challengeSchedulingLink = getSchedulingLink(
+      candidate.firstName,
+      candidate.lastName,
+      candidate.email,
+      candidate.phone,
+      SchedulingType.CHALLENGE
+    );
+    const webinarSchedulingLink = getSchedulingLink(
+      candidate.firstName,
+      candidate.lastName,
+      candidate.email,
+      candidate.phone,
+      SchedulingType.WEBINAR
+    );
+    await saveCandidateLinks(
+      restUrl,
+      BhRestToken,
+      candidate.id,
+      challengeLink,
+      challengeSchedulingLink,
+      webinarSchedulingLink
+    );
+    console.log('Successfully generated links for submission:');
   } else {
     console.log('Candidate already has a challenge link. Submission not processed:');
   }

@@ -5,4 +5,6 @@ export interface Candidate {
   email: string;
   phone: string;
   challengeLink: string;
+  webinarLink: string;
+  webinarRegistrantId: string;
 }

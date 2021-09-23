@@ -3,32 +3,106 @@ import { Appointment } from '../model/Appointment';
 import { SchedulingEvent } from '../model/SchedulingEvent';
 import { saveSchedulingDataByAppointmentId } from './careers.service';
 import { saveSchedulingDataByEmail } from './careers.service';
-import { getSessionData } from './oauth/bullhorn.oauth.service';
+import { getSessionData } from './auth/bullhorn.oauth.service';
 import { getSquareSpaceSecrets } from './secrets.service';
+import { SchedulingType } from '../model/SchedulingType';
+import { cancelWebinarRegistration, generateWebinarRegistration } from './webinar.service';
 
 const baseUrl = 'https://acuityscheduling.com/api/v1';
 
 export const processSchedulingEvent = async (event: SchedulingEvent) => {
   console.log('Received Scheduling Event: ', event);
-  if (event.calendarID === '6003573') {
-    const { restUrl, BhRestToken } = await getSessionData();
-    const { apiKey, userId } = await getSquareSpaceSecrets();
-    const appointment = await fetchAppointment(apiKey, userId, event.id);
-    const eventType = event.action.split('.')[1];
-    switch (eventType) {
-      case 'scheduled':
-        const existingAppointment = await findExistingAppointment(apiKey, userId, appointment);
-        const status = existingAppointment ? 'rescheduled' : 'scheduled';
-        await saveSchedulingDataByEmail(restUrl, BhRestToken, status, appointment);
-        existingAppointment && (await cancelAppointment(apiKey, userId, existingAppointment.id));
-        break;
-      case 'rescheduled':
-        await saveSchedulingDataByAppointmentId(restUrl, BhRestToken, eventType, appointment.id, appointment.datetime);
-        break;
-      case 'canceled':
-        await saveSchedulingDataByAppointmentId(restUrl, BhRestToken, eventType, appointment.id, '');
-        break;
+
+  switch (event.calendarID) {
+    case '6003573':
+      await processChallengeScheduling(event);
+      break;
+    case '6044217':
+      await processWebinarScheduling(event);
+      break;
+  }
+};
+
+const processChallengeScheduling = async (event: SchedulingEvent) => {
+  const { restUrl, BhRestToken } = await getSessionData();
+  const { apiKey, userId } = await getSquareSpaceSecrets();
+  const appointment = await fetchAppointment(apiKey, userId, event.id);
+  const eventType = event.action.split('.')[1];
+  const schedulingType = SchedulingType.CHALLENGE;
+  switch (eventType) {
+    case 'scheduled':
+      const existingAppointment = await findExistingAppointment(apiKey, userId, appointment);
+      const status = existingAppointment ? 'rescheduled' : 'scheduled';
+      await saveSchedulingDataByEmail(restUrl, BhRestToken, status, appointment, schedulingType);
+      existingAppointment && (await cancelAppointment(apiKey, userId, existingAppointment.id));
+      break;
+    case 'rescheduled':
+      await saveSchedulingDataByAppointmentId(
+        restUrl,
+        BhRestToken,
+        eventType,
+        appointment.id,
+        appointment.datetime,
+        schedulingType
+      );
+      break;
+    case 'canceled':
+      await saveSchedulingDataByAppointmentId(restUrl, BhRestToken, eventType, appointment.id, '', schedulingType);
+      break;
+  }
+};
+
+const processWebinarScheduling = async (event: SchedulingEvent) => {
+  const { restUrl, BhRestToken } = await getSessionData();
+  const { apiKey, userId } = await getSquareSpaceSecrets();
+  const appointment = await fetchAppointment(apiKey, userId, event.id);
+  const eventType = event.action.split('.')[1];
+  const schedulingType = SchedulingType.WEBINAR;
+  switch (eventType) {
+    case 'scheduled': {
+      const existingAppointment = await findExistingAppointment(apiKey, userId, appointment);
+      const status = existingAppointment ? 'rescheduled' : 'scheduled';
+      const registration = await generateWebinarRegistration(appointment);
+      const candidate = await saveSchedulingDataByEmail(
+        restUrl,
+        BhRestToken,
+        status,
+        appointment,
+        schedulingType,
+        registration
+      );
+      if (existingAppointment) {
+        await cancelAppointment(apiKey, userId, existingAppointment.id);
+        candidate && await cancelWebinarRegistration(candidate.webinarRegistrantId);
+      }
+      break;
     }
+    case 'rescheduled': {
+      const registration = await generateWebinarRegistration(appointment);
+      const candidate = await saveSchedulingDataByAppointmentId(
+        restUrl,
+        BhRestToken,
+        eventType,
+        appointment.id,
+        appointment.datetime,
+        schedulingType,
+        registration
+      );
+      candidate && (await cancelWebinarRegistration(candidate.webinarRegistrantId));
+      break;
+    }
+    case 'canceled':
+      const candidate = await saveSchedulingDataByAppointmentId(
+        restUrl,
+        BhRestToken,
+        eventType,
+        appointment.id,
+        '',
+        schedulingType,
+        { joinUrl: '', registrantId: '' }
+      );
+      candidate && (await cancelWebinarRegistration(candidate.webinarRegistrantId));
+      break;
   }
 };
 
