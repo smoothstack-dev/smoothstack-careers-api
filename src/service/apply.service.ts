@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent } from 'aws-lambda';
 import { parse } from 'aws-multipart-parser';
 import { createWebResponse, populateCandidateFields, saveApplicationNote } from './careers.service';
-import { getSessionData } from './oauth/bullhorn.oauth.service';
+import { getSessionData } from './auth/bullhorn.oauth.service';
 import { publishChallengeGenerationRequest } from './sns.service';
 
 export const apply = async (event: APIGatewayProxyEvent) => {

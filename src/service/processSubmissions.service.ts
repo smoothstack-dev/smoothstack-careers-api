@@ -1,5 +1,5 @@
 import { fetchNewSubmissions } from './careers.service';
-import { getSessionData } from './oauth/bullhorn.oauth.service';
+import { getSessionData } from './auth/bullhorn.oauth.service';
 import { publishChallengeGenerationRequest } from './sns.service';
 
 export const processSubmissions = async () => {

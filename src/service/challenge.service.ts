@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { ChallengeEvent } from 'src/model/ChallengeEvent';
 import { saveChallengeResult, saveChallengeSimilarity } from './careers.service';
-import { getSessionData } from './oauth/bullhorn.oauth.service';
+import { getSessionData } from './auth/bullhorn.oauth.service';
 
 const BASE_URL = `https://codility.com/api/tests`;
 

@@ -18,8 +18,10 @@
     "aws-multipart-parser": "^0.2.1",
     "aws-sdk": "^2.973.0",
     "axios": "^0.21.1",
+    "crypto": "^1.0.1",
     "form-data": "^4.0.0",
     "http-errors": "1.8.0",
+    "jose": "^3.17.0",
     "source-map-support": "^0.5.19"
   },
   "devDependencies": {
