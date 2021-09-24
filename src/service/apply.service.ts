@@ -12,17 +12,18 @@ export const apply = async (event: APIGatewayProxyEvent) => {
 
   const { restUrl, BhRestToken } = await getSessionData();
 
+  const formattedPhone = phone.replace(/\D+/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
   const webResponseFields = {
     firstName,
     lastName,
     email,
-    phone,
+    phone: formattedPhone,
     format,
   };
 
   const candidateFields = {
     ...extraFields,
-    phone,
+    phone: formattedPhone,
   };
 
   const newCandidate = await createWebResponse(careerId, webResponseFields, resume);
