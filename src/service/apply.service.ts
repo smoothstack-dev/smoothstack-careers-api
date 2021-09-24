@@ -6,7 +6,7 @@ import { publishChallengeGenerationRequest } from './sns.service';
 
 export const apply = async (event: APIGatewayProxyEvent) => {
   console.log('Received Candidate Application Request: ', event.queryStringParameters);
-  const { firstName, lastName, email, phone, format, ...extraFields } = event.queryStringParameters;
+  const { firstName, lastName, email, format, ...extraFields } = event.queryStringParameters;
   const { careerId } = event.pathParameters;
   const { resume } = parse(event, true);
 
@@ -16,7 +16,6 @@ export const apply = async (event: APIGatewayProxyEvent) => {
     firstName,
     lastName,
     email,
-    phone,
     format,
   };
 

@@ -11,7 +11,7 @@ const careers = async (event: APIGatewayEvent) => {
         return await apply(event as any);
     }
   } catch (e) {
-    console.error(e.message);
+    console.error(e);
     throw e;
   }
 };

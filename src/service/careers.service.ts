@@ -106,6 +106,7 @@ export const populateCandidateFields = async (
     city: fields.city,
     state: fields.state,
     zip: fields.zip,
+    phone: fields.phone,
     customText4: fields.workAuthorization,
     customText25: fields.relocation,
     customText7: fields.codingAbility,
