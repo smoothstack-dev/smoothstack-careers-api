@@ -1,7 +1,11 @@
+import { SNSEvent } from 'aws-lambda';
 import axios from 'axios';
+import { WebinarEvent } from 'src/model/WebinarEvent';
 import { Appointment } from '../model/Appointment';
 import { WebinarRegistration } from '../model/WebinarRegistration';
+import { getSessionData } from './auth/bullhorn.oauth.service';
 import { generateZoomToken } from './auth/zoom.jwt.service';
+import { saveWebinarDataByEmail } from './careers.service';
 
 const WEBINAR_TOPIC = 'Candidate Information Session / Learn about Smoothstack';
 const BASE_URL = 'https://api.zoom.us/v2';
@@ -108,4 +112,76 @@ const registerCandidate = async (
     registrantId: `${registrantPath}/${data.registrant_id}?occurrence_id=${occurrenceId}`,
     joinUrl: data.join_url,
   };
+};
+
+export const processWebinarEvent = async (event: SNSEvent): Promise<void> => {
+  const message = event.Records[0].Sns.Message;
+  console.log('Received Webinar Event Request: ', message);
+  const request: WebinarEvent = JSON.parse(message);
+
+  const { restUrl, BhRestToken } = await getSessionData();
+  const token = await generateZoomToken();
+
+  const attendees = await getWebinarParticipants(token, request.webinar.uuid);
+  const poll = await getPollAnswers(token, request.webinar.uuid);
+  for (const attendee of attendees) {
+    await saveWebinarDataByEmail(
+      restUrl,
+      BhRestToken,
+      attendee.user_email,
+      'Yes',
+      getParticipantPollAnswer(attendee, poll)
+    );
+  }
+
+  const absentees = await getWebinarAbsentees(token, request.webinar.uuid);
+  for (const absentee of absentees) {
+    await saveWebinarDataByEmail(restUrl, BhRestToken, absentee.email, 'No');
+  }
+  console.log('Successfully processed webinar event');
+};
+
+const getParticipantPollAnswer = (participant: any, questionList: any[]): string => {
+  const question = questionList.find((q) => q.email === participant.user_email);
+  const answer = question?.question_details.reduce((acc: boolean, qd: any) => qd.answer === 'Yes' && acc, true);
+  return answer ? 'Yes' : 'No';
+};
+
+const getWebinarParticipants = async (token: string, webinarUUID: string): Promise<any> => {
+  const url = `${BASE_URL}/past_webinars/${encodeURIComponent(webinarUUID)}/participants`;
+  const { data } = await axios.get(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    params: {
+      page_size: 300,
+    },
+  });
+
+  return data.participants;
+};
+
+const getWebinarAbsentees = async (token: string, webinarUUID: string): Promise<any> => {
+  const url = `${BASE_URL}/past_webinars/${encodeURIComponent(webinarUUID)}/absentees`;
+  const { data } = await axios.get(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    params: {
+      page_size: 300,
+    },
+  });
+
+  return data.registrants;
+};
+
+const getPollAnswers = async (token: string, webinarUUID: string): Promise<any[]> => {
+  const url = `${BASE_URL}/past_webinars/${encodeURIComponent(webinarUUID)}/polls`;
+  const { data } = await axios.get(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return data.questions;
 };

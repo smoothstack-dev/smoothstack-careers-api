@@ -7,6 +7,8 @@ import challengeRedirect from '@functions/challengeRedirect';
 import schedulingEvents from '@functions/schedulingEvents';
 import challengeEvents from '@functions/challengeEvents';
 import webinarRedirect from '@functions/webinarRedirect';
+import webinarProcessing from '@functions/webinarProcessing';
+import webinarEvents from '@functions/webinarEvents';
 
 const serverlessConfiguration: AWS = {
   service: 'smoothstack-careers-api',
@@ -46,13 +48,29 @@ const serverlessConfiguration: AWS = {
     lambdaHashingVersion: '20201221',
   },
   // import the function via paths
-  functions: { careers, submissionChecker, challengeGenerator, challengeRedirect, webinarRedirect, schedulingEvents, challengeEvents },
+  functions: {
+    careers,
+    submissionChecker,
+    challengeGenerator,
+    challengeRedirect,
+    webinarRedirect,
+    schedulingEvents,
+    challengeEvents,
+    webinarProcessing,
+    webinarEvents,
+  },
   resources: {
     Resources: {
       ChallengeGenerationTopic: {
         Type: 'AWS::SNS::Topic',
         Properties: {
           TopicName: 'smoothstack-challenge-generation-sns-topic',
+        },
+      },
+      WebinarProcessingTopic: {
+        Type: 'AWS::SNS::Topic',
+        Properties: {
+          TopicName: 'smoothstack-webinar-processing-sns-topic',
         },
       },
     },
