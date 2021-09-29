@@ -52,13 +52,16 @@ export const findCandidateByEmail = async (url: string, BhRestToken: string, ema
     },
   });
 
-  const { customText9, customTextBlock4, customText36, ...candidate } = data.data[0];
-  return {
-    ...candidate,
-    challengeLink: customText9,
-    webinarLink: customTextBlock4,
-    webinarRegistrantId: customText36,
-  };
+  if (data.data.length) {
+    const { customText9, customTextBlock4, customText36, ...candidate } = data.data[0];
+    return {
+      ...candidate,
+      challengeLink: customText9,
+      webinarLink: customTextBlock4,
+      webinarRegistrantId: customText36,
+    };
+  }
+  return undefined;
 };
 
 export const findCandidateByAppointment = async (
@@ -297,6 +300,30 @@ export const saveSchedulingDataByAppointmentId = async (
     await Promise.all(actions);
   }
   return candidate;
+};
+
+export const saveWebinarDataByEmail = async (
+  url: string,
+  BhRestToken: string,
+  email: string,
+  attendance: string,
+  pollAnswer?: string
+): Promise<void> => {
+  const candidate = await findCandidateByEmail(url, BhRestToken, email);
+  if (candidate) {
+    const candidateUrl = `${url}entity/Candidate/${candidate.id}`;
+
+    const updateData = {
+      customText12: attendance,
+      ...(pollAnswer && { customText13: pollAnswer }),
+    };
+
+    await axios.post(candidateUrl, updateData, {
+      params: {
+        BhRestToken,
+      },
+    });
+  }
 };
 
 export const saveChallengeResult = async (
