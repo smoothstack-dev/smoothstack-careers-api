@@ -7,7 +7,8 @@ import { getSessionData } from './auth/bullhorn.oauth.service';
 import { generateZoomToken } from './auth/zoom.jwt.service';
 import { saveWebinarDataByEmail } from './careers.service';
 
-const WEBINAR_TOPIC = 'Candidate Information Session / Learn about Smoothstack';
+export const WEBINAR_TOPIC = 'Candidate Information Session / Learn about Smoothstack';
+export const WEBINAR_TYPE = 9;
 const BASE_URL = 'https://api.zoom.us/v2';
 
 export const generateWebinarRegistration = async (appointment: Appointment): Promise<WebinarRegistration> => {
@@ -61,7 +62,7 @@ const findWebinarId = async (token: string, date: string): Promise<number> => {
     })
     .find((w: any) => {
       const lastOcurrenceDate = new Date(w.start_time).toISOString();
-      return w.type === 9 && w.topic === WEBINAR_TOPIC && appointmentDate <= lastOcurrenceDate;
+      return w.type === WEBINAR_TYPE && w.topic === WEBINAR_TOPIC && appointmentDate <= lastOcurrenceDate;
     });
 
   return webinar.id;
