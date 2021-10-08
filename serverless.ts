@@ -9,6 +9,7 @@ import challengeEvents from '@functions/challengeEvents';
 import webinarRedirect from '@functions/webinarRedirect';
 import webinarProcessing from '@functions/webinarProcessing';
 import webinarEvents from '@functions/webinarEvents';
+import formEvents from '@functions/formEvents';
 
 const serverlessConfiguration: AWS = {
   service: 'smoothstack-careers-api',
@@ -58,6 +59,7 @@ const serverlessConfiguration: AWS = {
     challengeEvents,
     webinarProcessing,
     webinarEvents,
+    formEvents,
   },
   resources: {
     Resources: {

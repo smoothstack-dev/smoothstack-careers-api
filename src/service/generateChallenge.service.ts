@@ -1,6 +1,6 @@
 import { SNSEvent } from 'aws-lambda';
 import { ChallengeGenerationRequest } from 'src/model/ChallengeGenerationRequest';
-import { getSchedulingLink } from 'src/util/getScheduleLink';
+import { getPrescreeningLink, getSchedulingLink } from 'src/util/links';
 import { fetchCandidate, fetchJobOrder, saveCandidateLinks } from './careers.service';
 import { generateChallengeLink, getChallengeDetails } from './challenge.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
@@ -34,13 +34,15 @@ export const generateChallenge = async (event: SNSEvent) => {
       candidate.phone,
       SchedulingType.WEBINAR
     );
+    const preScreeningLink = getPrescreeningLink(candidate);
     await saveCandidateLinks(
       restUrl,
       BhRestToken,
       candidate.id,
       challengeLink,
       challengeSchedulingLink,
-      webinarSchedulingLink
+      webinarSchedulingLink,
+      preScreeningLink
     );
     console.log('Successfully generated links for submission:');
   } else {

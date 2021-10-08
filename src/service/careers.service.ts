@@ -4,6 +4,7 @@ import { Appointment } from 'src/model/Appointment';
 import { Candidate } from 'src/model/Candidate';
 import { CandidateExtraFields } from 'src/model/CandidateExtraFields';
 import { ChallengeSession } from 'src/model/ChallengeEvent';
+import { PrescreenForm } from 'src/model/Form';
 import { JobOrder } from 'src/model/JobOrder';
 import { SchedulingType } from 'src/model/SchedulingType';
 import { WebinarRegistration } from 'src/model/WebinarRegistration';
@@ -30,14 +31,15 @@ export const fetchCandidate = async (url: string, BhRestToken: string, candidate
   const { data } = await axios.get(candidatesUrl, {
     params: {
       BhRestToken,
-      fields: 'id,firstName,lastName,email,phone,customText9',
+      fields: 'id,firstName,lastName,email,phone,customText9,customText25',
     },
   });
 
-  const { customText9, ...candidate } = data.data;
+  const { customText9, customText25, ...candidate } = data.data;
   return {
     ...candidate,
     challengeLink: customText9,
+    relocation: customText25,
   };
 };
 
@@ -46,7 +48,7 @@ export const findCandidateByEmail = async (url: string, BhRestToken: string, ema
   const { data } = await axios.get(candidateQueryUrl, {
     params: {
       BhRestToken,
-      fields: 'id,firstName,lastName,email,customText9,customTextBlock4,customText36',
+      fields: 'id,firstName,lastName,email,submissions(id,status),customText9,customTextBlock4,customText36',
       query: `email:${email}`,
       count: '1',
     },
@@ -59,6 +61,7 @@ export const findCandidateByEmail = async (url: string, BhRestToken: string, ema
       challengeLink: customText9,
       webinarLink: customTextBlock4,
       webinarRegistrantId: customText36,
+      submissions: candidate.submissions.data,
     };
   }
   return undefined;
@@ -130,6 +133,51 @@ export const populateCandidateFields = async (
   return data.data;
 };
 
+export const savePrescreenData = async (
+  url: string,
+  BhRestToken: string,
+  candidateId: number,
+  prescreenForm: PrescreenForm
+): Promise<string> => {
+  const candidateUrl = `${url}entity/Candidate/${candidateId}`;
+  const result = prescreenForm.result.answer.split('-')[0];
+  const resultReason = prescreenForm.result.answer.split('-')[1];
+  const candidateStatus =
+    result === 'Pass' ? 'Active' : result === 'Reject' ? 'Rejected' : result === 'Snooze' && result;
+  const updateData = {
+    ...(prescreenForm.newRelocation.answer && { customText25: prescreenForm.newRelocation.answer }),
+    ...(prescreenForm.expectedDegree.answer && { degreeList: prescreenForm.expectedDegree.answer }),
+    ...(prescreenForm.expectedGraduationDate.answer && {
+      customDate3: new Date(prescreenForm.expectedGraduationDate.answer).toLocaleDateString('en-US'),
+      customText32: isGraduatingWithin4Months(new Date(prescreenForm.expectedGraduationDate.answer)),
+    }),
+    ...(prescreenForm.highestDegree.answer && { educationDegree: prescreenForm.highestDegree.answer }),
+    ...(prescreenForm.graduationDate.answer && {
+      customDate10: new Date(prescreenForm.graduationDate.answer).toLocaleDateString('en-US'),
+    }),
+    ...(prescreenForm.monthsOfExperience.answer && { customText26: prescreenForm.monthsOfExperience.answer }),
+    ...(prescreenForm.canCommit.answer && { customText24: prescreenForm.canCommit.answer }),
+    ...(prescreenForm.referral.answer && { source: prescreenForm.referral.answer }),
+    ...(prescreenForm.opportunityRank.answer && { customText23: prescreenForm.opportunityRank.answer }),
+    ...(prescreenForm.communicationSkills.answer && { customText14: prescreenForm.communicationSkills.answer }),
+    ...(prescreenForm.githubLink.answer && { customText6: prescreenForm.githubLink.answer }),
+    ...(prescreenForm.linkedinLink.answer && { customText5: prescreenForm.linkedinLink.answer }),
+    ...(prescreenForm.programmingLanguages.answer && {
+      customText1: prescreenForm.programmingLanguages.answer.replace(/ /g, ','),
+    }),
+    customText27: prescreenForm.result.answer,
+    status: candidateStatus,
+  };
+
+  await axios.post(candidateUrl, updateData, {
+    params: {
+      BhRestToken,
+    },
+  });
+
+  return result === 'Pass' ? 'Prescreen Passed' : ['Reject', 'Snooze'].includes(result) && resultReason;
+};
+
 const isGraduatingWithin4Months = (graduationDate: Date) => {
   const today = new Date();
   let diff = (today.getTime() - graduationDate.getTime()) / 1000;
@@ -145,7 +193,7 @@ export const saveApplicationNote = async (
   application: any
 ): Promise<void> => {
   const noteUrl = `${url}entity/Note`;
-  const comments = generateComments(application);
+  const comments = generateApplicationComments(application);
   const note = {
     action: 'Application Survey',
     comments: Object.keys(comments).reduce((acc, q, i) => `${acc}Q${i + 1} - ${q}\nA${i + 1} - ${comments[q]}\n\n`, ''),
@@ -154,6 +202,58 @@ export const saveApplicationNote = async (
       id: candidateId,
     },
   };
+  await axios.put(noteUrl, note, {
+    params: {
+      BhRestToken,
+    },
+  });
+};
+
+export const saveFormNote = async (
+  url: string,
+  BhRestToken: string,
+  candidateId: number,
+  form: any,
+  formType: string
+): Promise<void> => {
+  const noteUrl = `${url}entity/Note`;
+  const action = `${formType} Survey`;
+  const note = {
+    action,
+    comments: Object.keys(form).reduce(
+      (acc, e, i) => `${acc}Q${i + 1} - ${form[e].question}\nA${i + 1} - ${form[e].answer}\n\n`,
+      ''
+    ),
+    personReference: {
+      searchEntity: 'Candidate',
+      id: candidateId,
+    },
+  };
+
+  await axios.put(noteUrl, note, {
+    params: {
+      BhRestToken,
+    },
+  });
+};
+
+export const saveNoSubmissionNote = async (
+  url: string,
+  BhRestToken: string,
+  candidateId: number,
+  prescreenResult: string
+): Promise<void> => {
+  const noteUrl = `${url}entity/Note`;
+  const action = `Submission Status Note`;
+  const note = {
+    action,
+    comments: `Submission status of "${prescreenResult}" was not updated since no application was found under "Webinar Passed" status`,
+    personReference: {
+      searchEntity: 'Candidate',
+      id: candidateId,
+    },
+  };
+
   await axios.put(noteUrl, note, {
     params: {
       BhRestToken,
@@ -193,7 +293,7 @@ export const saveSchedulingNote = async (
   });
 };
 
-const generateComments = (application: any): any => ({
+const generateApplicationComments = (application: any): any => ({
   'First Name': application.firstName,
   'Last Name': application.lastName,
   Email: application.email,
@@ -387,13 +487,15 @@ export const saveCandidateLinks = async (
   candidateId: number,
   challengeLink: string,
   challengeSchedulingLink: string,
-  webinarSchedulingLink: string
+  webinarSchedulingLink: string,
+  preScreeningLink: string
 ) => {
   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
   const updateData = {
     customText9: challengeLink,
     customTextBlock2: challengeSchedulingLink,
     customTextBlock3: webinarSchedulingLink,
+    customTextBlock6: preScreeningLink,
   };
   return axios.post(candidateUrl, updateData, {
     params: {
@@ -433,4 +535,21 @@ export const fetchNewJobSubmissionsIds = async (url: string, BhRestToken: string
 
   const newJobSubmissionIds = data.events?.map((e: any) => e.entityId);
   return newJobSubmissionIds ?? [];
+};
+
+export const saveSubmissionStatus = async (
+  url: string,
+  BhRestToken: string,
+  submissionId: number,
+  status: string
+): Promise<void> => {
+  const submissionUrl = `${url}entity/JobSubmission/${submissionId}`;
+  const updateData = {
+    status,
+  };
+  return axios.post(submissionUrl, updateData, {
+    params: {
+      BhRestToken,
+    },
+  });
 };

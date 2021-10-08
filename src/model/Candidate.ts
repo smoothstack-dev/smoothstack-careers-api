@@ -7,4 +7,6 @@ export interface Candidate {
   challengeLink: string;
   webinarLink: string;
   webinarRegistrantId: string;
+  relocation: string;
+  submissions: any[];
 }
