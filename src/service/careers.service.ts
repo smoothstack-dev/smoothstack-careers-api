@@ -169,7 +169,7 @@ export const savePrescreenData = async (
     ...(prescreenForm.githubLink.answer && { customText6: prescreenForm.githubLink.answer }),
     ...(prescreenForm.linkedinLink.answer && { customText5: prescreenForm.linkedinLink.answer }),
     ...(prescreenForm.programmingLanguages.answer && {
-      customText1: prescreenForm.programmingLanguages.answer.replace(/ /g, ','),
+      customText1: prescreenForm.programmingLanguages.answer,
     }),
     customText27: prescreenForm.result.answer,
     status: candidateStatus,
