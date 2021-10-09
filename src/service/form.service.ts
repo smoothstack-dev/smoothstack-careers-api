@@ -1,4 +1,4 @@
-import { PrescreenFormEvent } from 'src/model/Form';
+import { PrescreenForm } from 'src/model/Form';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import {
   findCandidateByEmail,
@@ -9,20 +9,15 @@ import {
 } from './careers.service';
 
 export const processFormEvent = async (formType: string, formEvent: any) => {
-  const { created_at, ...rawFormEvent } = formEvent;
   switch (formType) {
     case 'prescreen':
-      await processPrescreenEvent(rawFormEvent);
+      await processPrescreenEvent(formEvent);
       break;
   }
 };
 
-const processPrescreenEvent = async (rawPrescreenForm: PrescreenFormEvent) => {
+const processPrescreenEvent = async (prescreenForm: PrescreenForm) => {
   const { restUrl, BhRestToken } = await getSessionData();
-  const prescreenForm: any = Object.keys(rawPrescreenForm).reduce((acc, entry) => {
-    const parsedEntry = JSON.parse(rawPrescreenForm[entry]);
-    return { ...acc, [entry]: { ...parsedEntry, answer: parsedEntry.answer.replace(/\<BR\/\>/g, ' ') } };
-  }, {});
 
   const candidate = await findCandidateByEmail(restUrl, BhRestToken, prescreenForm.candidateEmail.answer);
   if (candidate) {

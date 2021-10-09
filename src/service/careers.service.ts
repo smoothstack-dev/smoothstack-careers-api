@@ -148,12 +148,18 @@ export const savePrescreenData = async (
     ...(prescreenForm.newRelocation.answer && { customText25: prescreenForm.newRelocation.answer }),
     ...(prescreenForm.expectedDegree.answer && { degreeList: prescreenForm.expectedDegree.answer }),
     ...(prescreenForm.expectedGraduationDate.answer && {
-      customDate3: new Date(prescreenForm.expectedGraduationDate.answer).toLocaleDateString('en-US'),
+      customDate3: new Date(
+        new Date(prescreenForm.expectedGraduationDate.answer).getTime() +
+          new Date(prescreenForm.expectedGraduationDate.answer).getTimezoneOffset() * 60000
+      ).toLocaleDateString('en-US'),
       customText32: isGraduatingWithin4Months(new Date(prescreenForm.expectedGraduationDate.answer)),
     }),
     ...(prescreenForm.highestDegree.answer && { educationDegree: prescreenForm.highestDegree.answer }),
     ...(prescreenForm.graduationDate.answer && {
-      customDate10: new Date(prescreenForm.graduationDate.answer).toLocaleDateString('en-US'),
+      customDate10: new Date(
+        new Date(prescreenForm.graduationDate.answer).getTime() +
+          new Date(prescreenForm.graduationDate.answer).getTimezoneOffset() * 60000
+      ).toLocaleDateString('en-US'),
     }),
     ...(prescreenForm.monthsOfExperience.answer && { customText26: prescreenForm.monthsOfExperience.answer }),
     ...(prescreenForm.canCommit.answer && { customText24: prescreenForm.canCommit.answer }),
