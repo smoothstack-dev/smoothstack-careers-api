@@ -145,30 +145,31 @@ export const savePrescreenData = async (
   const candidateStatus =
     result === 'Pass' ? 'Active' : result === 'Reject' ? 'Rejected' : result === 'Snooze' && result;
   const updateData = {
-    ...(prescreenForm.newRelocation.answer && { customText25: prescreenForm.newRelocation.answer }),
-    ...(prescreenForm.expectedDegree.answer && { degreeList: prescreenForm.expectedDegree.answer }),
-    ...(prescreenForm.expectedGraduationDate.answer && {
+    ...(prescreenForm.newRelocation?.answer && { customText25: prescreenForm.newRelocation.answer }),
+    ...(prescreenForm.expectedDegree?.answer && { degreeList: prescreenForm.expectedDegree.answer }),
+    ...(prescreenForm.expectedGraduationDate?.answer && {
       customDate3: new Date(
         new Date(prescreenForm.expectedGraduationDate.answer).getTime() +
           new Date(prescreenForm.expectedGraduationDate.answer).getTimezoneOffset() * 60000
       ).toLocaleDateString('en-US'),
       customText32: isGraduatingWithin4Months(new Date(prescreenForm.expectedGraduationDate.answer)),
     }),
-    ...(prescreenForm.highestDegree.answer && { educationDegree: prescreenForm.highestDegree.answer }),
-    ...(prescreenForm.graduationDate.answer && {
+    ...(prescreenForm.highestDegree?.answer && { educationDegree: prescreenForm.highestDegree.answer }),
+    ...(prescreenForm.graduationDate?.answer && {
       customDate10: new Date(
         new Date(prescreenForm.graduationDate.answer).getTime() +
           new Date(prescreenForm.graduationDate.answer).getTimezoneOffset() * 60000
       ).toLocaleDateString('en-US'),
     }),
-    ...(prescreenForm.monthsOfExperience.answer && { customText26: prescreenForm.monthsOfExperience.answer }),
-    ...(prescreenForm.canCommit.answer && { customText24: prescreenForm.canCommit.answer }),
-    ...(prescreenForm.referral.answer && { source: prescreenForm.referral.answer }),
-    ...(prescreenForm.opportunityRank.answer && { customText23: prescreenForm.opportunityRank.answer }),
-    ...(prescreenForm.communicationSkills.answer && { customText14: prescreenForm.communicationSkills.answer }),
-    ...(prescreenForm.githubLink.answer && { customText6: prescreenForm.githubLink.answer }),
-    ...(prescreenForm.linkedinLink.answer && { customText5: prescreenForm.linkedinLink.answer }),
-    ...(prescreenForm.programmingLanguages.answer && {
+    ...(prescreenForm.monthsOfExperience?.answer && { customText26: prescreenForm.monthsOfExperience.answer }),
+    ...(prescreenForm.canCommit?.answer && { customText24: prescreenForm.canCommit.answer }),
+    ...(prescreenForm.referral?.answer && { source: prescreenForm.referral.answer }),
+    ...(prescreenForm.opportunityRank?.answer && { customText23: prescreenForm.opportunityRank.answer }),
+    ...(prescreenForm.communicationSkills?.answer && { customText14: prescreenForm.communicationSkills.answer }),
+    ...(prescreenForm.isVaccinated?.answer && { customText8: prescreenForm.isVaccinated.answer }),
+    ...(prescreenForm.githubLink?.answer && { customText6: prescreenForm.githubLink.answer }),
+    ...(prescreenForm.linkedinLink?.answer && { customText5: prescreenForm.linkedinLink.answer }),
+    ...(prescreenForm.programmingLanguages?.answer && {
       customText1: prescreenForm.programmingLanguages.answer,
     }),
     customText27: prescreenForm.result.answer,
