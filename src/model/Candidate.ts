@@ -9,4 +9,10 @@ export interface Candidate {
   webinarRegistrantId: string;
   relocation: string;
   submissions: any[];
+  fileAttachments: Attachment[];
+}
+
+interface Attachment {
+  id: number;
+  type: string;
 }

@@ -4,6 +4,7 @@ import { Appointment } from 'src/model/Appointment';
 import { Candidate } from 'src/model/Candidate';
 import { CandidateExtraFields } from 'src/model/CandidateExtraFields';
 import { ChallengeSession } from 'src/model/ChallengeEvent';
+import { Contact } from 'src/model/Contact';
 import { PrescreenForm } from 'src/model/Form';
 import { JobOrder } from 'src/model/JobOrder';
 import { SchedulingType } from 'src/model/SchedulingType';
@@ -48,7 +49,8 @@ export const findCandidateByEmail = async (url: string, BhRestToken: string, ema
   const { data } = await axios.get(candidateQueryUrl, {
     params: {
       BhRestToken,
-      fields: 'id,firstName,lastName,email,submissions(id,status),customText9,customTextBlock4,customText36',
+      fields:
+        'id,firstName,lastName,email,submissions(id,status),fileAttachments(id,type),customText9,customTextBlock4,customText36',
       query: `email:${email}`,
       count: '1',
     },
@@ -350,6 +352,12 @@ export const saveSchedulingDataByEmail = async (
         customTextBlock4: webinarRegistration.joinUrl,
         customText36: webinarRegistration.registrantId,
       };
+    case SchedulingType.TECHSCREEN:
+      updateData = {
+        customText10: status,
+        customText39: appointmentId,
+        customDate5: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
+      };
       break;
   }
 
@@ -495,7 +503,8 @@ export const saveCandidateLinks = async (
   challengeLink: string,
   challengeSchedulingLink: string,
   webinarSchedulingLink: string,
-  preScreeningLink: string
+  preScreeningLink: string,
+  techScreeningLink: string
 ) => {
   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
   const updateData = {
@@ -503,6 +512,7 @@ export const saveCandidateLinks = async (
     customTextBlock2: challengeSchedulingLink,
     customTextBlock3: webinarSchedulingLink,
     customTextBlock6: preScreeningLink,
+    customTextBlock5: techScreeningLink,
   };
   return axios.post(candidateUrl, updateData, {
     params: {
@@ -559,4 +569,66 @@ export const saveSubmissionStatus = async (
       BhRestToken,
     },
   });
+};
+
+export const createTechScreenAppointment = async (
+  url: string,
+  BhRestToken: string,
+  candidate: Candidate,
+  screenerEmail: string,
+  meetingLink: string,
+  appointment: Appointment
+) => {
+  const screenerContact = await findContactByEmail(url, BhRestToken, screenerEmail);
+  const candidateResume = candidate.fileAttachments.find((file) => file.type === 'Resume');
+  const appointmentUrl = `${url}entity/Appointment`;
+  const appointmentData = {
+    ...(candidateResume && { attachments: [{ id: candidateResume.id, entity: 'Candidate', entityId: candidate.id }] }),
+    candidateReference: { id: candidate.id },
+    communicationMethod: 'Web Meeting',
+    dateBegin: new Date(appointment.datetime).getTime(),
+    dateEnd: new Date(appointment.datetime).getTime() + appointment.duration * 60000,
+    guests: [{ id: candidate.id }, { id: screenerContact.id }],
+    isPrivate: false,
+    location: meetingLink,
+    notificationMinutes: 0,
+    notifyAttendees: true,
+    owner: { id: 3 },
+    subject: `Tech Screening Appointment - ${candidate.firstName} ${candidate.lastName}`,
+    description: generateMeetingDescription(meetingLink, candidate, screenerContact);
+    type: 'Meeting',
+  };
+
+  await axios.put(appointmentUrl, appointmentData, {
+    params: {
+      BhRestToken,
+    },
+  });
+};
+
+
+const findContactByEmail = async (url: string, BhRestToken: string, email: string): Promise<Contact> => {
+  const contactQueryUrl = `${url}search/ClientContact`;
+  const { data } = await axios.get(contactQueryUrl, {
+    params: {
+      BhRestToken,
+      fields: 'id,firstName,lastName,email',
+      query: `email:${email}`,
+      count: '1',
+    },
+  });
+
+  return data.data.length ? data.data[0] : undefined;
+};
+
+
+const generateMeetingDescription = (meetingLink: string, candidate, screenerContact): string => {
+  const techScreenFormLink = "http";
+  return `A Technical Screening Appointment with Smoothstack has been scheduled.<br />
+  <br />
+  When it&#39;s time to join the meeting...<br />
+  Click to join:&nbsp;<a href="${meetingLink}">Meeting Link</a><br />
+  <br />
+  For Tech Screener Use Only:<br />
+  Click to Open: <a href="${techScreenFormLink}">Tech Screening Form</a>`;
 };

@@ -1,25 +1,14 @@
 import { Candidate } from 'src/model/Candidate';
-import { SchedulingType } from 'src/model/SchedulingType';
+import { SchedulingTypeId } from 'src/model/SchedulingType';
 
 export const getSchedulingLink = (
   firstName: string,
   lastName: string,
   email: string,
   phone: string,
-  type: SchedulingType
+  typeId: SchedulingTypeId
 ) => {
-  let calendarID: string;
-
-  switch (type) {
-    case SchedulingType.CHALLENGE:
-      calendarID = '6003573';
-      break;
-    case SchedulingType.WEBINAR:
-      calendarID = '6044217';
-      break;
-  }
-
-  return `https://app.squarespacescheduling.com/schedule.php?owner=23045512&calendarID=${calendarID}&firstName=${encodeURIComponent(
+  return `https://app.squarespacescheduling.com/schedule.php?owner=23045512&appointmentType=${typeId}&firstName=${encodeURIComponent(
     firstName
   )}&lastName=${encodeURIComponent(lastName)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}`;
 };
@@ -31,3 +20,9 @@ export const getPrescreeningLink = (candidate: Candidate) => {
     fullName
   )}&entry.139410096=${encodeURIComponent(email)}&entry.1002222934=${encodeURIComponent(relocation)}`;
 };
+
+export const getTechScreeningLink = (candidate: Candidate) => {
+  //const { firstName, lastName, email, } = candidate;
+  // const fullName = `${firstName} ${lastName}`;
+  //TODO : Add link
+}

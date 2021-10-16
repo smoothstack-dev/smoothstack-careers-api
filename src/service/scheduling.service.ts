@@ -1,24 +1,28 @@
 import axios from 'axios';
 import { Appointment } from '../model/Appointment';
 import { SchedulingEvent } from '../model/SchedulingEvent';
-import { saveSchedulingDataByAppointmentId } from './careers.service';
+import { createTechScreenAppointment, saveSchedulingDataByAppointmentId } from './careers.service';
 import { saveSchedulingDataByEmail } from './careers.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { getSquareSpaceSecrets } from './secrets.service';
-import { SchedulingType } from '../model/SchedulingType';
+import { SchedulingType, SchedulingTypeId } from '../model/SchedulingType';
 import { cancelWebinarRegistration, generateWebinarRegistration } from './webinar.service';
+import { createMeeting } from './meeting.service';
 
 const baseUrl = 'https://acuityscheduling.com/api/v1';
 
 export const processSchedulingEvent = async (event: SchedulingEvent) => {
   console.log('Received Scheduling Event: ', event);
 
-  switch (event.calendarID) {
-    case '6003573':
+  switch (event.appointmentTypeID) {
+    case SchedulingTypeId.CHALLENGE:
       await processChallengeScheduling(event);
       break;
-    case '6044217':
+    case SchedulingType.WEBINAR:
       await processWebinarScheduling(event);
+      break;
+    case SchedulingType.TECHSCREEN:
+      await processTechScreenScheduling(event);
       break;
   }
 };
@@ -73,7 +77,7 @@ const processWebinarScheduling = async (event: SchedulingEvent) => {
       );
       if (existingAppointment) {
         await cancelAppointment(apiKey, userId, existingAppointment.id);
-        candidate && await cancelWebinarRegistration(candidate.webinarRegistrantId);
+        candidate && (await cancelWebinarRegistration(candidate.webinarRegistrantId));
       }
       break;
     }
@@ -91,7 +95,7 @@ const processWebinarScheduling = async (event: SchedulingEvent) => {
       candidate && (await cancelWebinarRegistration(candidate.webinarRegistrantId));
       break;
     }
-    case 'canceled':
+    case 'canceled': {
       const candidate = await saveSchedulingDataByAppointmentId(
         restUrl,
         BhRestToken,
@@ -103,6 +107,56 @@ const processWebinarScheduling = async (event: SchedulingEvent) => {
       );
       candidate && (await cancelWebinarRegistration(candidate.webinarRegistrantId));
       break;
+    }
+  }
+};
+
+const processTechScreenScheduling = async (event: SchedulingEvent) => {
+  const { restUrl, BhRestToken } = await getSessionData();
+  const { apiKey, userId } = await getSquareSpaceSecrets();
+  const appointment = await fetchAppointment(apiKey, userId, event.id);
+  const eventType = event.action.split('.')[1];
+  const schedulingType = SchedulingType.TECHSCREEN;
+  switch (eventType) {
+    case 'scheduled': {
+      const existingAppointment = await findExistingAppointment(apiKey, userId, appointment);
+      const status = existingAppointment ? 'rescheduled' : 'scheduled';
+      const meetingLink = await createMeeting(appointment);
+      const screenerEmail = await findCalendarEmail(apiKey, userId, appointment.calendarID);
+      const candidate = await saveSchedulingDataByEmail(restUrl, BhRestToken, status, appointment, schedulingType);
+      await createTechScreenAppointment(restUrl, BhRestToken, candidate, screenerEmail, meetingLink, appointment);
+      if (existingAppointment) {
+        await cancelAppointment(apiKey, userId, existingAppointment.id);
+        // candidate && (await cancelMeeting(candidate.webinarRegistrantId)); TODO: Is cancelling meeting required?
+      }
+      break;
+    }
+    case 'rescheduled': {
+      const meetingLink = await createMeeting(appointment);
+      const screenerEmail = await findCalendarEmail(apiKey, userId, appointment.calendarID);
+      const candidate = await saveSchedulingDataByAppointmentId(
+        restUrl,
+        BhRestToken,
+        eventType,
+        appointment.id,
+        appointment.datetime,
+        schedulingType
+      );
+      //candidate && (await cancelWebinarRegistration(candidate.webinarRegistrantId));
+      break;
+    }
+    case 'canceled': {
+      const candidate = await saveSchedulingDataByAppointmentId(
+        restUrl,
+        BhRestToken,
+        eventType,
+        appointment.id,
+        '',
+        schedulingType
+      );
+      // candidate && (await cancelWebinarRegistration(candidate.webinarRegistrantId));
+      break;
+    }
   }
 };
 
@@ -124,13 +178,13 @@ const findExistingAppointment = async (
   userId: string,
   newAppointment: Appointment
 ): Promise<Appointment> => {
-  const { email, calendarID, id: newAppointmentId } = newAppointment;
+  const { email, appointmentTypeID, id: newAppointmentId } = newAppointment;
   const url = `${baseUrl}/appointments`;
 
   const { data } = await axios.get(url, {
     params: {
       email,
-      calendarID,
+      appointmentTypeID,
     },
     auth: {
       username: userId,
@@ -158,4 +212,17 @@ const cancelAppointment = async (apiKey: string, userId: string, appointmentId: 
       },
     }
   );
+};
+
+const findCalendarEmail = async (apiKey: string, userId: string, calendarId: number): Promise<string> => {
+  const url = `${baseUrl}/calendars`;
+
+  const { data } = await axios.get(url, {
+    auth: {
+      username: userId,
+      password: apiKey,
+    },
+  });
+
+  return data.find((c: any) => c.id === calendarId).email;
 };

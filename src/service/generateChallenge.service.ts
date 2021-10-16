@@ -5,7 +5,7 @@ import { fetchCandidate, fetchJobOrder, saveCandidateLinks } from './careers.ser
 import { generateChallengeLink, getChallengeDetails } from './challenge.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { getCodilitySecrets } from './secrets.service';
-import { SchedulingType } from 'src/model/SchedulingType';
+import { SchedulingTypeId } from 'src/model/SchedulingType';
 
 export const generateChallenge = async (event: SNSEvent) => {
   console.log('Received Challenge Generation Request.');
@@ -25,16 +25,24 @@ export const generateChallenge = async (event: SNSEvent) => {
       candidate.lastName,
       candidate.email,
       candidate.phone,
-      SchedulingType.CHALLENGE
+      SchedulingTypeId.CHALLENGE
     );
     const webinarSchedulingLink = getSchedulingLink(
       candidate.firstName,
       candidate.lastName,
       candidate.email,
       candidate.phone,
-      SchedulingType.WEBINAR
+      SchedulingTypeId.WEBINAR
     );
     const preScreeningLink = getPrescreeningLink(candidate);
+    const techScreeningLink = getSchedulingLink(
+      candidate.firstName,
+      candidate.lastName,
+      candidate.email,
+      candidate.phone,
+      SchedulingTypeId.TECHSCREEN
+    );
+
     await saveCandidateLinks(
       restUrl,
       BhRestToken,
@@ -42,7 +50,8 @@ export const generateChallenge = async (event: SNSEvent) => {
       challengeLink,
       challengeSchedulingLink,
       webinarSchedulingLink,
-      preScreeningLink
+      preScreeningLink,
+      techScreeningLink,
     );
     console.log('Successfully generated links for submission:');
   } else {
