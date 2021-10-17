@@ -8,5 +8,17 @@ export interface Candidate {
   webinarLink: string;
   webinarRegistrantId: string;
   relocation: string;
-  submissions: any[];
+  submissions: Submission[];
+  webResponses: WebResponse[];
+}
+
+export interface Submission {
+  id: number;
+  status: string;
+  dateAdded: number;
+}
+
+export interface WebResponse {
+  id: number;
+  dateAdded: number;
 }

@@ -1,3 +1,4 @@
+import { Candidate } from 'src/model/Candidate';
 import { PrescreenForm } from 'src/model/Form';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import {
@@ -23,10 +24,17 @@ const processPrescreenEvent = async (prescreenForm: PrescreenForm) => {
   if (candidate) {
     await saveFormNote(restUrl, BhRestToken, candidate.id, prescreenForm, 'Prescreen');
     const prescreenResult = await savePrescreenData(restUrl, BhRestToken, candidate.id, prescreenForm);
-    const jobSubmissions = candidate.submissions.filter((sub) => sub.status === 'Webinar Passed');
-    for (const submission of jobSubmissions) {
-      await saveSubmissionStatus(restUrl, BhRestToken, submission.id, prescreenResult);
-    }
-    !jobSubmissions.length && (await saveNoSubmissionNote(restUrl, BhRestToken, candidate.id, prescreenResult));
+    await updateSubmissionStatus(restUrl, BhRestToken, candidate, prescreenResult);
   }
+};
+
+const updateSubmissionStatus = async (url: string, token: string, candidate: Candidate, prescreenResult: string) => {
+  const searchStatuses = ['Prescreen Scheduled', 'Webinar Passed'];
+  const prescreenSubmissions = candidate.submissions.filter((sub) => sub.status === searchStatuses[0]);
+  const webinarSubmissions = candidate.submissions.filter((sub) => sub.status === searchStatuses[1]);
+  const jobSubmissions = prescreenSubmissions.length ? prescreenSubmissions : webinarSubmissions;
+  for (const submission of jobSubmissions) {
+    await saveSubmissionStatus(url, token, submission.id, prescreenResult);
+  }
+  !jobSubmissions.length && (await saveNoSubmissionNote(url, token, candidate.id, prescreenResult, searchStatuses));
 };
