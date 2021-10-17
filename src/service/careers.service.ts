@@ -50,7 +50,7 @@ export const findCandidateByEmail = async (url: string, BhRestToken: string, ema
     params: {
       BhRestToken,
       fields:
-        'id,firstName,lastName,email,submissions(id,status),fileAttachments(id,type),customText9,customTextBlock4,customText36',
+        'id,firstName,lastName,email,submissions(id,status),webResponses(id,dateAdded),fileAttachments(id,type),customText9,customTextBlock4,customText36',
       query: `email:${email}`,
       count: '1',
     },
@@ -64,6 +64,8 @@ export const findCandidateByEmail = async (url: string, BhRestToken: string, ema
       webinarLink: customTextBlock4,
       webinarRegistrantId: customText36,
       submissions: candidate.submissions.data,
+      webResponses: candidate.webResponses.data,
+      fileAttachments: candidate.fileAttachments.data,
     };
   }
   return undefined;
@@ -250,13 +252,16 @@ export const saveNoSubmissionNote = async (
   url: string,
   BhRestToken: string,
   candidateId: number,
-  prescreenResult: string
+  prescreenResult: string,
+  searchStatuses: string[]
 ): Promise<void> => {
   const noteUrl = `${url}entity/Note`;
   const action = `Submission Status Note`;
   const note = {
     action,
-    comments: `Submission status of "${prescreenResult}" was not updated since no application was found under "Webinar Passed" status`,
+    comments: `Submission status of "${prescreenResult}" was not updated since no application was found under "${searchStatuses.join(
+      '/'
+    )}" status`,
     personReference: {
       searchEntity: 'Candidate',
       id: candidateId,

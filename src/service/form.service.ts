@@ -1,3 +1,4 @@
+import { Candidate } from 'src/model/Candidate';
 import { PrescreenForm } from 'src/model/Form';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import {
@@ -19,15 +20,21 @@ export const processFormEvent = async (formType: string, formEvent: any) => {
 const processPrescreenEvent = async (prescreenForm: PrescreenForm) => {
   const { restUrl, BhRestToken } = await getSessionData();
 
-  console.log(BhRestToken)
-  // const candidate = await findCandidateByEmail(restUrl, BhRestToken, prescreenForm.candidateEmail.answer);
-  // if (candidate) {
-  //   await saveFormNote(restUrl, BhRestToken, candidate.id, prescreenForm, 'Prescreen');
-  //   const prescreenResult = await savePrescreenData(restUrl, BhRestToken, candidate.id, prescreenForm);
-  //   const jobSubmissions = candidate.submissions.filter((sub) => sub.status === 'Webinar Passed');
-  //   for (const submission of jobSubmissions) {
-  //     await saveSubmissionStatus(restUrl, BhRestToken, submission.id, prescreenResult);
-  //   }
-  //   !jobSubmissions.length && (await saveNoSubmissionNote(restUrl, BhRestToken, candidate.id, prescreenResult));
-  // }
+  const candidate = await findCandidateByEmail(restUrl, BhRestToken, prescreenForm.candidateEmail.answer);
+  if (candidate) {
+    await saveFormNote(restUrl, BhRestToken, candidate.id, prescreenForm, 'Prescreen');
+    const prescreenResult = await savePrescreenData(restUrl, BhRestToken, candidate.id, prescreenForm);
+    await updateSubmissionStatus(restUrl, BhRestToken, candidate, prescreenResult);
+  }
+};
+
+const updateSubmissionStatus = async (url: string, token: string, candidate: Candidate, prescreenResult: string) => {
+  const searchStatuses = ['Prescreen Scheduled', 'Webinar Passed'];
+  const prescreenSubmissions = candidate.submissions.filter((sub) => sub.status === searchStatuses[0]);
+  const webinarSubmissions = candidate.submissions.filter((sub) => sub.status === searchStatuses[1]);
+  const jobSubmissions = prescreenSubmissions.length ? prescreenSubmissions : webinarSubmissions;
+  for (const submission of jobSubmissions) {
+    await saveSubmissionStatus(url, token, submission.id, prescreenResult);
+  }
+  !jobSubmissions.length && (await saveNoSubmissionNote(url, token, candidate.id, prescreenResult, searchStatuses));
 };

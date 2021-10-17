@@ -1,36 +1,59 @@
 import { APIGatewayProxyEvent } from 'aws-lambda';
 import { parse } from 'aws-multipart-parser';
-import { createWebResponse, populateCandidateFields, saveApplicationNote } from './careers.service';
+import {
+  createWebResponse,
+  findCandidateByEmail,
+  populateCandidateFields,
+  saveApplicationNote,
+} from './careers.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { publishChallengeGenerationRequest } from './sns.service';
+import { Submission, WebResponse } from 'src/model/Candidate';
+
+const DAY_DIFF = 90;
 
 export const apply = async (event: APIGatewayProxyEvent) => {
   console.log('Received Candidate Application Request: ', event.queryStringParameters);
   const { firstName, lastName, email, format, phone, ...extraFields } = event.queryStringParameters;
   const { careerId } = event.pathParameters;
   const { resume } = parse(event, true);
-
   const { restUrl, BhRestToken } = await getSessionData();
 
-  const formattedPhone = phone.replace(/\D+/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-  const webResponseFields = {
-    firstName,
-    lastName,
-    email,
-    phone: formattedPhone,
-    format,
-  };
+  const candidate = await findCandidateByEmail(restUrl, BhRestToken, email);
+  console.log(candidate);
+  const existingApplications = [...(candidate?.webResponses ?? []), ...(candidate?.submissions ?? [])];
 
-  const candidateFields = {
-    ...extraFields,
-    phone: formattedPhone,
-  };
+  if (!hasRecentApplication(existingApplications)) {
+    const formattedPhone = phone.replace(/\D+/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+    const webResponseFields = {
+      firstName,
+      lastName,
+      email,
+      phone: formattedPhone,
+      format,
+    };
 
-  const newCandidate = await createWebResponse(careerId, webResponseFields, resume);
-  await populateCandidateFields(restUrl, BhRestToken, newCandidate.id, candidateFields as any);
-  await saveApplicationNote(restUrl, BhRestToken, newCandidate.id, event.queryStringParameters);
+    const candidateFields = {
+      ...extraFields,
+      phone: formattedPhone,
+    };
 
-  await publishChallengeGenerationRequest(newCandidate.id, +careerId);
+    const newCandidate = await createWebResponse(careerId, webResponseFields, resume);
+    await populateCandidateFields(restUrl, BhRestToken, newCandidate.id, candidateFields as any);
+    await saveApplicationNote(restUrl, BhRestToken, newCandidate.id, event.queryStringParameters);
+    await publishChallengeGenerationRequest(newCandidate.id, +careerId);
 
-  return newCandidate;
+    console.log('Successfully created new Candidate.');
+    return newCandidate;
+  }
+  console.log(`Candidate already has a job submission in the last ${DAY_DIFF} days, skipping creation...`);
+  return candidate;
+};
+
+const hasRecentApplication = (applications: (WebResponse | Submission)[]): boolean => {
+  return applications.some((a) => {
+    const timeDiff = new Date().getTime() - a.dateAdded;
+    const dayDiff = timeDiff / (1000 * 3600 * 24);
+    return dayDiff < DAY_DIFF;
+  });
 };
