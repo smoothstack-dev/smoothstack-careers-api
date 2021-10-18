@@ -1,3 +1,5 @@
+import { JobOrder } from "./JobOrder";
+
 export interface Candidate {
   id: number;
   firstName: string;
@@ -21,6 +23,7 @@ interface Attachment {
 export interface Submission {
   id: number;
   status: string;
+  jobOrder: JobOrder,
   dateAdded: number;
 }
 

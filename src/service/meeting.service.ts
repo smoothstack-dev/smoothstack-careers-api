@@ -9,7 +9,7 @@ export const createMeeting = async (appointment: Appointment): Promise<string> =
   const url = `${BASE_URL}/users/OxHMtzLCQ7yQtd3RjNJfXw/meetings`;
 
   const meetingData = {
-    topic: `Tech Screening - ${appointment.firstName} ${appointment.lastName}`,
+    topic: `Technical Screening - ${appointment.firstName} ${appointment.lastName}`,
     type: 2,
     start_time: appointment.datetime,
     duration: appointment.duration,

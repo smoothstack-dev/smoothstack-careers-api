@@ -9,6 +9,7 @@ import { PrescreenForm } from 'src/model/Form';
 import { JobOrder } from 'src/model/JobOrder';
 import { SchedulingType } from 'src/model/SchedulingType';
 import { WebinarRegistration } from 'src/model/WebinarRegistration';
+import { getTechScreeningLink } from 'src/util/links';
 
 export const createWebResponse = async (careerId: string, application: any, resume: any): Promise<any> => {
   // these are public non-secret values
@@ -50,7 +51,7 @@ export const findCandidateByEmail = async (url: string, BhRestToken: string, ema
     params: {
       BhRestToken,
       fields:
-        'id,firstName,lastName,email,submissions(id,status),webResponses(id,dateAdded),fileAttachments(id,type),customText9,customTextBlock4,customText36',
+        'id,firstName,lastName,email,submissions(id,jobOrder(id,title),status),webResponses(id,dateAdded),fileAttachments(id,type),customText9,customTextBlock4,customText36',
       query: `email:${email}`,
       count: '1',
     },
@@ -252,14 +253,14 @@ export const saveNoSubmissionNote = async (
   url: string,
   BhRestToken: string,
   candidateId: number,
-  prescreenResult: string,
+  status: string,
   searchStatuses: string[]
 ): Promise<void> => {
   const noteUrl = `${url}entity/Note`;
   const action = `Submission Status Note`;
   const note = {
     action,
-    comments: `Submission status of "${prescreenResult}" was not updated since no application was found under "${searchStatuses.join(
+    comments: `Submission status of "${status}" was not updated since no application was found under "${searchStatuses.join(
       '/'
     )}" status`,
     personReference: {
@@ -582,35 +583,46 @@ export const createTechScreenAppointment = async (
   candidate: Candidate,
   screenerEmail: string,
   meetingLink: string,
-  appointment: Appointment
+  appointment: Appointment,
+  jobOrder: JobOrder
 ) => {
   const screenerContact = await findContactByEmail(url, BhRestToken, screenerEmail);
   const candidateResume = candidate.fileAttachments.find((file) => file.type === 'Resume');
   const appointmentUrl = `${url}entity/Appointment`;
   const appointmentData = {
-    ...(candidateResume && { attachments: [{ id: candidateResume.id, entity: 'Candidate', entityId: candidate.id }] }),
+    //...(candidateResume && { attachments: [{ id: candidateResume.id, entity: 'Candidate', entityId: candidate.id }] }),
     candidateReference: { id: candidate.id },
+    clientContactReference: { id: screenerContact.id },
     communicationMethod: 'Web Meeting',
     dateBegin: new Date(appointment.datetime).getTime(),
     dateEnd: new Date(appointment.datetime).getTime() + appointment.duration * 60000,
-    guests: [{ id: candidate.id }, { id: screenerContact.id }],
+    guests: [{ id: screenerContact.id }, { id: candidate.id }],
     isPrivate: false,
     location: meetingLink,
     notificationMinutes: 0,
-    notifyAttendees: true,
+    //notifyAttendees: true,
     owner: { id: 3 },
+    ...(jobOrder && { jobOrder: { id: jobOrder.id } }),
     subject: `Tech Screening Appointment - ${candidate.firstName} ${candidate.lastName}`,
-    description: generateMeetingDescription(meetingLink, candidate, screenerContact);
-    type: 'Meeting',
+    description: generateMeetingDescription(
+      meetingLink,
+      candidate,
+      appointment.datetime,
+      jobOrder?.title,
+      screenerContact
+    ),
+    type: 'Tech Screen',
   };
 
-  await axios.put(appointmentUrl, appointmentData, {
+  console.log(appointmentData);
+
+  const {data} = await axios.put(appointmentUrl, appointmentData, {
     params: {
       BhRestToken,
     },
   });
+  console.log(data)
 };
-
 
 const findContactByEmail = async (url: string, BhRestToken: string, email: string): Promise<Contact> => {
   const contactQueryUrl = `${url}search/ClientContact`;
@@ -626,14 +638,20 @@ const findContactByEmail = async (url: string, BhRestToken: string, email: strin
   return data.data.length ? data.data[0] : undefined;
 };
 
-
-const generateMeetingDescription = (meetingLink: string, candidate, screenerContact): string => {
-  const techScreenFormLink = "http";
-  return `A Technical Screening Appointment with Smoothstack has been scheduled.<br />
-  <br />
-  When it&#39;s time to join the meeting...<br />
-  Click to join:&nbsp;<a href="${meetingLink}">Meeting Link</a><br />
-  <br />
-  For Tech Screener Use Only:<br />
-  Click to Open: <a href="${techScreenFormLink}">Tech Screening Form</a>`;
+const generateMeetingDescription = (
+  meetingLink: string,
+  candidate: Candidate,
+  appointmentDatetime: string,
+  jobName: string,
+  screenerContact: Contact
+): string => {
+  const formattedDate =
+    new Date(appointmentDatetime).toLocaleString('en-US', {
+      timeZone: 'America/New_York',
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }) + ' EDT';
+  const techScreenFormLink = getTechScreeningLink(candidate);
+  const positionString = jobName ? `Position:&nbsp; ${jobName}` : '';
+  return `A Technical Screening Appointment with Smoothstack has been scheduled for: ${formattedDate}<br />\n<br />\nCandidate: ${candidate.firstName} ${candidate.lastName}<br />\n${positionString}<br />\nTech Screener: ${screenerContact.firstName} ${screenerContact.lastName}<br />\n<br />\nWhen it&#39;s time to join the meeting...<br />\nClick to join:&nbsp;<a href="${meetingLink}">Meeting Link</a><br />\n<br />\nFor Tech Screener Use Only:<br />\nClick to Open: <a href="${techScreenFormLink}">Tech Screening Form</a>`;
 };

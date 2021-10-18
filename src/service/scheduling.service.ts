@@ -1,13 +1,19 @@
 import axios from 'axios';
 import { Appointment } from '../model/Appointment';
 import { SchedulingEvent } from '../model/SchedulingEvent';
-import { createTechScreenAppointment, saveSchedulingDataByAppointmentId } from './careers.service';
+import {
+  createTechScreenAppointment,
+  saveNoSubmissionNote,
+  saveSchedulingDataByAppointmentId,
+  saveSubmissionStatus,
+} from './careers.service';
 import { saveSchedulingDataByEmail } from './careers.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { getSquareSpaceSecrets } from './secrets.service';
 import { SchedulingType, SchedulingTypeId } from '../model/SchedulingType';
 import { cancelWebinarRegistration, generateWebinarRegistration } from './webinar.service';
 import { createMeeting } from './meeting.service';
+import { Candidate, Submission } from 'src/model/Candidate';
 
 const baseUrl = 'https://acuityscheduling.com/api/v1';
 
@@ -18,10 +24,10 @@ export const processSchedulingEvent = async (event: SchedulingEvent) => {
     case SchedulingTypeId.CHALLENGE:
       await processChallengeScheduling(event);
       break;
-    case SchedulingType.WEBINAR:
+    case SchedulingTypeId.WEBINAR:
       await processWebinarScheduling(event);
       break;
-    case SchedulingType.TECHSCREEN:
+    case SchedulingTypeId.TECHSCREEN:
       await processTechScreenScheduling(event);
       break;
   }
@@ -124,7 +130,8 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
       const meetingLink = await createMeeting(appointment);
       const screenerEmail = await findCalendarEmail(apiKey, userId, appointment.calendarID);
       const candidate = await saveSchedulingDataByEmail(restUrl, BhRestToken, status, appointment, schedulingType);
-      await createTechScreenAppointment(restUrl, BhRestToken, candidate, screenerEmail, meetingLink, appointment);
+      const jobSubmission = await updateSubmissionStatus(restUrl, BhRestToken, candidate, status);
+      await createTechScreenAppointment(restUrl, BhRestToken, candidate, screenerEmail, meetingLink, appointment, jobSubmission?.jobOrder);
       if (existingAppointment) {
         await cancelAppointment(apiKey, userId, existingAppointment.id);
         // candidate && (await cancelMeeting(candidate.webinarRegistrantId)); TODO: Is cancelling meeting required?
@@ -158,6 +165,22 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
       break;
     }
   }
+};
+
+const updateSubmissionStatus = async (
+  url: string,
+  token: string,
+  candidate: Candidate,
+  schedulingStatus: string
+): Promise<Submission> => {
+  const searchStatuses = ['Prescreen Passed', 'Prescreen Scheduled'];
+  const passedSubmission = candidate.submissions.find((sub) => sub.status === searchStatuses[0]);
+  const scheduledSubmission = candidate.submissions.find((sub) => sub.status === searchStatuses[1]);
+  const jobSubmission = passedSubmission ?? scheduledSubmission;
+  //TODO: Fix Submission Status (scheduled -> Tech Screen Scheduled)
+  jobSubmission && await saveSubmissionStatus(url, token, jobSubmission?.id, schedulingStatus);
+  !jobSubmission && (await saveNoSubmissionNote(url, token, candidate.id, schedulingStatus, searchStatuses));
+  return jobSubmission;
 };
 
 const fetchAppointment = async (apiKey: string, userId: string, appointmentId: string): Promise<Appointment> => {
