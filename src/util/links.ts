@@ -21,8 +21,3 @@ export const getPrescreeningLink = (candidate: Candidate) => {
   )}&entry.139410096=${encodeURIComponent(email)}&entry.1002222934=${encodeURIComponent(relocation)}`;
 };
 
-export const getTechScreeningLink = (candidate: Candidate) => {
-  //const { firstName, lastName, email, } = candidate;
-  // const fullName = `${firstName} ${lastName}`;
-  //TODO : Add link
-}
