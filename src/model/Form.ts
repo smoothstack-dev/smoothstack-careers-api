@@ -32,7 +32,18 @@ export interface PrescreenForm {
   vaccinationNotes: FormEntry;
 }
 
-interface FormEntry {
+export interface TechScreenForm {
+  candidateEmail: FormEntry;
+  onTime: FormEntry;
+  dressedProfessionally: FormEntry;
+  technicalQuestions: FormEntry[];
+  behavioralQuestions: FormEntry[];
+  projectQuestions: FormEntry[];
+  screenerRecommendation: FormEntry;
+  communicationSkills: FormEntry;
+}
+
+export interface FormEntry {
   question: string;
   answer: string;
 }
