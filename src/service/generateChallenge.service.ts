@@ -1,6 +1,6 @@
 import { SNSEvent } from 'aws-lambda';
 import { ChallengeGenerationRequest } from 'src/model/ChallengeGenerationRequest';
-import { getPrescreeningLink, getSchedulingLink } from 'src/util/links';
+import { getPrescreeningLink, getSchedulingLink, getTechScreeningLink } from 'src/util/links';
 import { fetchCandidate, fetchJobOrder, saveCandidateLinks } from './careers.service';
 import { generateChallengeLink, getChallengeDetails } from './challenge.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
@@ -35,6 +35,7 @@ export const generateChallenge = async (event: SNSEvent) => {
       SchedulingType.WEBINAR
     );
     const preScreeningLink = getPrescreeningLink(candidate);
+    const techScreeningLink = getTechScreeningLink(candidate);
     await saveCandidateLinks(
       restUrl,
       BhRestToken,
@@ -42,7 +43,8 @@ export const generateChallenge = async (event: SNSEvent) => {
       challengeLink,
       challengeSchedulingLink,
       webinarSchedulingLink,
-      preScreeningLink
+      preScreeningLink,
+      techScreeningLink //TODO: TO BE REMOVED
     );
     console.log('Successfully generated links for submission:');
   } else {
