@@ -10,6 +10,7 @@ export interface Candidate {
   relocation: string;
   submissions: Submission[];
   webResponses: WebResponse[];
+  githubLink: string;
 }
 
 export interface Submission {

@@ -31,3 +31,12 @@ export const getPrescreeningLink = (candidate: Candidate) => {
     fullName
   )}&entry.139410096=${encodeURIComponent(email)}&entry.1002222934=${encodeURIComponent(relocation)}`;
 };
+
+//TODO: TO BE REMOVED
+export const getTechScreeningLink = (candidate: Candidate) => {
+  const { firstName, lastName, email, githubLink } = candidate;
+  const fullName = `${firstName} ${lastName}`;
+  return `https://docs.google.com/forms/d/e/1FAIpQLSdq8JhtHNcyMe3ig5W6XLQa0IB-0AY9h75G69QYfI_IKmGiYA/viewform?usp=pp_url&entry.885949558=${encodeURIComponent(
+    fullName
+  )}&entry.1324592995=${encodeURIComponent(email)}&entry.1466421106=${encodeURIComponent(githubLink ?? '')}`;
+};
