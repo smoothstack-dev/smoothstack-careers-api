@@ -251,7 +251,6 @@ const calculateSectionResult = (entries: FormEntry[], threshold: any[]): string 
   const sectionPoints = entries.length * +entries[0].question.split('(highest:')[1].match(/(\d+)/)[0];
   const totalPoints = entries.reduce((acc, e) => +e.answer.split('-')[0].trim() + acc, 0);
   const score = totalPoints / sectionPoints;
-  console.log(score);
   return resultCategories[threshold.findIndex((t) => score >= t)];
 };
 
