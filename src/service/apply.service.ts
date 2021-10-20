@@ -19,15 +19,16 @@ export const apply = async (event: APIGatewayProxyEvent) => {
   const { resume } = parse(event, true);
   const { restUrl, BhRestToken } = await getSessionData();
 
+  const formattedEmail = email.toLowerCase();
   const formattedPhone = phone.replace(/\D+/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-  const candidate = await findCandidateByEmailOrPhone(restUrl, BhRestToken, email, formattedPhone);
+  const candidate = await findCandidateByEmailOrPhone(restUrl, BhRestToken, formattedEmail, formattedPhone);
   const existingApplications = [...(candidate?.webResponses ?? []), ...(candidate?.submissions ?? [])];
 
   if (!hasRecentApplication(existingApplications)) {
     const webResponseFields = {
       firstName,
       lastName,
-      email,
+      email: formattedEmail,
       phone: formattedPhone,
       format,
     };
