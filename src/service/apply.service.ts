@@ -2,7 +2,7 @@ import { APIGatewayProxyEvent } from 'aws-lambda';
 import { parse } from 'aws-multipart-parser';
 import {
   createWebResponse,
-  findCandidateByEmail,
+  findCandidateByEmailOrPhone,
   populateCandidateFields,
   saveApplicationNote,
 } from './careers.service';
@@ -19,12 +19,11 @@ export const apply = async (event: APIGatewayProxyEvent) => {
   const { resume } = parse(event, true);
   const { restUrl, BhRestToken } = await getSessionData();
 
-  const candidate = await findCandidateByEmail(restUrl, BhRestToken, email);
-  console.log(candidate);
+  const formattedPhone = phone.replace(/\D+/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+  const candidate = await findCandidateByEmailOrPhone(restUrl, BhRestToken, email, formattedPhone);
   const existingApplications = [...(candidate?.webResponses ?? []), ...(candidate?.submissions ?? [])];
 
   if (!hasRecentApplication(existingApplications)) {
-    const formattedPhone = phone.replace(/\D+/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
     const webResponseFields = {
       firstName,
       lastName,

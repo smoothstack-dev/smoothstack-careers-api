@@ -53,14 +53,14 @@ const updateSubmissionStatus = async (
   url: string,
   token: string,
   candidate: Candidate,
-  prescreenResult: string,
+  result: string,
   searchStatuses: string[]
 ) => {
   const firstPrioritySubmissions = candidate.submissions.filter((sub) => sub.status === searchStatuses[0]);
   const secondPrioritySubmissions = candidate.submissions.filter((sub) => sub.status === searchStatuses[1]);
   const jobSubmissions = firstPrioritySubmissions.length ? firstPrioritySubmissions : secondPrioritySubmissions;
   for (const submission of jobSubmissions) {
-    await saveSubmissionStatus(url, token, submission.id, prescreenResult);
+    await saveSubmissionStatus(url, token, submission.id, result);
   }
-  !jobSubmissions.length && (await saveNoSubmissionNote(url, token, candidate.id, prescreenResult, searchStatuses));
+  !jobSubmissions.length && (await saveNoSubmissionNote(url, token, candidate.id, result, searchStatuses));
 };

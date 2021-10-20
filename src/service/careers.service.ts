@@ -73,6 +73,33 @@ export const findCandidateByEmail = async (url: string, BhRestToken: string, ema
   return undefined;
 };
 
+export const findCandidateByEmailOrPhone = async (
+  url: string,
+  BhRestToken: string,
+  email: string,
+  phone: string
+): Promise<Candidate> => {
+  const candidateQueryUrl = `${url}search/Candidate`;
+  const { data } = await axios.get(candidateQueryUrl, {
+    params: {
+      BhRestToken,
+      fields: 'id,firstName,lastName,email,phone,submissions(id,status,dateAdded),webResponses(id,dateAdded)',
+      query: `email:${email} OR phone:${phone}`,
+      count: '1',
+    },
+  });
+
+  if (data.data.length) {
+    const candidate = data.data[0];
+    return {
+      ...candidate,
+      submissions: candidate.submissions.data,
+      webResponses: candidate.webResponses.data,
+    };
+  }
+  return undefined;
+};
+
 export const findCandidateByAppointment = async (
   url: string,
   BhRestToken: string,
@@ -208,9 +235,11 @@ export const saveTechScreenData = async (
   techScreenForm: TechScreenForm
 ): Promise<string> => {
   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
-  const result = techScreenForm.screenerRecommendation.answer.split('-')[0];
-  const resultReason = techScreenForm.screenerRecommendation.answer.split('-')[1];
-  const candidateStatus = ['Pass', 'SE Recommendation'].includes(result) ? 'Active' : result === 'Fail' && 'Rejected';
+  const screenerDetermination = techScreenForm.screenerRecommendation.answer.split('-')[0];
+  const determinationReason = techScreenForm.screenerRecommendation.answer.split('-')[1];
+  const candidateStatus = ['Pass', 'SE Recommendation'].includes(screenerDetermination)
+    ? 'Active'
+    : screenerDetermination === 'Fail' && 'Rejected';
   const technicalResult = techScreenForm.technicalQuestions
     ? calculateSectionResult(techScreenForm.technicalQuestions, [0.8, 0.6, 0])
     : 'No Pass';
@@ -220,9 +249,10 @@ export const saveTechScreenData = async (
   const projectResult = techScreenForm.projectQuestions
     ? calculateSectionResult(techScreenForm.projectQuestions, [0.83, 0.5, 0])
     : 'No Pass';
-  const finalResult = getFinalResult(technicalResult, behavioralResult, projectResult);
+  const calcResult = getCalculatedResult(technicalResult, behavioralResult, projectResult);
 
   const updateData = {
+    ...(techScreenForm.githubLink?.answer && { customText6: techScreenForm.githubLink.answer }),
     ...(techScreenForm.onTime?.answer && { customText20: techScreenForm.onTime.answer }),
     ...(techScreenForm.dressedProfessionally?.answer && { customText21: techScreenForm.dressedProfessionally.answer }),
     ...(techScreenForm.communicationSkills?.answer && {
@@ -231,7 +261,7 @@ export const saveTechScreenData = async (
     customText16: technicalResult,
     customText17: behavioralResult,
     customText18: projectResult,
-    customText19: finalResult,
+    customText19: calcResult,
     customText22: techScreenForm.screenerRecommendation.answer,
     status: candidateStatus,
   };
@@ -242,11 +272,14 @@ export const saveTechScreenData = async (
     },
   });
 
-  return result === 'Pass'
+  const discrepancy = getResultDiscrepancy(technicalResult, behavioralResult, projectResult, screenerDetermination);
+  discrepancy && (await saveCandidateNote(url, BhRestToken, candidateId, 'Tech Screen Result Mismatch', discrepancy));
+
+  return screenerDetermination === 'Pass'
     ? 'Tech Screen Passed'
-    : result === 'SE Recommendation'
+    : screenerDetermination === 'SE Recommendation'
     ? 'SE Recommended'
-    : result === 'Fail' && resultReason;
+    : screenerDetermination === 'Fail' && determinationReason;
 };
 
 const calculateSectionResult = (entries: FormEntry[], threshold: any[]): string => {
@@ -257,13 +290,57 @@ const calculateSectionResult = (entries: FormEntry[], threshold: any[]): string 
   return resultCategories[threshold.findIndex((t) => score >= t)];
 };
 
-const getFinalResult = (technical: string, behavioral: string, project: string): string => {
+const getCalculatedResult = (technical: string, behavioral: string, project: string): string => {
   const results = [technical[0], behavioral[0], project[0]].sort((a) => a === 'L' && -1);
   return results.includes('N')
     ? 'No Hire'
     : results.every((r) => r === 'H')
     ? 'Strong Hire'
     : `Hire(${results.join('')})`;
+};
+
+const getResultDiscrepancy = (
+  technical: string,
+  behavioral: string,
+  project: string,
+  determination: string
+): string => {
+  const failedSections = [
+    { name: 'Technical', result: technical },
+    { name: 'Behavioral', result: behavioral },
+    { name: 'Project', result: project },
+  ].flatMap((s) => (s.result === 'No Pass' ? [s.name] : []));
+
+  return failedSections.length && determination === 'Pass'
+    ? `Tech Screener determination was "Pass" but Candidate failed the following section/s: "${failedSections.join(
+        ','
+      )}"`
+    : failedSections.includes('Behavioral') && determination === 'SE Recommendation'
+    ? 'Candidate was SE Recommended but failed Behavioral Section of Tech Screening'
+    : '';
+};
+
+const saveCandidateNote = async (
+  url: string,
+  BhRestToken: string,
+  candidateId: number,
+  title: string,
+  comments: string
+) => {
+  const noteUrl = `${url}entity/Note`;
+  const note = {
+    action: title,
+    comments,
+    personReference: {
+      searchEntity: 'Candidate',
+      id: candidateId,
+    },
+  };
+  await axios.put(noteUrl, note, {
+    params: {
+      BhRestToken,
+    },
+  });
 };
 
 export const saveApplicationNote = async (

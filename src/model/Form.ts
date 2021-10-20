@@ -34,6 +34,7 @@ export interface PrescreenForm {
 
 export interface TechScreenForm {
   candidateEmail: FormEntry;
+  githubLink: FormEntry;
   onTime: FormEntry;
   dressedProfessionally: FormEntry;
   technicalQuestions: FormEntry[];
