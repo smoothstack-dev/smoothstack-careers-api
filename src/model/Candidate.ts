@@ -1,4 +1,4 @@
-import { JobOrder } from "./JobOrder";
+import { JobOrder } from './JobOrder';
 
 export interface Candidate {
   id: number;
@@ -10,6 +10,7 @@ export interface Candidate {
   webinarLink: string;
   webinarRegistrantId: string;
   relocation: string;
+  techScreenEventId: string;
   submissions: Submission[];
   webResponses: WebResponse[];
   githubLink: string;
@@ -24,7 +25,7 @@ interface Attachment {
 export interface Submission {
   id: number;
   status: string;
-  jobOrder: JobOrder,
+  jobOrder: JobOrder;
   dateAdded: number;
 }
 

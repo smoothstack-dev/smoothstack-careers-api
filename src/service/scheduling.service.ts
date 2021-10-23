@@ -1,19 +1,15 @@
 import axios from 'axios';
 import { Appointment } from '../model/Appointment';
 import { SchedulingEvent } from '../model/SchedulingEvent';
-import {
-  createTechScreenAppointment,
-  saveNoSubmissionNote,
-  saveSchedulingDataByAppointmentId,
-  saveSubmissionStatus,
-} from './careers.service';
+import { saveNoSubmissionNote, saveSchedulingDataByAppointmentId, saveSubmissionStatus } from './careers.service';
 import { saveSchedulingDataByEmail } from './careers.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { getSquareSpaceSecrets } from './secrets.service';
 import { SchedulingType, SchedulingTypeId } from '../model/SchedulingType';
 import { cancelWebinarRegistration, generateWebinarRegistration } from './webinar.service';
-import { createMeeting } from './meeting.service';
 import { Candidate, Submission } from 'src/model/Candidate';
+import { publishAppointmentGenerationRequest } from './sns.service';
+import { cancelCalendarInvite } from './calendar.service';
 
 const baseUrl = 'https://acuityscheduling.com/api/v1';
 
@@ -127,19 +123,28 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
     case 'scheduled': {
       const existingAppointment = await findExistingAppointment(apiKey, userId, appointment);
       const status = existingAppointment ? 'rescheduled' : 'scheduled';
-      const meetingLink = await createMeeting(appointment);
       const screenerEmail = await findCalendarEmail(apiKey, userId, appointment.calendarID);
       const candidate = await saveSchedulingDataByEmail(restUrl, BhRestToken, status, appointment, schedulingType);
-      const jobSubmission = await updateSubmissionStatus(restUrl, BhRestToken, candidate, status);
-      await createTechScreenAppointment(restUrl, BhRestToken, candidate, screenerEmail, meetingLink, appointment, jobSubmission?.jobOrder);
+      const jobSubmission = await updateSubmissionStatus(
+        restUrl,
+        BhRestToken,
+        candidate,
+        ['Prescreen Passed', 'Prescreen Scheduled'],
+        'Tech Screen Scheduled'
+      );
       if (existingAppointment) {
         await cancelAppointment(apiKey, userId, existingAppointment.id);
-        // candidate && (await cancelMeeting(candidate.webinarRegistrantId)); TODO: Is cancelling meeting required?
+        await cancelCalendarInvite(candidate.techScreenEventId);
       }
+      await publishAppointmentGenerationRequest({
+        candidate,
+        screenerEmail,
+        appointment,
+        jobTitle: jobSubmission?.jobOrder.title,
+      });
       break;
     }
     case 'rescheduled': {
-      const meetingLink = await createMeeting(appointment);
       const screenerEmail = await findCalendarEmail(apiKey, userId, appointment.calendarID);
       const candidate = await saveSchedulingDataByAppointmentId(
         restUrl,
@@ -149,7 +154,13 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
         appointment.datetime,
         schedulingType
       );
-      //candidate && (await cancelWebinarRegistration(candidate.webinarRegistrantId));
+      await publishAppointmentGenerationRequest({
+        candidate,
+        screenerEmail,
+        appointment,
+        jobTitle: findSubmission(candidate.submissions, ['Tech Screen Scheduled'])?.jobOrder.title,
+      });
+      candidate && (await cancelCalendarInvite(candidate.techScreenEventId));
       break;
     }
     case 'canceled': {
@@ -161,7 +172,8 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
         '',
         schedulingType
       );
-      // candidate && (await cancelWebinarRegistration(candidate.webinarRegistrantId));
+      await updateSubmissionStatus(restUrl, BhRestToken, candidate, ['Tech Screen Scheduled'], 'Prescreen Passed');
+      candidate && (await cancelCalendarInvite(candidate.techScreenEventId));
       break;
     }
   }
@@ -171,16 +183,19 @@ const updateSubmissionStatus = async (
   url: string,
   token: string,
   candidate: Candidate,
-  schedulingStatus: string
+  searchStatuses: string[],
+  updateStatus: string
 ): Promise<Submission> => {
-  const searchStatuses = ['Prescreen Passed', 'Prescreen Scheduled'];
-  const passedSubmission = candidate.submissions.find((sub) => sub.status === searchStatuses[0]);
-  const scheduledSubmission = candidate.submissions.find((sub) => sub.status === searchStatuses[1]);
-  const jobSubmission = passedSubmission ?? scheduledSubmission;
-  //TODO: Fix Submission Status (scheduled -> Tech Screen Scheduled)
-  jobSubmission && await saveSubmissionStatus(url, token, jobSubmission?.id, schedulingStatus);
-  !jobSubmission && (await saveNoSubmissionNote(url, token, candidate.id, schedulingStatus, searchStatuses));
+  const jobSubmission = findSubmission(candidate.submissions, searchStatuses);
+  jobSubmission && (await saveSubmissionStatus(url, token, jobSubmission?.id, updateStatus));
+  !jobSubmission && (await saveNoSubmissionNote(url, token, candidate.id, updateStatus, searchStatuses));
   return jobSubmission;
+};
+
+const findSubmission = (submissions: Submission[], searchStatuses: string[]): Submission => {
+  const firstPrioritySubmission = submissions.find((sub) => sub.status === searchStatuses[0]);
+  const secondPrioritySubmission = submissions.find((sub) => sub.status === searchStatuses[1]);
+  return firstPrioritySubmission ?? secondPrioritySubmission;
 };
 
 const fetchAppointment = async (apiKey: string, userId: string, appointmentId: string): Promise<Appointment> => {
