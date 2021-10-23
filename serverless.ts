@@ -10,6 +10,7 @@ import webinarRedirect from '@functions/webinarRedirect';
 import webinarProcessing from '@functions/webinarProcessing';
 import webinarEvents from '@functions/webinarEvents';
 import formEvents from '@functions/formEvents';
+import appointmentGenerator from '@functions/appointmentGenerator';
 
 const serverlessConfiguration: AWS = {
   service: 'smoothstack-careers-api',
@@ -60,6 +61,7 @@ const serverlessConfiguration: AWS = {
     webinarProcessing,
     webinarEvents,
     formEvents,
+    appointmentGenerator,
   },
   resources: {
     Resources: {
@@ -73,6 +75,12 @@ const serverlessConfiguration: AWS = {
         Type: 'AWS::SNS::Topic',
         Properties: {
           TopicName: 'smoothstack-webinar-processing-sns-topic',
+        },
+      },
+      AppointmentGenerationTopic: {
+        Type: 'AWS::SNS::Topic',
+        Properties: {
+          TopicName: 'smoothstack-appointment-generation-sns-topic',
         },
       },
     },

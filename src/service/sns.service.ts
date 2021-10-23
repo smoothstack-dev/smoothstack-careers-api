@@ -1,5 +1,6 @@
 import AWS from 'aws-sdk';
 import { PublishInput } from 'aws-sdk/clients/sns';
+import { AppointmentGenerationRequest, TechScreenAppointmentData } from 'src/model/AppointmentGenerationRequest';
 import { ChallengeGenerationRequest } from 'src/model/ChallengeGenerationRequest';
 import { WebinarEvent } from 'src/model/WebinarEvent';
 import { getSNSConfig } from 'src/util/sns.util';
@@ -39,4 +40,19 @@ export const publishWebinarProcesingRequest = async (data: any) => {
 
     await sns.publish(message).promise();
   }
+};
+
+export const publishAppointmentGenerationRequest = async (appointmentData: TechScreenAppointmentData) => {
+  const sns = new AWS.SNS(getSNSConfig(process.env.ENV));
+  const topic = `arn:aws:sns:us-east-1:${process.env.AWS_ACCOUNT}:smoothstack-appointment-generation-sns-topic`;
+  const request: AppointmentGenerationRequest = {
+    type: 'techscreen',
+    appointmentData,
+  };
+  const message: PublishInput = {
+    Message: JSON.stringify(request),
+    TopicArn: topic,
+  };
+
+  await sns.publish(message).promise();
 };

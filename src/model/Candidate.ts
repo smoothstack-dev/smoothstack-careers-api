@@ -1,3 +1,5 @@
+import { JobOrder } from './JobOrder';
+
 export interface Candidate {
   id: number;
   firstName: string;
@@ -8,14 +10,22 @@ export interface Candidate {
   webinarLink: string;
   webinarRegistrantId: string;
   relocation: string;
+  techScreenEventId: string;
   submissions: Submission[];
   webResponses: WebResponse[];
   githubLink: string;
+  fileAttachments: Attachment[];
+}
+
+interface Attachment {
+  id: number;
+  type: string;
 }
 
 export interface Submission {
   id: number;
   status: string;
+  jobOrder: JobOrder;
   dateAdded: number;
 }
 

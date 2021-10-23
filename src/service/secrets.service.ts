@@ -1,6 +1,7 @@
 import { SecretsManager } from 'aws-sdk';
 import { BullhornCredentials } from 'src/model/BullhornCredentials';
 import { CodilitySecrets } from 'src/model/CodilitySecrets';
+import { GoogleCredentials } from 'src/model/GoogleCredentials';
 import { SquareSpaceCredentials } from 'src/model/SquareSpaceCredentials';
 import { ZoomCredentials } from 'src/model/ZoomCredentials';
 
@@ -24,8 +25,7 @@ export const getCodilitySecrets = async (): Promise<CodilitySecrets> => {
   return JSON.parse(res.SecretString);
 };
 
-
-export const getSquareSpaceSecrets =  async (): Promise<SquareSpaceCredentials> => {
+export const getSquareSpaceSecrets = async (): Promise<SquareSpaceCredentials> => {
   const secretPath = 'smoothstack/squarespace-credentials';
   const client = new SecretsManager({
     region: 'us-east-1',
@@ -35,9 +35,18 @@ export const getSquareSpaceSecrets =  async (): Promise<SquareSpaceCredentials> 
   return JSON.parse(res.SecretString);
 };
 
-
-export const getZoomSecrets =  async (): Promise<ZoomCredentials> => {
+export const getZoomSecrets = async (): Promise<ZoomCredentials> => {
   const secretPath = 'smoothstack/zoom-credentials';
+  const client = new SecretsManager({
+    region: 'us-east-1',
+  });
+
+  const res = await client.getSecretValue({ SecretId: secretPath }).promise();
+  return JSON.parse(res.SecretString);
+};
+
+export const getGoogleSecrets = async (): Promise<GoogleCredentials> => {
+  const secretPath = 'smoothstack/google-credentials';
   const client = new SecretsManager({
     region: 'us-east-1',
   });
