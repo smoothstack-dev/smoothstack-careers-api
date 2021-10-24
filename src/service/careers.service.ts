@@ -531,6 +531,7 @@ export const saveSchedulingDataByEmail = async (
         customText10: status,
         customText39: appointmentId,
         customDate5: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
+        customTextBlock7: appointment.confirmationPage
       };
       break;
   }
