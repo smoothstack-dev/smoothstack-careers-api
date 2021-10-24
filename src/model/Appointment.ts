@@ -8,4 +8,5 @@ export interface Appointment {
   appointmentTypeID: number;
   calendarID: number;
   duration: number;
+  confirmationPage: string;
 }

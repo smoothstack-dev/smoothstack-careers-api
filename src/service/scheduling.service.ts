@@ -125,16 +125,19 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
       const status = existingAppointment ? 'rescheduled' : 'scheduled';
       const screenerEmail = await findCalendarEmail(apiKey, userId, appointment.calendarID);
       const candidate = await saveSchedulingDataByEmail(restUrl, BhRestToken, status, appointment, schedulingType);
-      const jobSubmission = await updateSubmissionStatus(
-        restUrl,
-        BhRestToken,
-        candidate,
-        ['Prescreen Passed', 'Prescreen Scheduled'],
-        'Tech Screen Scheduled'
-      );
+      let jobSubmission: Submission;
       if (existingAppointment) {
+        jobSubmission = findSubmission(candidate.submissions, ['Tech Screen Scheduled']);
         await cancelAppointment(apiKey, userId, existingAppointment.id);
         await cancelCalendarInvite(candidate.techScreenEventId);
+      } else {
+        jobSubmission = await updateSubmissionStatus(
+          restUrl,
+          BhRestToken,
+          candidate,
+          ['Prescreen Passed', 'Prescreen Scheduled'],
+          'Tech Screen Scheduled'
+        );
       }
       await publishAppointmentGenerationRequest({
         candidate,
@@ -154,11 +157,12 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
         appointment.datetime,
         schedulingType
       );
+      const jobSubmission = findSubmission(candidate.submissions, ['Tech Screen Scheduled']);
       await publishAppointmentGenerationRequest({
         candidate,
         screenerEmail,
         appointment,
-        jobTitle: findSubmission(candidate.submissions, ['Tech Screen Scheduled'])?.jobOrder.title,
+        jobTitle: jobSubmission?.jobOrder.title,
       });
       candidate && (await cancelCalendarInvite(candidate.techScreenEventId));
       break;
