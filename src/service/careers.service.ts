@@ -511,14 +511,15 @@ export const saveSchedulingDataByEmail = async (
 
   let updateData: any;
   switch (type) {
-    case SchedulingType.CHALLENGE:
+    case SchedulingType.CHALLENGE: {
       updateData = {
         customText28: status,
         customText34: appointmentId,
         customDate11: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
       };
       break;
-    case SchedulingType.WEBINAR:
+    }
+    case SchedulingType.WEBINAR: {
       updateData = {
         customText30: status,
         customText37: appointmentId,
@@ -526,25 +527,26 @@ export const saveSchedulingDataByEmail = async (
         customTextBlock4: webinarRegistration.joinUrl,
         customText36: webinarRegistration.registrantId,
       };
-    case SchedulingType.TECHSCREEN:
+      break;
+    }
+    case SchedulingType.TECHSCREEN: {
       updateData = {
         customText10: status,
         customText39: appointmentId,
         customDate5: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
-        customTextBlock7: appointment.confirmationPage
+        customTextBlock7: appointment.confirmationPage,
       };
       break;
+    }
   }
 
-  const noteAction = saveSchedulingNote(url, BhRestToken, candidate.id, type, status, date);
-  const schedulingAction = axios.post(candidateUrl, updateData, {
+  await axios.post(candidateUrl, updateData, {
     params: {
       BhRestToken,
     },
   });
-  const actions = [schedulingAction, noteAction];
+  await saveSchedulingNote(url, BhRestToken, candidate.id, type, status, date);
 
-  await Promise.all(actions);
   return candidate;
 };
 
@@ -563,13 +565,14 @@ export const saveSchedulingDataByAppointmentId = async (
 
     let updateData: any;
     switch (type) {
-      case SchedulingType.CHALLENGE:
+      case SchedulingType.CHALLENGE: {
         updateData = {
           customText28: status,
           customDate11: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
         };
         break;
-      case SchedulingType.WEBINAR:
+      }
+      case SchedulingType.WEBINAR: {
         updateData = {
           customText30: status,
           customDate13: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
@@ -577,23 +580,22 @@ export const saveSchedulingDataByAppointmentId = async (
           ...(webinarRegistration && { customText36: webinarRegistration.registrantId }),
         };
         break;
-      case SchedulingType.TECHSCREEN:
+      }
+      case SchedulingType.TECHSCREEN: {
         updateData = {
           customText10: status,
           customDate5: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
         };
         break;
+      }
     }
 
-    const noteAction = saveSchedulingNote(url, BhRestToken, candidate.id, type, status, date);
-    const schedulingAction = axios.post(candidateUrl, updateData, {
+    await axios.post(candidateUrl, updateData, {
       params: {
         BhRestToken,
       },
     });
-    const actions = [schedulingAction, noteAction];
-
-    await Promise.all(actions);
+    await saveSchedulingNote(url, BhRestToken, candidate.id, type, status, date);
   }
   return candidate;
 };
