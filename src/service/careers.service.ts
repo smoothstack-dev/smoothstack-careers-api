@@ -118,7 +118,7 @@ export const findCandidateByAppointment = async (
     params: {
       BhRestToken,
       fields:
-        'id,firstName,lastName,email,customText9,customText36,customText11,submissions(id,jobOrder(id,title),status)',
+        'id,firstName,lastName,email,customText9,customText36,customText11,submissions(id,jobOrder(id,title),status),fileAttachments(id,type)',
       query: `${appointmentIdField}:${appointmentId}`,
       count: '1',
     },
@@ -133,6 +133,7 @@ export const findCandidateByAppointment = async (
       webinarRegistrantId: customText36,
       techScreenEventId: customText11,
       submissions: candidate.submissions.data,
+      fileAttachments: candidate.fileAttachments.data,
     };
   }
   return undefined;
