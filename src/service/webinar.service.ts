@@ -143,7 +143,7 @@ export const processWebinarEvent = async (event: SNSEvent): Promise<void> => {
 };
 
 const getParticipantPollAnswer = (participant: any, questionList: any[]): string => {
-  const question = questionList.find((q) => q.email === participant.user_email);
+  const question = questionList.find((q) => q.email.toLowerCase() === participant.user_email.toLowerCase());
   const answer = question?.question_details.reduce((acc: boolean, qd: any) => qd.answer === 'Yes' && acc, true);
   return answer ? 'Yes' : 'No';
 };

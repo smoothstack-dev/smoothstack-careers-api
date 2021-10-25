@@ -34,7 +34,11 @@ export const sendCalendarInvite = async (
       dateTime: new Date(+new Date(appointment.datetime) + appointment.duration * 60000).toISOString(),
       timeZone: 'America/New_York',
     },
-    attendees: [{ email: candidate.email }, { email: screenerEmail }],
+    attendees: [
+      { email: candidate.email },
+      { email: screenerEmail },
+      ...(candidate.owner ? [{ email: candidate.owner.email }] : []),
+    ],
     ...(resumeFile && {
       attachments: [
         {

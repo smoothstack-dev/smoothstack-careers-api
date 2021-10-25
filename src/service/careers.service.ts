@@ -51,7 +51,7 @@ export const findCandidateByEmail = async (url: string, BhRestToken: string, ema
     params: {
       BhRestToken,
       fields:
-        'id,firstName,lastName,email,submissions(id,jobOrder(id,title),status),webResponses(id,dateAdded),fileAttachments(id,type),customText9,customTextBlock4,customText36,customText6,customText11',
+        'id,firstName,lastName,email,owner(email),submissions(id,jobOrder(id,title),status),webResponses(id,dateAdded),fileAttachments(id,type),customText9,customTextBlock4,customText36,customText6,customText11',
       query: `email:${email}`,
       count: '1',
     },
@@ -118,7 +118,7 @@ export const findCandidateByAppointment = async (
     params: {
       BhRestToken,
       fields:
-        'id,firstName,lastName,email,customText9,customText36,customText11,submissions(id,jobOrder(id,title),status),fileAttachments(id,type)',
+        'id,firstName,lastName,email,owner(email),customText9,customText36,customText11,submissions(id,jobOrder(id,title),status),fileAttachments(id,type)',
       query: `${appointmentIdField}:${appointmentId}`,
       count: '1',
     },
