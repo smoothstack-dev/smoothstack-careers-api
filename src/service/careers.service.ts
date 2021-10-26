@@ -156,6 +156,7 @@ export const populateCandidateFields = async (
 ): Promise<Candidate> => {
   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
   const updateData = {
+    ...(fields.nickName && { nickName: fields.nickName }),
     city: fields.city,
     state: fields.state,
     zip: fields.zip,
