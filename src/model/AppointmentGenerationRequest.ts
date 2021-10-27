@@ -3,7 +3,7 @@ import { Candidate } from './Candidate';
 
 export interface AppointmentGenerationRequest {
   type: string;
-  appointmentData: TechScreenAppointmentData;
+  appointmentData: TechScreenAppointmentData | ChallengeAppointmentData;
 }
 
 export interface TechScreenAppointmentData {
@@ -11,4 +11,14 @@ export interface TechScreenAppointmentData {
   screenerEmail: string;
   appointment: Appointment;
   jobTitle: string;
+}
+
+export interface ChallengeAppointmentData {
+  candidate: Candidate;
+  appointment: Appointment;
+}
+
+export enum AppointmentType {
+  TECHSCREEN = 'techscreen',
+  CHALLENGE = 'challenge',
 }

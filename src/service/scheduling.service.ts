@@ -10,6 +10,7 @@ import { cancelWebinarRegistration, generateWebinarRegistration } from './webina
 import { Candidate, Submission } from 'src/model/Candidate';
 import { publishAppointmentGenerationRequest } from './sns.service';
 import { cancelCalendarInvite } from './calendar.service';
+import { AppointmentType } from 'src/model/AppointmentGenerationRequest';
 
 const baseUrl = 'https://acuityscheduling.com/api/v1';
 
@@ -36,14 +37,25 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
   const eventType = event.action.split('.')[1];
   const schedulingType = SchedulingType.CHALLENGE;
   switch (eventType) {
-    case 'scheduled':
+    case 'scheduled': {
       const existingAppointment = await findExistingAppointment(apiKey, userId, appointment);
       const status = existingAppointment ? 'rescheduled' : 'scheduled';
-      await saveSchedulingDataByEmail(restUrl, BhRestToken, status, appointment, schedulingType);
-      existingAppointment && (await cancelAppointment(apiKey, userId, existingAppointment.id));
+      const candidate = await saveSchedulingDataByEmail(restUrl, BhRestToken, status, appointment, schedulingType);
+      if (existingAppointment) {
+        await cancelAppointment(apiKey, userId, existingAppointment.id);
+        await cancelCalendarInvite(candidate.challengeEventId);
+      }
+      await publishAppointmentGenerationRequest(
+        {
+          candidate,
+          appointment,
+        },
+        AppointmentType.CHALLENGE
+      );
       break;
-    case 'rescheduled':
-      await saveSchedulingDataByAppointmentId(
+    }
+    case 'rescheduled': {
+      const candidate = await saveSchedulingDataByAppointmentId(
         restUrl,
         BhRestToken,
         eventType,
@@ -51,10 +63,30 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
         appointment.datetime,
         schedulingType
       );
+      if (candidate) {
+        await cancelCalendarInvite(candidate.challengeEventId);
+        await publishAppointmentGenerationRequest(
+          {
+            candidate,
+            appointment,
+          },
+          AppointmentType.CHALLENGE
+        );
+      }
       break;
-    case 'canceled':
-      await saveSchedulingDataByAppointmentId(restUrl, BhRestToken, eventType, appointment.id, '', schedulingType);
+    }
+    case 'canceled': {
+      const candidate = await saveSchedulingDataByAppointmentId(
+        restUrl,
+        BhRestToken,
+        eventType,
+        appointment.id,
+        '',
+        schedulingType
+      );
+      candidate && (await cancelCalendarInvite(candidate.challengeEventId));
       break;
+    }
   }
 };
 
@@ -139,12 +171,15 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
           'Tech Screen Scheduled'
         );
       }
-      await publishAppointmentGenerationRequest({
-        candidate,
-        screenerEmail,
-        appointment,
-        jobTitle: jobSubmission?.jobOrder.title,
-      });
+      await publishAppointmentGenerationRequest(
+        {
+          candidate,
+          screenerEmail,
+          appointment,
+          jobTitle: jobSubmission?.jobOrder.title,
+        },
+        AppointmentType.TECHSCREEN
+      );
       break;
     }
     case 'rescheduled': {
@@ -158,12 +193,15 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
         schedulingType
       );
       const jobSubmission = findSubmission(candidate.submissions, ['Tech Screen Scheduled']);
-      await publishAppointmentGenerationRequest({
-        candidate,
-        screenerEmail,
-        appointment,
-        jobTitle: jobSubmission?.jobOrder.title,
-      });
+      await publishAppointmentGenerationRequest(
+        {
+          candidate,
+          screenerEmail,
+          appointment,
+          jobTitle: jobSubmission?.jobOrder.title,
+        },
+        AppointmentType.TECHSCREEN
+      );
       candidate && (await cancelCalendarInvite(candidate.techScreenEventId));
       break;
     }

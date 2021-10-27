@@ -51,14 +51,15 @@ export const findCandidateByEmail = async (url: string, BhRestToken: string, ema
     params: {
       BhRestToken,
       fields:
-        'id,firstName,lastName,email,owner(email),submissions(id,jobOrder(id,title),status),webResponses(id,dateAdded),fileAttachments(id,type),customText9,customTextBlock4,customText36,customText6,customText11',
+        'id,firstName,lastName,email,owner(email),submissions(id,jobOrder(id,title),status),webResponses(id,dateAdded),fileAttachments(id,type),customText9,customTextBlock4,customText36,customText6,customText11,customText38',
       query: `email:${email}`,
       count: '1',
     },
   });
 
   if (data.data.length) {
-    const { customText9, customTextBlock4, customText36, customText6, customText11, ...candidate } = data.data[0];
+    const { customText9, customTextBlock4, customText36, customText6, customText11, customText38, ...candidate } =
+      data.data[0];
     return {
       ...candidate,
       challengeLink: customText9,
@@ -66,6 +67,7 @@ export const findCandidateByEmail = async (url: string, BhRestToken: string, ema
       webinarRegistrantId: customText36,
       githubLink: customText6,
       techScreenEventId: customText11,
+      challengeEventId: customText38,
       submissions: candidate.submissions.data,
       webResponses: candidate.webResponses.data,
       fileAttachments: candidate.fileAttachments.data,
@@ -118,20 +120,21 @@ export const findCandidateByAppointment = async (
     params: {
       BhRestToken,
       fields:
-        'id,firstName,lastName,email,owner(email),customText9,customText36,customText11,submissions(id,jobOrder(id,title),status),fileAttachments(id,type)',
+        'id,firstName,lastName,email,owner(email),customText9,customText36,customText11,submissions(id,jobOrder(id,title),status),fileAttachments(id,type),customText38',
       query: `${appointmentIdField}:${appointmentId}`,
       count: '1',
     },
   });
 
   if (data.data.length) {
-    const { customText9, customTextBlock4, customText36, customText11, ...candidate } = data.data[0];
+    const { customText9, customTextBlock4, customText36, customText11, customText38, ...candidate } = data.data[0];
     return {
       ...candidate,
       webinarLink: customTextBlock4,
       challengeLink: customText9,
       webinarRegistrantId: customText36,
       techScreenEventId: customText11,
+      challengeEventId: customText38,
       submissions: candidate.submissions.data,
       fileAttachments: candidate.fileAttachments.data,
     };
