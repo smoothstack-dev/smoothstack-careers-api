@@ -12,6 +12,7 @@ export interface Candidate {
   webinarRegistrantId: string;
   relocation: string;
   techScreenEventId: string;
+  challengeEventId: string;
   submissions: Submission[];
   webResponses: WebResponse[];
   githubLink: string;

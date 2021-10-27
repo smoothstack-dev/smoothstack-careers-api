@@ -1,6 +1,11 @@
 import AWS from 'aws-sdk';
 import { PublishInput } from 'aws-sdk/clients/sns';
-import { AppointmentGenerationRequest, TechScreenAppointmentData } from 'src/model/AppointmentGenerationRequest';
+import {
+  AppointmentGenerationRequest,
+  AppointmentType,
+  ChallengeAppointmentData,
+  TechScreenAppointmentData,
+} from 'src/model/AppointmentGenerationRequest';
 import { ChallengeGenerationRequest } from 'src/model/ChallengeGenerationRequest';
 import { WebinarEvent } from 'src/model/WebinarEvent';
 import { getSNSConfig } from 'src/util/sns.util';
@@ -42,11 +47,14 @@ export const publishWebinarProcesingRequest = async (data: any) => {
   }
 };
 
-export const publishAppointmentGenerationRequest = async (appointmentData: TechScreenAppointmentData) => {
+export const publishAppointmentGenerationRequest = async (
+  appointmentData: TechScreenAppointmentData | ChallengeAppointmentData,
+  type: AppointmentType
+) => {
   const sns = new AWS.SNS(getSNSConfig(process.env.ENV));
   const topic = `arn:aws:sns:us-east-1:${process.env.AWS_ACCOUNT}:smoothstack-appointment-generation-sns-topic`;
   const request: AppointmentGenerationRequest = {
-    type: 'techscreen',
+    type,
     appointmentData,
   };
   const message: PublishInput = {
