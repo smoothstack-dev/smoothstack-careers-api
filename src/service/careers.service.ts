@@ -225,6 +225,7 @@ export const savePrescreenData = async (
     ...(prescreenForm.programmingLanguages?.answer && {
       customText1: prescreenForm.programmingLanguages.answer,
     }),
+    ...(prescreenForm.county?.answer && { customText31: prescreenForm.county.answer }),
     customText27: prescreenForm.result.answer,
     status: candidateStatus,
   };

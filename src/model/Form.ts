@@ -30,6 +30,7 @@ export interface PrescreenForm {
   isVaccinated: FormEntry;
   willVaccinate: FormEntry;
   vaccinationNotes: FormEntry;
+  county: FormEntry;
 }
 
 export interface TechScreenForm {
