@@ -728,6 +728,26 @@ export const fetchNewSubmissions = async (url: string, BhRestToken: string): Pro
   return filteredSubs;
 };
 
+export const fetchUpdatedSubmissions = async (url: string, BhRestToken: string): Promise<any[]> => {
+  const ids = await fetchUpdatedJobSubmissionsIds(url, BhRestToken);
+  if (!ids.length) {
+    return [];
+  }
+
+  const submissionsUrl = `${url}entity/JobSubmission/${ids.join(',')}`;
+  const { data } = await axios.get(submissionsUrl, {
+    params: {
+      BhRestToken,
+      fields: 'candidate,jobOrder,status,isDeleted',
+    },
+  });
+
+  const submissionArr = ids.length > 1 ? data.data : [data.data];
+  const filteredSubs = submissionArr.filter((sub) => !sub.isDeleted && ['Evaluation Offered', 'SE Offered'].includes(sub.status));
+
+  return filteredSubs;
+};
+
 export const fetchNewJobSubmissionsIds = async (url: string, BhRestToken: string): Promise<number[]> => {
   const eventsUrl = `${url}event/subscription/1`;
   const { data } = await axios.get(eventsUrl, {
@@ -737,8 +757,21 @@ export const fetchNewJobSubmissionsIds = async (url: string, BhRestToken: string
     },
   });
 
-  const newJobSubmissionIds = data.events?.map((e: any) => e.entityId);
-  return newJobSubmissionIds ?? [];
+  const jobSubmissionIds = data.events?.map((e: any) => e.entityId);
+  return jobSubmissionIds ?? [];
+};
+
+export const fetchUpdatedJobSubmissionsIds = async (url: string, BhRestToken: string): Promise<number[]> => {
+  const eventsUrl = `${url}event/subscription/2`;
+  const { data } = await axios.get(eventsUrl, {
+    params: {
+      BhRestToken,
+      maxEvents: 100,
+    },
+  });
+
+  const jobSubmissionIds = data.events?.flatMap((e: any) => e.updatedFields.includes() ? [e.entityId] :[]);
+  return jobSubmissionIds ?? [];
 };
 
 export const saveSubmissionStatus = async (
