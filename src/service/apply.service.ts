@@ -8,7 +8,8 @@ import {
 } from './careers.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { publishChallengeGenerationRequest } from './sns.service';
-import { Submission, WebResponse } from 'src/model/Candidate';
+import { WebResponse } from 'src/model/Candidate';
+import { JobSubmission } from 'src/model/JobSubmission';
 
 const DAY_DIFF = 90;
 
@@ -50,7 +51,7 @@ export const apply = async (event: APIGatewayProxyEvent) => {
   return candidate;
 };
 
-const hasRecentApplication = (applications: (WebResponse | Submission)[]): boolean => {
+const hasRecentApplication = (applications: (WebResponse | JobSubmission)[]): boolean => {
   return applications.some((a) => {
     const timeDiff = new Date().getTime() - a.dateAdded;
     const dayDiff = timeDiff / (1000 * 3600 * 24);

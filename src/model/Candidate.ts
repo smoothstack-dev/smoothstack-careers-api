@@ -1,4 +1,4 @@
-import { JobOrder } from './JobOrder';
+import { JobSubmission } from './JobSubmission';
 
 export interface Candidate {
   id: number;
@@ -13,7 +13,7 @@ export interface Candidate {
   relocation: string;
   techScreenEventId: string;
   challengeEventId: string;
-  submissions: Submission[];
+  submissions: JobSubmission[];
   webResponses: WebResponse[];
   githubLink: string;
   fileAttachments: Attachment[];
@@ -21,19 +21,14 @@ export interface Candidate {
 
 interface Owner {
   id: number;
+  firstName: string;
+  lastName: string;
   email: string;
 }
 
 interface Attachment {
   id: number;
   type: string;
-}
-
-export interface Submission {
-  id: number;
-  status: string;
-  jobOrder: JobOrder;
-  dateAdded: number;
 }
 
 export interface WebResponse {
