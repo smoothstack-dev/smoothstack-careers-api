@@ -1,7 +1,7 @@
 import type { AWS } from '@serverless/typescript';
 
 import careers from '@functions/careers';
-import submissionChecker from '@functions/submissionChecker';
+import newSubmissionChecker from '@functions/newSubmissionChecker';
 import challengeGenerator from '@functions/challengeGenerator';
 import challengeRedirect from '@functions/challengeRedirect';
 import schedulingEvents from '@functions/schedulingEvents';
@@ -11,6 +11,9 @@ import webinarProcessing from '@functions/webinarProcessing';
 import webinarEvents from '@functions/webinarEvents';
 import formEvents from '@functions/formEvents';
 import appointmentGenerator from '@functions/appointmentGenerator';
+import updatedSubmissionChecker from '@functions/updatedSubmissionChecker';
+import documentGenerator from '@functions/documentGenerator';
+import documentEvents from '@functions/documentEvents';
 
 const serverlessConfiguration: AWS = {
   service: 'smoothstack-careers-api',
@@ -52,8 +55,11 @@ const serverlessConfiguration: AWS = {
   // import the function via paths
   functions: {
     careers,
-    submissionChecker,
+    newSubmissionChecker,
+    updatedSubmissionChecker,
     challengeGenerator,
+    documentGenerator,
+    documentEvents,
     challengeRedirect,
     webinarRedirect,
     schedulingEvents,
@@ -69,6 +75,12 @@ const serverlessConfiguration: AWS = {
         Type: 'AWS::SNS::Topic',
         Properties: {
           TopicName: 'smoothstack-challenge-generation-sns-topic',
+        },
+      },
+      DocumentGenerationTopic: {
+        Type: 'AWS::SNS::Topic',
+        Properties: {
+          TopicName: 'smoothstack-document-generation-sns-topic',
         },
       },
       WebinarProcessingTopic: {

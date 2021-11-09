@@ -6,6 +6,7 @@ import { CandidateExtraFields } from 'src/model/CandidateExtraFields';
 import { ChallengeSession } from 'src/model/ChallengeEvent';
 import { FormEntry, PrescreenForm, TechScreenForm } from 'src/model/Form';
 import { JobOrder } from 'src/model/JobOrder';
+import { JobSubmission } from 'src/model/JobSubmission';
 import { ResumeFile } from 'src/model/ResumeFile';
 import { SchedulingType } from 'src/model/SchedulingType';
 import { WebinarRegistration } from 'src/model/WebinarRegistration';
@@ -729,6 +730,43 @@ export const fetchNewSubmissions = async (url: string, BhRestToken: string): Pro
   return filteredSubs;
 };
 
+export const fetchUpdatedSubmissions = async (url: string, BhRestToken: string): Promise<any[]> => {
+  const ids = await fetchUpdatedJobSubmissionsIds(url, BhRestToken);
+  if (!ids.length) {
+    return [];
+  }
+
+  const submissionsUrl = `${url}entity/JobSubmission/${ids.join(',')}`;
+  const { data } = await axios.get(submissionsUrl, {
+    params: {
+      BhRestToken,
+      fields:
+        'id,candidate(firstName,lastName,email,phone,owner(firstName,lastName,email)),jobOrder(startDate,customDate1,salary,customFloat1),status,isDeleted',
+    },
+  });
+
+  const submissionArr = ids.length > 1 ? data.data : [data.data];
+
+  const filteredSubs = submissionArr.flatMap((sub) =>
+    !sub.isDeleted && ['Evaluation Offered', 'SE Offered'].includes(sub.status)
+      ? [
+          {
+            ...sub,
+            jobOrder: {
+              ...sub.jobOrder,
+              evaluationStartDate: sub.jobOrder.startDate,
+              seStartDate: sub.jobOrder.customDate1,
+              year1Salary: sub.jobOrder.salary,
+              year2Salary: sub.jobOrder.customFloat1,
+            },
+          },
+        ]
+      : []
+  );
+
+  return filteredSubs;
+};
+
 export const fetchNewJobSubmissionsIds = async (url: string, BhRestToken: string): Promise<number[]> => {
   const eventsUrl = `${url}event/subscription/1`;
   const { data } = await axios.get(eventsUrl, {
@@ -738,8 +776,24 @@ export const fetchNewJobSubmissionsIds = async (url: string, BhRestToken: string
     },
   });
 
-  const newJobSubmissionIds = data.events?.map((e: any) => e.entityId);
-  return newJobSubmissionIds ?? [];
+  const jobSubmissionIds = data.events?.map((e: any) => e.entityId);
+  return jobSubmissionIds ?? [];
+};
+
+export const fetchUpdatedJobSubmissionsIds = async (url: string, BhRestToken: string): Promise<number[]> => {
+  const eventsUrl = `${url}event/subscription/2`;
+  const { data } = await axios.get(eventsUrl, {
+    params: {
+      BhRestToken,
+      maxEvents: 500,
+    },
+  });
+
+  const jobSubmissionIds = data.events?.flatMap((e: any) =>
+    e.updatedProperties.includes('status') ? [e.entityId] : []
+  );
+  const uniqueIds = [...new Set(jobSubmissionIds)] as any;
+  return uniqueIds ?? [];
 };
 
 export const saveSubmissionStatus = async (
@@ -777,4 +831,43 @@ export const fetchCandidateResume = async (
     return data.File;
   }
   return undefined;
+};
+
+export const uploadCandidateFile = async (
+  url: string,
+  BhRestToken: string,
+  candidateId: number,
+  fileContent: string,
+  fileName: string,
+  fileType: string
+) => {
+  const filesUrl = `${url}file/Candidate/${candidateId}`;
+  const fileData = {
+    externalID: 'signedDocument',
+    fileContent,
+    name: fileName,
+    fileType: 'SAMPLE',
+    type: fileType,
+  };
+  await axios.put(filesUrl, fileData, {
+    params: {
+      BhRestToken,
+    },
+  });
+};
+
+export const fetchSubmission = async (
+  url: string,
+  BhRestToken: string,
+  submissionId: number
+): Promise<JobSubmission> => {
+  const submissionsUrl = `${url}entity/JobSubmission/${submissionId}`;
+  const { data } = await axios.get(submissionsUrl, {
+    params: {
+      BhRestToken,
+      fields: 'id,status,candidate(id,firstName,lastName,email),jobOrder,dateAdded',
+    },
+  });
+
+  return data.data;
 };

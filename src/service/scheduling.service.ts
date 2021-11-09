@@ -7,10 +7,11 @@ import { getSessionData } from './auth/bullhorn.oauth.service';
 import { getSquareSpaceSecrets } from './secrets.service';
 import { SchedulingType, SchedulingTypeId } from '../model/SchedulingType';
 import { cancelWebinarRegistration, generateWebinarRegistration } from './webinar.service';
-import { Candidate, Submission } from 'src/model/Candidate';
+import { Candidate } from 'src/model/Candidate';
 import { publishAppointmentGenerationRequest } from './sns.service';
 import { cancelCalendarInvite } from './calendar.service';
 import { AppointmentType } from 'src/model/AppointmentGenerationRequest';
+import { JobSubmission } from 'src/model/JobSubmission';
 
 const baseUrl = 'https://acuityscheduling.com/api/v1';
 
@@ -157,7 +158,7 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
       const status = existingAppointment ? 'rescheduled' : 'scheduled';
       const screenerEmail = await findCalendarEmail(apiKey, userId, appointment.calendarID);
       const candidate = await saveSchedulingDataByEmail(restUrl, BhRestToken, status, appointment, schedulingType);
-      let jobSubmission: Submission;
+      let jobSubmission: JobSubmission;
       if (existingAppointment) {
         jobSubmission = findSubmission(candidate.submissions, ['Tech Screen Scheduled']);
         await cancelAppointment(apiKey, userId, existingAppointment.id);
@@ -227,14 +228,14 @@ const updateSubmissionStatus = async (
   candidate: Candidate,
   searchStatuses: string[],
   updateStatus: string
-): Promise<Submission> => {
+): Promise<JobSubmission> => {
   const jobSubmission = findSubmission(candidate.submissions, searchStatuses);
   jobSubmission && (await saveSubmissionStatus(url, token, jobSubmission?.id, updateStatus));
   !jobSubmission && (await saveNoSubmissionNote(url, token, candidate.id, updateStatus, searchStatuses));
   return jobSubmission;
 };
 
-const findSubmission = (submissions: Submission[], searchStatuses: string[]): Submission => {
+const findSubmission = (submissions: JobSubmission[], searchStatuses: string[]): JobSubmission => {
   const firstPrioritySubmission = submissions.find((sub) => sub.status === searchStatuses[0]);
   const secondPrioritySubmission = submissions.find((sub) => sub.status === searchStatuses[1]);
   return firstPrioritySubmission ?? secondPrioritySubmission;
