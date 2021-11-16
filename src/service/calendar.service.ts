@@ -63,16 +63,16 @@ export const sendTechScreenCalendarInvite = async (
   return data.id;
 };
 
-export const sendChallengeCalendarInvite = async (candidate: Candidate, appointment: Appointment): Promise<string> => {
+export const sendChallengeCalendarInvite = async (
+  candidate: Candidate,
+  challengeLink: string,
+  appointment: Appointment
+): Promise<string> => {
   const calendarClient = await getClient();
   const event = {
     summary: `Smoothstack Coding Challenge - ${candidate.firstName} ${candidate.lastName}`,
-    location: candidate.challengeLink,
-    description: generateChallengeDescription(
-      candidate.firstName,
-      candidate.challengeLink,
-      appointment.confirmationPage
-    ),
+    location: challengeLink,
+    description: generateChallengeDescription(candidate.firstName, challengeLink, appointment.confirmationPage),
     start: {
       dateTime: appointment.datetime,
       timeZone: 'America/New_York',

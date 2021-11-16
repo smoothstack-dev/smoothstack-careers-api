@@ -10,4 +10,5 @@ export interface GoogleCredentials {
 export enum GoogleService {
   CALENDAR = 'CALENDAR',
   DRIVE = 'DRIVE',
+  GMAIL = 'GMAIL',
 }

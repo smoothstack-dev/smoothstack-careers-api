@@ -1,7 +1,12 @@
 import axios from 'axios';
 import { Appointment } from '../model/Appointment';
 import { SchedulingEvent } from '../model/SchedulingEvent';
-import { saveNoSubmissionNote, saveSchedulingDataByAppointmentId, saveSubmissionStatus } from './careers.service';
+import {
+  saveNoSubmissionNote,
+  saveSchedulingDataByAppointmentId,
+  saveSchedulingDataBySubmissionId,
+  saveSubmissionStatus,
+} from './careers.service';
 import { saveSchedulingDataByEmail } from './careers.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { getSquareSpaceSecrets } from './secrets.service';
@@ -12,6 +17,7 @@ import { publishAppointmentGenerationRequest } from './sns.service';
 import { cancelCalendarInvite } from './calendar.service';
 import { AppointmentType } from 'src/model/AppointmentGenerationRequest';
 import { JobSubmission } from 'src/model/JobSubmission';
+import { sendOldCalendarAlertEmail } from './email.service';
 
 const baseUrl = 'https://acuityscheduling.com/api/v1';
 
@@ -21,6 +27,9 @@ export const processSchedulingEvent = async (event: SchedulingEvent) => {
   switch (event.appointmentTypeID) {
     case SchedulingTypeId.CHALLENGE:
       await processChallengeScheduling(event);
+      break;
+    case SchedulingTypeId.CHALLENGE_V2:
+      await processChallengeSchedulingV2(event);
       break;
     case SchedulingTypeId.WEBINAR:
       await processWebinarScheduling(event);
@@ -53,6 +62,7 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
         },
         AppointmentType.CHALLENGE
       );
+      await sendOldCalendarAlertEmail(appointment.email);
       break;
     }
     case 'rescheduled': {
@@ -86,6 +96,70 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
         schedulingType
       );
       candidate && (await cancelCalendarInvite(candidate.challengeEventId));
+      break;
+    }
+  }
+};
+
+const processChallengeSchedulingV2 = async (event: SchedulingEvent) => {
+  const { restUrl, BhRestToken } = await getSessionData();
+  const { apiKey, userId } = await getSquareSpaceSecrets();
+  const appointment = await fetchAppointment(apiKey, userId, event.id);
+  const eventType = event.action.split('.')[1];
+  const schedulingType = SchedulingType.CHALLENGE;
+  switch (eventType) {
+    case 'scheduled': {
+      const existingAppointment = await findExistingAppointment(apiKey, userId, appointment);
+      const status = existingAppointment ? 'rescheduled' : 'scheduled';
+      const submission = await saveSchedulingDataBySubmissionId(
+        restUrl,
+        BhRestToken,
+        status,
+        appointment,
+        schedulingType
+      );
+      if (existingAppointment) {
+        await cancelAppointment(apiKey, userId, existingAppointment.id);
+        await cancelCalendarInvite(submission.challengeEventId);
+      }
+      await publishAppointmentGenerationRequest(
+        {
+          submission,
+          appointment,
+        },
+        AppointmentType.CHALLENGE
+      );
+      break;
+    }
+    case 'rescheduled': {
+      const submission = await saveSchedulingDataBySubmissionId(
+        restUrl,
+        BhRestToken,
+        eventType,
+        appointment,
+        schedulingType
+      );
+      if (submission) {
+        await cancelCalendarInvite(submission.challengeEventId);
+        await publishAppointmentGenerationRequest(
+          {
+            submission,
+            appointment,
+          },
+          AppointmentType.CHALLENGE
+        );
+      }
+      break;
+    }
+    case 'canceled': {
+      const submission = await saveSchedulingDataBySubmissionId(
+        restUrl,
+        BhRestToken,
+        eventType,
+        appointment,
+        schedulingType
+      );
+      submission && (await cancelCalendarInvite(submission.challengeEventId));
       break;
     }
   }

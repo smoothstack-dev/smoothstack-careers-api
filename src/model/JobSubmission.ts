@@ -7,4 +7,6 @@ export interface JobSubmission {
   candidate: Candidate;
   jobOrder: JobOrder;
   dateAdded: number;
+  challengeEventId: string;
+  challengeLink: string;
 }
