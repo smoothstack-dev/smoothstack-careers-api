@@ -12,8 +12,7 @@ const getClient = async () => {
 export const sendOldCalendarAlertEmail = async (candidateEmail: string): Promise<void> => {
   const gmailClient = await getClient();
   const mail = new MailComposer({
-    //to: 'boris.kuiper@smoothstack.com',
-    to: 'oscar.cedano@smoothstack.com',
+    to: 'boris.kuiper@smoothstack.com',
     text: `${candidateEmail} has scheduled Coding Challenge using old scheduling calendar.`,
     html: `<strong>${candidateEmail} has scheduled Coding Challenge using old scheduling calendar.</strong>`,
     subject: 'Old Challenge Calendar Scheduling Action Occurred',
