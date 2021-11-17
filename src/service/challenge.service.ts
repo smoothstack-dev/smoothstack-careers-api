@@ -1,6 +1,11 @@
 import axios from 'axios';
 import { ChallengeEvent } from 'src/model/ChallengeEvent';
-import { saveChallengeResult, saveChallengeSimilarity } from './careers.service';
+import {
+  saveCandidateChallengeResult,
+  saveCandidateChallengeSimilarity,
+  saveSubmissionChallengeResult,
+  saveSubmissionChallengeSimilarity,
+} from './careers.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 
 const BASE_URL = `https://codility.com/api/tests`;
@@ -52,15 +57,29 @@ export const generateChallengeLink = async (
   return data.candidates[0].test_link;
 };
 
-export const processChallengeEvent = async ({ event, session }: ChallengeEvent) => {
+//TODO: To be Removed
+export const processCandidateChallengeEvent = async ({ event, session }: ChallengeEvent) => {
   const { restUrl, BhRestToken } = await getSessionData();
 
   switch (event) {
     case 'result':
-      await saveChallengeResult(restUrl, BhRestToken, session);
+      await saveCandidateChallengeResult(restUrl, BhRestToken, session);
       break;
     case 'similarity':
-      await saveChallengeSimilarity(restUrl, BhRestToken, session);
+      await saveCandidateChallengeSimilarity(restUrl, BhRestToken, session);
+      break;
+  }
+};
+
+export const processSubmissionChallengeEvent = async ({ event, session }: ChallengeEvent, submissionId: number) => {
+  const { restUrl, BhRestToken } = await getSessionData();
+
+  switch (event) {
+    case 'result':
+      await saveSubmissionChallengeResult(restUrl, BhRestToken, session, submissionId);
+      break;
+    case 'similarity':
+      await saveSubmissionChallengeSimilarity(restUrl, BhRestToken, session, submissionId);
       break;
   }
 };

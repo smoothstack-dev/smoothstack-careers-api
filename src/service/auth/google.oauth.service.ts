@@ -1,10 +1,16 @@
 import { auth as calendarAuth } from '@googleapis/calendar';
 import { auth as driveAuth } from '@googleapis/calendar';
+import { auth as gmailAuth } from '@googleapis/calendar';
 import { GoogleService } from 'src/model/GoogleCredentials';
 import { getGoogleSecrets } from '../secrets.service';
 
 export const getOauth2Client = async (service: GoogleService) => {
-  const auth = service === GoogleService.CALENDAR ? calendarAuth : service === GoogleService.DRIVE && driveAuth;
+  const auth =
+    service === GoogleService.CALENDAR
+      ? calendarAuth
+      : service === GoogleService.DRIVE
+      ? driveAuth
+      : service === GoogleService.GMAIL && gmailAuth;
   const secrets = await getGoogleSecrets();
   const clientId = secrets[`${service}_CLIENT_ID`];
   const clientSecret = secrets[`${service}_CLIENT_SECRET`];

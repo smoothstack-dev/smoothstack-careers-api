@@ -6,19 +6,18 @@ import {
   ChallengeAppointmentData,
   TechScreenAppointmentData,
 } from 'src/model/AppointmentGenerationRequest';
-import { ChallengeGenerationRequest } from 'src/model/ChallengeGenerationRequest';
+import { LinksGenerationRequest } from 'src/model/LinksGenerationRequest';
 import { DocumentGenerationRequest } from 'src/model/DocumentGenerationRequest';
 import { JobSubmission } from 'src/model/JobSubmission';
 import { WebinarEvent } from 'src/model/WebinarEvent';
 import { getSNSConfig } from 'src/util/sns.util';
 import { WEBINAR_TOPIC, WEBINAR_TYPE } from './webinar.service';
 
-export const publishChallengeGenerationRequest = async (candidateId: number, jobOrderId: number) => {
+export const publishLinksGenerationRequest = async (submissionId: number) => {
   const sns = new AWS.SNS(getSNSConfig(process.env.ENV));
-  const topic = `arn:aws:sns:us-east-1:${process.env.AWS_ACCOUNT}:smoothstack-challenge-generation-sns-topic`;
-  const request: ChallengeGenerationRequest = {
-    candidate: { id: candidateId },
-    jobOrder: { id: jobOrderId },
+  const topic = `arn:aws:sns:us-east-1:${process.env.AWS_ACCOUNT}:smoothstack-links-generation-sns-topic`;
+  const request: LinksGenerationRequest = {
+    submissionId,
   };
   const message: PublishInput = {
     Message: JSON.stringify(request),

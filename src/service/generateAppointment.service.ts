@@ -7,7 +7,7 @@ import {
 } from 'src/model/AppointmentGenerationRequest';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { sendChallengeCalendarInvite, sendTechScreenCalendarInvite } from './calendar.service';
-import { fetchCandidateResume, saveCandidateFields } from './careers.service';
+import { fetchCandidateResume, saveCandidateFields, saveSubmissionFields } from './careers.service';
 import { processResumeFile } from './drive.service';
 
 export const generateAppointment = async (event: SNSEvent) => {
@@ -35,10 +35,20 @@ const generateTechScreenAppointment = async (appointmentData: TechScreenAppointm
   });
 };
 
-const generateChallengeAppointment = async ({ candidate, appointment }: ChallengeAppointmentData) => {
+const generateChallengeAppointment = async (appointmentData: ChallengeAppointmentData) => {
   const { restUrl, BhRestToken } = await getSessionData();
-  const eventId = await sendChallengeCalendarInvite(candidate, appointment);
-  await saveCandidateFields(restUrl, BhRestToken, candidate.id, {
-    customText38: eventId,
-  });
+  const candidate = appointmentData.candidate ?? appointmentData.submission.candidate;
+  const challengeLink = appointmentData.candidate?.challengeLink ?? appointmentData.submission?.challengeLink;
+  const eventId = await sendChallengeCalendarInvite(candidate, challengeLink, appointmentData.appointment);
+  //TODO: Get challengeLink from submission only when candidate flow is removed
+  //TODO: Only save submissionfields when candidate flow is removed
+  if (appointmentData.submission) {
+    await saveSubmissionFields(restUrl, BhRestToken, appointmentData.submission.id, {
+      customText15: eventId,
+    });
+  } else {
+    await saveCandidateFields(restUrl, BhRestToken, candidate.id, {
+      customText38: eventId,
+    });
+  }
 };

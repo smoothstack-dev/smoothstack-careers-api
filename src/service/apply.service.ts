@@ -7,7 +7,7 @@ import {
   saveApplicationNote,
 } from './careers.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
-import { publishChallengeGenerationRequest } from './sns.service';
+import { publishLinksGenerationRequest } from './sns.service';
 import { WebResponse } from 'src/model/Candidate';
 import { JobSubmission } from 'src/model/JobSubmission';
 
@@ -39,10 +39,10 @@ export const apply = async (event: APIGatewayProxyEvent) => {
       phone: formattedPhone,
     };
 
-    const newCandidate = await createWebResponse(careerId, webResponseFields, resume);
+    const { jobSubmission, candidate: newCandidate } = await createWebResponse(careerId, webResponseFields, resume);
     await populateCandidateFields(restUrl, BhRestToken, newCandidate.id, candidateFields as any);
     await saveApplicationNote(restUrl, BhRestToken, newCandidate.id, event.queryStringParameters);
-    await publishChallengeGenerationRequest(newCandidate.id, +careerId);
+    await publishLinksGenerationRequest(jobSubmission.id);
 
     console.log('Successfully created new Candidate.');
     return newCandidate;
