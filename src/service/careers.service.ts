@@ -974,7 +974,7 @@ export const fetchSubmission = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone),jobOrder(customText1),dateAdded,customText15,customText10',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText25),jobOrder(customText1),dateAdded,customText15,customText10',
     },
   });
 
@@ -983,6 +983,7 @@ export const fetchSubmission = async (
     ...submission,
     challengeEventId: customText15,
     challengeLink: customText10,
+    candidate: { ...submission.candidate, relocation: submission.candidate.customText25 },
     jobOrder: { challengeName: submission.jobOrder.customText1 },
   };
 };
