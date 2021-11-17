@@ -594,7 +594,14 @@ export const saveSchedulingDataBySubmissionId = async (
       BhRestToken,
     },
   });
-  await saveSchedulingNote(url, BhRestToken, submission.candidate.id, type, status, schedulingDate);
+  await saveSchedulingNote(
+    url,
+    BhRestToken,
+    submission.candidate.id,
+    `${type}(${submission.jobOrder.challengeName})` as any,
+    status,
+    schedulingDate
+  );
 
   return submission;
 };
