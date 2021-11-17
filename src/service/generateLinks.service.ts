@@ -68,5 +68,6 @@ export const generateLinks = async (event: SNSEvent) => {
   } else {
     console.log('Submission already has a challenge link. Submission not processed:');
   }
+  console.log(`Submission ID: ${submissionId}`);
   console.log({ jobOrder, candidate });
 };
