@@ -32,7 +32,7 @@ export const generateLinks = async (event: SNSEvent) => {
     const challengeSchedulingLink = getSchedulingLink(
       candidate.firstName,
       candidate.lastName,
-      `${submissionId}@smoothstack.com`,
+      `coding_challenge_${submissionId}@smoothstack.com`,
       candidate.phone,
       SchedulingTypeId.CHALLENGE_V2
     );

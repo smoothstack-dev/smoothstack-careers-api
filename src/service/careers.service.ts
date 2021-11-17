@@ -573,7 +573,7 @@ export const saveSchedulingDataBySubmissionId = async (
   type: SchedulingType
 ): Promise<JobSubmission> => {
   const { email, datetime: date } = appointment;
-  const submissionId = email.split('@')[0];
+  const submissionId = email.split('challenge_').pop().split('@')[0];
   const submission = await fetchSubmission(url, BhRestToken, +submissionId);
   const submissionUrl = `${url}entity/JobSubmission/${submissionId}`;
 
