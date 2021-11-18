@@ -33,16 +33,35 @@ export const fetchCandidate = async (url: string, BhRestToken: string, candidate
   const { data } = await axios.get(candidatesUrl, {
     params: {
       BhRestToken,
-      fields: 'id,firstName,lastName,email,phone,customText9,customText25,customText6',
+      fields:
+        'id,firstName,lastName,email,phone,customText9,customText25,customText6,submissions(customText10,customText12,customTextBlock1,customText14,jobOrder(customText1)),webResponses(customText10,customText12,customTextBlock1,customText14,jobOrder(customText1))',
     },
   });
 
-  const { customText9, customText25, customText6, ...candidate } = data.data;
+  const { customText9, customText25, customText6, submissions, webResponses, ...candidate } = data.data;
   return {
     ...candidate,
     challengeLink: customText9,
     relocation: customText25,
     githubLink: customText6,
+    submissions: [
+      ...submissions.data.map((s) => ({
+        id: s.id,
+        challengeLink: s.customText10,
+        challengeScore: s.customText12,
+        challengeSchedulingLink: s.customTextBlock1,
+        previousChallengeId: s.customText14,
+        jobOrder: { challengeName: s.jobOrder.customText1 },
+      })),
+      ...webResponses.data.map((w) => ({
+        id: w.id,
+        challengeLink: w.customText10,
+        challengeScore: w.customText12,
+        challengeSchedulingLink: w.customTextBlock1,
+        previousChallengeId: w.customText14,
+        jobOrder: { challengeName: w.jobOrder.customText1 },
+      })),
+    ],
   };
 };
 
@@ -804,12 +823,16 @@ export const saveSubmissionLinks = async (
   BhRestToken: string,
   submissionId: number,
   challengeLink: string,
-  challengeSchedulingLink: string
+  challengeSchedulingLink: string,
+  previousChallengeId?: number,
+  previousChallengeScore?: string
 ) => {
   const submissionUrl = `${url}entity/JobSubmission/${submissionId}`;
   const updateData = {
     customText10: challengeLink,
     customTextBlock1: challengeSchedulingLink,
+    ...(previousChallengeId && { customText14: previousChallengeId }),
+    ...(previousChallengeScore && { customText12: previousChallengeScore }),
   };
   return axios.post(submissionUrl, updateData, {
     params: {
@@ -986,4 +1009,22 @@ export const fetchSubmission = async (
     candidate: { ...submission.candidate, relocation: submission.candidate.customText25 },
     jobOrder: { challengeName: submission.jobOrder.customText1 },
   };
+};
+
+export const findSubmissionsByPreviousChallengeId = async (
+  url: string,
+  BhRestToken: string,
+  previousChallengeId: number
+): Promise<JobSubmission[]> => {
+  const submissionQueryUrl = `${url}search/JobSubmission`;
+  const { data } = await axios.get(submissionQueryUrl, {
+    params: {
+      BhRestToken,
+      fields: 'id',
+      query: `customText14:${previousChallengeId}`,
+      count: '20',
+    },
+  });
+
+  return data.data;
 };

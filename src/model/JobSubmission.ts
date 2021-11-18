@@ -9,4 +9,7 @@ export interface JobSubmission {
   dateAdded: number;
   challengeEventId: string;
   challengeLink: string;
+  challengeScore: string;
+  challengeSchedulingLink: string;
+  previousChallengeId: string;
 }

@@ -9,12 +9,24 @@ const getClient = async () => {
 };
 
 // TODO: Remove when candidate challenge flow is purged
-export const sendOldCalendarAlertEmail = async (candidateEmail: string): Promise<void> => {
+export const sendOldCalendarAlertEmail = async (candidateEmail: string, date: string): Promise<void> => {
   const gmailClient = await getClient();
   const mail = new MailComposer({
     to: 'boris.kuiper@smoothstack.com',
-    text: `${candidateEmail} has scheduled Coding Challenge using old scheduling calendar.`,
-    html: `<strong>${candidateEmail} has scheduled Coding Challenge using old scheduling calendar.</strong>`,
+    text: `${candidateEmail} has scheduled Coding Challenge using old scheduling calendar: ${new Date(
+      date
+    ).toLocaleString('en-US', {
+      timeZone: 'America/New_York',
+      dateStyle: 'short',
+      timeStyle: 'short',
+    })}`,
+    html: `<strong>${candidateEmail} has scheduled Coding Challenge using old scheduling calendar: ${new Date(
+      date
+    ).toLocaleString('en-US', {
+      timeZone: 'America/New_York',
+      dateStyle: 'short',
+      timeStyle: 'short',
+    })}</strong>`,
     subject: 'Old Challenge Calendar Scheduling Action Occurred',
     textEncoding: 'base64',
   });
