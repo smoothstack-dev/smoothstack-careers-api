@@ -62,7 +62,7 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
         },
         AppointmentType.CHALLENGE
       );
-      await sendOldCalendarAlertEmail(appointment.email);
+      await sendOldCalendarAlertEmail(appointment.email, appointment.datetime);
       break;
     }
     case 'rescheduled': {

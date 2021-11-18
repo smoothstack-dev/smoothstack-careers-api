@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { ChallengeEvent } from 'src/model/ChallengeEvent';
 import {
+  findSubmissionsByPreviousChallengeId,
   saveCandidateChallengeResult,
   saveCandidateChallengeSimilarity,
   saveSubmissionChallengeResult,
@@ -73,13 +74,18 @@ export const processCandidateChallengeEvent = async ({ event, session }: Challen
 
 export const processSubmissionChallengeEvent = async ({ event, session }: ChallengeEvent, submissionId: number) => {
   const { restUrl, BhRestToken } = await getSessionData();
-
+  const prevSubmissions = await findSubmissionsByPreviousChallengeId(restUrl, BhRestToken, submissionId);
+  const submissionIds = [...prevSubmissions.map((s) => s.id), submissionId];
   switch (event) {
     case 'result':
-      await saveSubmissionChallengeResult(restUrl, BhRestToken, session, submissionId);
+      for (const subId of submissionIds) {
+        await saveSubmissionChallengeResult(restUrl, BhRestToken, session, subId);
+      }
       break;
     case 'similarity':
-      await saveSubmissionChallengeSimilarity(restUrl, BhRestToken, session, submissionId);
+      for (const subId of submissionIds) {
+        await saveSubmissionChallengeSimilarity(restUrl, BhRestToken, session, subId);
+      }
       break;
   }
 };
