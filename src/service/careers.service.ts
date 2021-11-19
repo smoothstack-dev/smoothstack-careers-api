@@ -320,14 +320,23 @@ export const saveTechScreenData = async (
   const candidateStatus = ['Pass', 'SE Recommendation'].includes(screenerDetermination)
     ? 'Active'
     : screenerDetermination === 'Fail' && 'Rejected';
+  const technicalQuestions = Array.isArray(techScreenForm.technicalQuestions)
+    ? techScreenForm.technicalQuestions
+    : [techScreenForm.technicalQuestions];
+  const behavioralQuestions = Array.isArray(techScreenForm.behavioralQuestions)
+    ? techScreenForm.behavioralQuestions
+    : [techScreenForm.behavioralQuestions];
+  const projectQuestions = Array.isArray(techScreenForm.projectQuestions)
+    ? techScreenForm.projectQuestions
+    : [techScreenForm.projectQuestions];
   const technicalResult = techScreenForm.technicalQuestions
-    ? calculateSectionResult(techScreenForm.technicalQuestions, [0.8, 0.6, 0])
+    ? calculateSectionResult(technicalQuestions, [0.8, 0.6, 0])
     : 'No Pass';
   const behavioralResult = techScreenForm.behavioralQuestions
-    ? calculateSectionResult(techScreenForm.behavioralQuestions, [0.75, 0.5, 0])
+    ? calculateSectionResult(behavioralQuestions, [0.75, 0.5, 0])
     : 'No Pass';
   const projectResult = techScreenForm.projectQuestions
-    ? calculateSectionResult(techScreenForm.projectQuestions, [0.83, 0.5, 0])
+    ? calculateSectionResult(projectQuestions, [0.83, 0.5, 0])
     : 'No Pass';
   const calcResult = getCalculatedResult(technicalResult, behavioralResult, projectResult);
 
