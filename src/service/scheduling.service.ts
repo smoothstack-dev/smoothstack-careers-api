@@ -5,6 +5,7 @@ import {
   saveNoSubmissionNote,
   saveSchedulingDataByAppointmentId,
   saveSchedulingDataBySubmissionId,
+  saveSubmissionSchedulingDataByAppointmentId,
   saveSubmissionStatus,
 } from './careers.service';
 import { saveSchedulingDataByEmail } from './careers.service';
@@ -132,11 +133,12 @@ const processChallengeSchedulingV2 = async (event: SchedulingEvent) => {
       break;
     }
     case 'rescheduled': {
-      const submission = await saveSchedulingDataBySubmissionId(
+      const submission = await saveSubmissionSchedulingDataByAppointmentId(
         restUrl,
         BhRestToken,
         eventType,
-        appointment,
+        appointment.id,
+        appointment.datetime,
         schedulingType
       );
       if (submission) {
@@ -152,11 +154,12 @@ const processChallengeSchedulingV2 = async (event: SchedulingEvent) => {
       break;
     }
     case 'canceled': {
-      const submission = await saveSchedulingDataBySubmissionId(
+      const submission = await saveSubmissionSchedulingDataByAppointmentId(
         restUrl,
         BhRestToken,
         eventType,
-        appointment,
+        appointment.id,
+        '',
         schedulingType
       );
       submission && (await cancelCalendarInvite(submission.challengeEventId));

@@ -162,6 +162,34 @@ export const findCandidateByAppointment = async (
   return undefined;
 };
 
+const findSubmissionByAppointment = async (
+  url: string,
+  BhRestToken: string,
+  appointmentId: number,
+  schedulingType: SchedulingType
+): Promise<JobSubmission> => {
+  const submissionQueryUrl = `${url}search/JobSubmission`;
+  const appointmentIdField = schedulingType === SchedulingType.CHALLENGE && 'customText16';
+
+  const { data } = await axios.get(submissionQueryUrl, {
+    params: {
+      BhRestToken,
+      fields: 'id,candidate(id),jobOrder(customText1)',
+      query: `${appointmentIdField}:${appointmentId}`,
+      count: '1',
+    },
+  });
+
+  if (data.data.length) {
+    const { jobOrder, ...submission } = data.data[0];
+    return {
+      ...submission,
+      jobOrder: { challengeName: jobOrder.customText1 },
+    };
+  }
+  return undefined;
+};
+
 export const saveCandidateFields = async (url: string, BhRestToken: string, candidateId: number, updateData: any) => {
   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
   return axios.post(candidateUrl, updateData, {
@@ -596,13 +624,13 @@ export const saveSchedulingDataBySubmissionId = async (
   const submission = await fetchSubmission(url, BhRestToken, +submissionId);
   const submissionUrl = `${url}entity/JobSubmission/${submissionId}`;
 
-  const schedulingDate = status === 'canceled' ? '' : date;
   let updateData: any;
   switch (type) {
     case SchedulingType.CHALLENGE: {
       updateData = {
         customText11: status,
-        customDate1: schedulingDate.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
+        customDate1: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
+        customText16: appointment.id,
       };
       break;
     }
@@ -619,9 +647,49 @@ export const saveSchedulingDataBySubmissionId = async (
     submission.candidate.id,
     `${type}(${submission.jobOrder.challengeName})` as any,
     status,
-    schedulingDate
+    date
   );
 
+  return submission;
+};
+
+export const saveSubmissionSchedulingDataByAppointmentId = async (
+  url: string,
+  BhRestToken: string,
+  status: string,
+  appointmentId: number,
+  date: string,
+  type: SchedulingType
+): Promise<JobSubmission> => {
+  const submission = await findSubmissionByAppointment(url, BhRestToken, appointmentId, type);
+  if (submission) {
+    const submissionUrl = `${url}entity/JobSubmission/${submission.id}`;
+
+    let updateData: any;
+    switch (type) {
+      case SchedulingType.CHALLENGE: {
+        updateData = {
+          customText11: status,
+          customDate1: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
+        };
+        break;
+      }
+    }
+
+    await axios.post(submissionUrl, updateData, {
+      params: {
+        BhRestToken,
+      },
+    });
+    await saveSchedulingNote(
+      url,
+      BhRestToken,
+      submission.candidate.id,
+      `${type}(${submission.jobOrder.challengeName})` as any,
+      status,
+      date
+    );
+  }
   return submission;
 };
 
