@@ -23,7 +23,7 @@ export const processFormEvent = async (formType: string, formEvent: any) => {
 
 const processPrescreenEvent = async (prescreenForm: PrescreenForm) => {
   const { restUrl, BhRestToken } = await getSessionData();
-  
+
   const candidate = await findCandidateByEmail(restUrl, BhRestToken, prescreenForm.candidateEmail.answer);
   if (candidate) {
     await saveFormNote(restUrl, BhRestToken, candidate.id, prescreenForm, 'Prescreen');

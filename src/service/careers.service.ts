@@ -174,17 +174,21 @@ const findSubmissionByAppointment = async (
   const { data } = await axios.get(submissionQueryUrl, {
     params: {
       BhRestToken,
-      fields: 'id,candidate(id),jobOrder(customText1)',
+      fields:
+        'id,status,candidate(id,firstName,lastName,email,phone,customText25),jobOrder(customText1),dateAdded,customText15,customText10',
       query: `${appointmentIdField}:${appointmentId}`,
       count: '1',
     },
   });
 
   if (data.data.length) {
-    const { jobOrder, ...submission } = data.data[0];
+    const { customText15, customText10, ...submission } = data.data[0];
     return {
       ...submission,
-      jobOrder: { challengeName: jobOrder.customText1 },
+      challengeEventId: customText15,
+      challengeLink: customText10,
+      candidate: { ...submission.candidate, relocation: submission.candidate.customText25 },
+      jobOrder: { challengeName: submission.jobOrder.customText1 },
     };
   }
   return undefined;
