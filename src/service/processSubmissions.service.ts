@@ -17,7 +17,7 @@ export const processNewSubmissions = async () => {
 
 export const processUpdatedSubmissions = async () => {
   console.log('Received request to process updated job submissions.');
-  /*
+
   const { restUrl, BhRestToken } = await getSessionData();
 
   const submissions = await fetchUpdatedSubmissions(restUrl, BhRestToken);
@@ -27,6 +27,4 @@ export const processUpdatedSubmissions = async () => {
 
   console.log('Successfully processed updated submissions:');
   console.log(submissions);
-  */
-  console.log('Disabled temporarily');
 };
