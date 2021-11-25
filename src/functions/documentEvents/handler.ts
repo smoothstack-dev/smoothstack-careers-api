@@ -1,15 +1,12 @@
 import { middyfy } from '@libs/lambda';
 import { APIGatewayEvent } from 'aws-lambda';
-import { parse } from 'aws-multipart-parser';
-import { processDocumentEvent } from 'src/service/document.service';
+import { processDocumentEvent_v2 } from 'src/service/document.service';
 
 const documentEvents = async (event: APIGatewayEvent) => {
   try {
     switch (event.httpMethod) {
       case 'POST': {
-        const { json } = parse(event, true);
-        await processDocumentEvent(JSON.parse(json as any));
-        return 'Hello API Event Received';
+        await processDocumentEvent_v2(event.body as any);
       }
     }
   } catch (e) {
