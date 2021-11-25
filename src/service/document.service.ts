@@ -201,8 +201,7 @@ const prefillEnvelopeTabs = async (
         textTabs: [
           {
             tabLabel: 'candidatePhone',
-            fontSize: 'size8',
-            underline: true,
+            fontSize: 'size9',
             font: 'calibri',
             required: true,
             value: submission.candidate.phone,
@@ -212,9 +211,8 @@ const prefillEnvelopeTabs = async (
           },
           {
             tabLabel: 'candidateEmail',
-            fontSize: 'size8',
+            fontSize: 'size9',
             font: 'calibri',
-            underline: true,
             required: true,
             value: submission.candidate.email,
             pageNumber: 1,
@@ -291,7 +289,7 @@ const getDoc1Tabs = (submission: JobSubmission): any[] => {
     },
     {
       tabLabel: 'recruiterEmail',
-      fontSize: 'size9',
+      fontSize: 'size10',
       font: 'calibri',
       required: true,
       value: submission.candidate.owner.email,
