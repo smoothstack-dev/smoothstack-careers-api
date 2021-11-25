@@ -236,7 +236,7 @@ const getDoc1Tabs = (submission: JobSubmission): any[] => {
   return [
     {
       tabLabel: 'startDate',
-      fontSize: 'size9',
+      fontSize: 'size10',
       font: 'calibri',
       required: true,
       value: new Date(submission.jobOrder[`${docType.toLowerCase()}StartDate`]).toLocaleDateString('en-US', {
@@ -297,11 +297,11 @@ const getDoc1Tabs = (submission: JobSubmission): any[] => {
       ...(docType === 'SE'
         ? {
             xPosition: 356,
-            yPosition: 461,
+            yPosition: 460,
           }
         : {
             xPosition: 355,
-            yPosition: 410,
+            yPosition: 409,
           }),
     },
     {
