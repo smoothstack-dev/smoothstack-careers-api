@@ -246,11 +246,11 @@ const getDoc1Tabs = (submission: JobSubmission): any[] => {
       ...(docType === 'SE'
         ? {
             xPosition: 146,
-            yPosition: 176,
+            yPosition: 175,
           }
         : {
             xPosition: 148,
-            yPosition: 171,
+            yPosition: 170,
           }),
     },
     {
