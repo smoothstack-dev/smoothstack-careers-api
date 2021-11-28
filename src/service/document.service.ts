@@ -25,6 +25,7 @@ export const generateDocument = async (submission: JobSubmission) => {
   await sendSignatureRequest(client, templateId, submission);
 };
 
+//TODO: Remove
 const findTemplateId = async (client: HelloSign, submission: JobSubmission) => {
   const { templates } = await client.template.list();
   const searchKey = `${SUB_STATUS_DOCTYPE[submission.status]}_Offer`;

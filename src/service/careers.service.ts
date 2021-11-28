@@ -297,7 +297,7 @@ export const savePrescreenData = async (
     },
   });
 
-  return result === 'Pass' ? 'Prescreen Passed' : ['Reject', 'Snooze'].includes(result) && resultReason;
+  return result === 'Pass' ? 'Prescreen Passed' : ['Reject', 'Snooze'].includes(result) && `R-${resultReason}`;
 };
 
 const isGraduatingWithin4Months = (graduationDate: Date) => {
@@ -369,7 +369,7 @@ export const saveTechScreenData = async (
     ? 'Tech Screen Passed'
     : screenerDetermination === 'SE Recommendation'
     ? 'SE Recommended'
-    : screenerDetermination === 'Fail' && determinationReason;
+    : screenerDetermination === 'Fail' && `R-${determinationReason}`;
 };
 
 const calculateSectionResult = (entries: FormEntry[], threshold: any[]): string => {
@@ -788,9 +788,12 @@ export const saveSubmissionChallengeResult = async (
 ): Promise<void> => {
   const { evaluation } = challengeSession;
   const score = Math.round((evaluation.result / evaluation.max_result) * 100);
+  const { jobOrder } = await fetchSubmission(url, BhRestToken, submissionId);
+  const status = score >= jobOrder.passingScore ? 'Challenge Passed' : 'R-Challenge Failed';
   const submissionUrl = `${url}entity/JobSubmission/${submissionId}`;
   const updateData = {
     customText12: score,
+    status,
   };
 
   return axios.post(submissionUrl, updateData, {
@@ -1078,7 +1081,7 @@ export const fetchSubmission = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText25),jobOrder(customText1),dateAdded,customText15,customText10',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText25),jobOrder(customText1,customInt1),dateAdded,customText15,customText10',
     },
   });
 
@@ -1088,7 +1091,7 @@ export const fetchSubmission = async (
     challengeEventId: customText15,
     challengeLink: customText10,
     candidate: { ...submission.candidate, relocation: submission.candidate.customText25 },
-    jobOrder: { challengeName: submission.jobOrder.customText1 },
+    jobOrder: { challengeName: submission.jobOrder.customText1, passingScore: submission.jobOrder.customInt1 },
   };
 };
 

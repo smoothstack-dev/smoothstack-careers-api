@@ -6,4 +6,5 @@ export interface JobOrder {
   evaluationStartDate: string;
   seStartDate: string;
   challengeName: string;
+  passingScore: number;
 }
