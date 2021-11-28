@@ -785,22 +785,26 @@ export const saveSubmissionChallengeResult = async (
   BhRestToken: string,
   challengeSession: ChallengeSession,
   submissionId: number
-): Promise<void> => {
+): Promise<any> => {
   const { evaluation } = challengeSession;
   const score = Math.round((evaluation.result / evaluation.max_result) * 100);
-  const { jobOrder } = await fetchSubmission(url, BhRestToken, submissionId);
-  const status = score >= jobOrder.passingScore ? 'Challenge Passed' : 'R-Challenge Failed';
+  const { jobOrder, candidate } = await fetchSubmission(url, BhRestToken, submissionId);
+  const subStatus = score >= jobOrder.passingScore ? 'Challenge Passed' : 'R-Challenge Failed';
+  const candidateStatus = score >= jobOrder.passingScore ? 'Active' : 'Rejected';
   const submissionUrl = `${url}entity/JobSubmission/${submissionId}`;
   const updateData = {
     customText12: score,
-    status,
+    subStatus,
   };
-
-  return axios.post(submissionUrl, updateData, {
-    params: {
-      BhRestToken,
-    },
-  });
+  const updates = [
+    saveCandidateFields(url, BhRestToken, candidate.id, { status: candidateStatus }),
+    axios.post(submissionUrl, updateData, {
+      params: {
+        BhRestToken,
+      },
+    }),
+  ];
+  return Promise.all(updates);
 };
 
 export const saveSubmissionChallengeSimilarity = async (
