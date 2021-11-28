@@ -794,7 +794,7 @@ export const saveSubmissionChallengeResult = async (
   const submissionUrl = `${url}entity/JobSubmission/${submissionId}`;
   const updateData = {
     customText12: score,
-    subStatus,
+    status: subStatus,
   };
   const updates = [
     saveCandidateFields(url, BhRestToken, candidate.id, { status: candidateStatus }),
