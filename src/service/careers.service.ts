@@ -34,7 +34,7 @@ export const fetchCandidate = async (url: string, BhRestToken: string, candidate
     params: {
       BhRestToken,
       fields:
-        'id,firstName,lastName,email,phone,customText9,customText25,customText6,submissions(customText10,customText12,customTextBlock1,customText14,jobOrder(customText1)),webResponses(customText10,customText12,customTextBlock1,customText14,jobOrder(customText1))',
+        'id,firstName,lastName,email,phone,customText9,customText25,customText6,submissions(customText10,customText12,customTextBlock1,customText14,jobOrder(customText1,customInt1)),webResponses(customText10,customText12,customTextBlock1,customText14,jobOrder(customText1))',
     },
   });
 
@@ -51,7 +51,7 @@ export const fetchCandidate = async (url: string, BhRestToken: string, candidate
         challengeScore: s.customText12,
         challengeSchedulingLink: s.customTextBlock1,
         previousChallengeId: s.customText14,
-        jobOrder: { challengeName: s.jobOrder.customText1 },
+        jobOrder: { challengeName: s.jobOrder.customText1, passingScore: s.jobOrder.customInt1 },
       })),
       ...webResponses.data.map((w) => ({
         id: w.id,
@@ -913,12 +913,14 @@ export const saveSubmissionLinks = async (
   challengeLink: string,
   challengeSchedulingLink: string,
   previousChallengeId?: number,
-  previousChallengeScore?: string
+  previousChallengeScore?: string,
+  status?: string
 ) => {
   const submissionUrl = `${url}entity/JobSubmission/${submissionId}`;
   const updateData = {
     customText10: challengeLink,
     customTextBlock1: challengeSchedulingLink,
+    ...(status && { status }),
     ...(previousChallengeId && { customText14: previousChallengeId }),
     ...(previousChallengeScore && { customText12: previousChallengeScore }),
   };
