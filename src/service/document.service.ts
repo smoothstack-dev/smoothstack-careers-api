@@ -6,6 +6,7 @@ import { getSessionData } from './auth/bullhorn.oauth.service';
 import { fetchSubmission, saveSubmissionStatus, uploadCandidateFile } from './careers.service';
 import { DocusignClientData, generateDocusignClient } from './auth/docusign.jwt.service';
 import { EnvelopesApi, TemplatesApi, EnvelopeDefinition, EnvelopeTemplate } from 'docusign-esign';
+import { sendSignedDocument } from './email.service';
 
 const SUB_STATUS_DOCTYPE = {
   'Evaluation Offered': 'Evaluation',
@@ -353,6 +354,7 @@ export const processDocumentEvent_v2 = async (eventReq: EnvelopeTemplate) => {
         `Signed_${docType}_Document.pdf`,
         DOCTYPE_NAME[docType]
       );
+      await sendSignedDocument(submission.candidate.email, docType, signedFile);
       if (submission.status === `${docType} Offered`) {
         await saveSubmissionStatus(restUrl, BhRestToken, submission.id, `${docType} Signed`);
       }
