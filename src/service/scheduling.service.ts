@@ -160,7 +160,8 @@ const processChallengeSchedulingV2 = async (event: SchedulingEvent) => {
         eventType,
         appointment.id,
         '',
-        schedulingType
+        schedulingType,
+        'R-Challenge Canceled'
       );
       submission && (await cancelCalendarInvite(submission.challengeEventId));
       break;

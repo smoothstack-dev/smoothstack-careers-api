@@ -672,7 +672,8 @@ export const saveSubmissionSchedulingDataByAppointmentId = async (
   status: string,
   appointmentId: number,
   date: string,
-  type: SchedulingType
+  type: SchedulingType,
+  submissionStatus?: string
 ): Promise<JobSubmission> => {
   const submission = await findSubmissionByAppointment(url, BhRestToken, appointmentId, type);
   if (submission) {
@@ -684,6 +685,7 @@ export const saveSubmissionSchedulingDataByAppointmentId = async (
         updateData = {
           customText11: status,
           customDate1: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
+          ...(submissionStatus && { status: submissionStatus }),
         };
         break;
       }
