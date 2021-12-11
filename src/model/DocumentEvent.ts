@@ -1,4 +1,3 @@
-// TODO: Remove
 export interface DocumentEventRequest {
   event: DocumentEvent;
   signature_request: SignatureRequest;
