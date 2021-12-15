@@ -44,7 +44,7 @@ export const sendOldCalendarAlertEmail = async (candidateEmail: string, date: st
 export const sendSignedDocument = async (candidateEmail: string, docType: string, document: string): Promise<void> => {
   const gmailClient = await getClient();
   const mail = new MailComposer({
-    to: 'funding@smoothstack.com',
+    to: 'oscar.cedano@smoothstack.com',
     text: `${candidateEmail} has signed the attached ${docType} Offer Document.`,
     html: `<strong>${candidateEmail} has signed the attached ${docType} Offer Document.</strong>`,
     subject: 'Signed Document Event',
