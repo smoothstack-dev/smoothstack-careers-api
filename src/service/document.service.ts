@@ -108,7 +108,7 @@ export const processDocumentEvent = async (eventReq: DocumentEventRequest) => {
         `Signed_${docType}_Document.pdf`,
         DOCTYPE_NAME[docType]
       );
-      await sendSignedDocument(submission.candidate.email, docType, signedFile);
+      // await sendSignedDocument(submission.candidate.email, docType, signedFile);
       if (submission.status === `${docType} Offered`) {
         await saveSubmissionStatus(restUrl, BhRestToken, submissionId, `${docType} Signed`);
       }
