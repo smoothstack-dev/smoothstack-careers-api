@@ -148,7 +148,7 @@ const getParticipantPollAnswer = (participant: any, questionList: any[]): string
   return answer ? 'Yes' : 'No';
 };
 
-export const getWebinarParticipants = async (token: string, webinarUUID: string): Promise<any> => {
+const getWebinarParticipants = async (token: string, webinarUUID: string): Promise<any> => {
   const url = `${BASE_URL}/past_webinars/${encodeURIComponent(encodeURIComponent(webinarUUID))}/participants`;
   const { data } = await axios.get(url, {
     headers: {
