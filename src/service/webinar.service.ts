@@ -148,8 +148,8 @@ const getParticipantPollAnswer = (participant: any, questionList: any[]): string
   return answer ? 'Yes' : 'No';
 };
 
-const getWebinarParticipants = async (token: string, webinarUUID: string): Promise<any> => {
-  const url = `${BASE_URL}/past_webinars/${encodeURIComponent(webinarUUID)}/participants`;
+export const getWebinarParticipants = async (token: string, webinarUUID: string): Promise<any> => {
+  const url = `${BASE_URL}/past_webinars/${encodeURIComponent(encodeURIComponent(webinarUUID))}/participants`;
   const { data } = await axios.get(url, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -159,11 +159,11 @@ const getWebinarParticipants = async (token: string, webinarUUID: string): Promi
     },
   });
 
-  return data.participants;
+  return data.participants.filter((p) => !!p.user_email);
 };
 
 const getWebinarAbsentees = async (token: string, webinarUUID: string): Promise<any> => {
-  const url = `${BASE_URL}/past_webinars/${encodeURIComponent(webinarUUID)}/absentees`;
+  const url = `${BASE_URL}/past_webinars/${encodeURIComponent(encodeURIComponent(webinarUUID))}/absentees`;
   const { data } = await axios.get(url, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -177,7 +177,7 @@ const getWebinarAbsentees = async (token: string, webinarUUID: string): Promise<
 };
 
 const getPollAnswers = async (token: string, webinarUUID: string): Promise<any[]> => {
-  const url = `${BASE_URL}/past_webinars/${encodeURIComponent(webinarUUID)}/polls`;
+  const url = `${BASE_URL}/past_webinars/${encodeURIComponent(encodeURIComponent(webinarUUID))}/polls`;
   const { data } = await axios.get(url, {
     headers: {
       Authorization: `Bearer ${token}`,
