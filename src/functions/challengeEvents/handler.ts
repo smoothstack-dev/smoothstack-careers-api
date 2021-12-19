@@ -1,6 +1,6 @@
 import { middyfy } from '@libs/lambda';
 import { APIGatewayEvent } from 'aws-lambda';
-import { processCandidateChallengeEvent, processSubmissionChallengeEvent } from 'src/service/challenge.service';
+import { processSubmissionChallengeEvent } from 'src/service/challenge.service';
 
 const challengeEvents = async (event: APIGatewayEvent) => {
   console.log('Received Challenge Event: ', event);
@@ -8,11 +8,7 @@ const challengeEvents = async (event: APIGatewayEvent) => {
     switch (event.httpMethod) {
       case 'POST': {
         const submissionId = event.queryStringParameters?.submissionId;
-        if (submissionId) {
-          await processSubmissionChallengeEvent(JSON.parse(event.body), +submissionId);
-        } else {
-          await processCandidateChallengeEvent(JSON.parse(event.body));
-        }
+        await processSubmissionChallengeEvent(JSON.parse(event.body), +submissionId);
       }
     }
   } catch (e) {

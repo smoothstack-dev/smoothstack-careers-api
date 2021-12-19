@@ -55,7 +55,7 @@ export const generateLinks = async (event: SNSEvent) => {
         candidate.lastName,
         `coding_challenge_${submissionId}@smoothstack.com`,
         candidate.phone,
-        SchedulingTypeId.CHALLENGE_V2
+        SchedulingTypeId.CHALLENGE
       );
       const webinarSchedulingLink = getSchedulingLink(
         candidate.firstName,

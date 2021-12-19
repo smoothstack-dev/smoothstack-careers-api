@@ -37,18 +37,10 @@ const generateTechScreenAppointment = async (appointmentData: TechScreenAppointm
 
 const generateChallengeAppointment = async (appointmentData: ChallengeAppointmentData) => {
   const { restUrl, BhRestToken } = await getSessionData();
-  const candidate = appointmentData.candidate ?? appointmentData.submission.candidate;
-  const challengeLink = appointmentData.candidate?.challengeLink ?? appointmentData.submission?.challengeLink;
+  const candidate = appointmentData.submission.candidate;
+  const challengeLink = appointmentData.submission.challengeLink;
   const eventId = await sendChallengeCalendarInvite(candidate, challengeLink, appointmentData.appointment);
-  //TODO: Get challengeLink from submission only when candidate flow is removed
-  //TODO: Only save submissionfields when candidate flow is removed
-  if (appointmentData.submission) {
-    await saveSubmissionFields(restUrl, BhRestToken, appointmentData.submission.id, {
-      customText15: eventId,
-    });
-  } else {
-    await saveCandidateFields(restUrl, BhRestToken, candidate.id, {
-      customText38: eventId,
-    });
-  }
+  await saveSubmissionFields(restUrl, BhRestToken, appointmentData.submission.id, {
+    customText15: eventId,
+  });
 };

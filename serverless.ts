@@ -2,7 +2,6 @@ import type { AWS } from '@serverless/typescript';
 
 import careers from '@functions/careers';
 import newSubmissionChecker from '@functions/newSubmissionChecker';
-import challengeRedirect from '@functions/challengeRedirect';
 import schedulingEvents from '@functions/schedulingEvents';
 import challengeEvents from '@functions/challengeEvents';
 import webinarRedirect from '@functions/webinarRedirect';
@@ -60,7 +59,6 @@ const serverlessConfiguration: AWS = {
     linksGenerator,
     documentGenerator,
     documentEvents,
-    challengeRedirect,
     webinarRedirect,
     schedulingEvents,
     challengeEvents,

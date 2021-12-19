@@ -17,7 +17,6 @@
     "@middy/core": "^1.5.2",
     "@middy/http-cors": "^2.5.1",
     "@middy/http-json-body-parser": "^1.5.2",
-    "@middy/http-multipart-body-parser": "^2.5.3",
     "@middy/http-urlencode-body-parser": "^2.5.1",
     "aws-multipart-parser": "^0.2.1",
     "aws-sdk": "^2.973.0",
