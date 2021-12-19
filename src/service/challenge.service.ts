@@ -2,8 +2,6 @@ import axios from 'axios';
 import { ChallengeEvent } from 'src/model/ChallengeEvent';
 import {
   findSubmissionsByPreviousChallengeId,
-  saveCandidateChallengeResult,
-  saveCandidateChallengeSimilarity,
   saveSubmissionChallengeResult,
   saveSubmissionChallengeSimilarity,
 } from './careers.service';
@@ -56,20 +54,6 @@ export const generateChallengeLink = async (
   });
 
   return data.candidates[0].test_link;
-};
-
-//TODO: To be Removed
-export const processCandidateChallengeEvent = async ({ event, session }: ChallengeEvent) => {
-  const { restUrl, BhRestToken } = await getSessionData();
-
-  switch (event) {
-    case 'result':
-      await saveCandidateChallengeResult(restUrl, BhRestToken, session);
-      break;
-    case 'similarity':
-      await saveCandidateChallengeSimilarity(restUrl, BhRestToken, session);
-      break;
-  }
 };
 
 export const processSubmissionChallengeEvent = async ({ event, session }: ChallengeEvent, submissionId: number) => {

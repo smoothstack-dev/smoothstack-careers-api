@@ -131,9 +131,7 @@ export const findCandidateByAppointment = async (
 ): Promise<Candidate> => {
   const candidateQueryUrl = `${url}search/Candidate`;
   const appointmentIdField =
-    schedulingType === SchedulingType.CHALLENGE
-      ? 'customText34'
-      : schedulingType === SchedulingType.WEBINAR
+    schedulingType === SchedulingType.WEBINAR
       ? 'customText37'
       : schedulingType === SchedulingType.TECHSCREEN && 'customText39';
   const { data } = await axios.get(candidateQueryUrl, {
@@ -586,14 +584,6 @@ export const saveSchedulingDataByEmail = async (
 
   let updateData: any;
   switch (type) {
-    case SchedulingType.CHALLENGE: {
-      updateData = {
-        customText28: status,
-        customText34: appointmentId,
-        customDate11: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
-      };
-      break;
-    }
     case SchedulingType.WEBINAR: {
       updateData = {
         customText30: status,
@@ -723,13 +713,6 @@ export const saveSchedulingDataByAppointmentId = async (
 
     let updateData: any;
     switch (type) {
-      case SchedulingType.CHALLENGE: {
-        updateData = {
-          customText28: status,
-          customDate11: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
-        };
-        break;
-      }
       case SchedulingType.WEBINAR: {
         updateData = {
           customText30: status,
@@ -823,47 +806,6 @@ export const saveSubmissionChallengeSimilarity = async (
     };
 
     return axios.post(submissionUrl, updateData, {
-      params: {
-        BhRestToken,
-      },
-    });
-  }
-};
-
-//TODO: To be removed
-export const saveCandidateChallengeResult = async (
-  url: string,
-  BhRestToken: string,
-  challengeSession: ChallengeSession
-): Promise<void> => {
-  const { candidate: candidateId, evaluation } = challengeSession;
-  const score = Math.round((evaluation.result / evaluation.max_result) * 100);
-  const candidateUrl = `${url}entity/Candidate/${candidateId}`;
-  const updateData = {
-    customText29: score,
-  };
-
-  return axios.post(candidateUrl, updateData, {
-    params: {
-      BhRestToken,
-    },
-  });
-};
-
-//TODO: To be removed
-export const saveCandidateChallengeSimilarity = async (
-  url: string,
-  BhRestToken: string,
-  challengeSession: ChallengeSession
-): Promise<void> => {
-  const { candidate: candidateId, similarity } = challengeSession;
-  if (similarity) {
-    const candidateUrl = `${url}entity/Candidate/${candidateId}`;
-    const updateData = {
-      customText33: similarity.text,
-    };
-
-    return axios.post(candidateUrl, updateData, {
       params: {
         BhRestToken,
       },

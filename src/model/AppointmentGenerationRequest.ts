@@ -15,8 +15,7 @@ export interface TechScreenAppointmentData {
 }
 
 export interface ChallengeAppointmentData {
-  candidate?: Candidate; // TODO: REMOVE
-  submission?: JobSubmission;
+  submission: JobSubmission;
   appointment: Appointment;
 }
 
