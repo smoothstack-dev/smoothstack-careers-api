@@ -18,6 +18,7 @@ import { publishAppointmentGenerationRequest } from './sns.service';
 import { cancelCalendarInvite } from './calendar.service';
 import { AppointmentType } from 'src/model/AppointmentGenerationRequest';
 import { JobSubmission } from 'src/model/JobSubmission';
+import { sendChallengeSchedulingAlert } from './email.service';
 
 const baseUrl = 'https://acuityscheduling.com/api/v1';
 
@@ -43,6 +44,10 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
   const appointment = await fetchAppointment(apiKey, userId, event.id);
   const eventType = event.action.split('.')[1];
   const schedulingType = SchedulingType.CHALLENGE;
+  if (!/.+\d+@smoothstack\.com/.test(appointment.email)) {
+    await sendChallengeSchedulingAlert(appointment.email);
+    return;
+  }
   switch (eventType) {
     case 'scheduled': {
       const existingAppointment = await findExistingAppointment(apiKey, userId, appointment);
