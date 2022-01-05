@@ -11,4 +11,5 @@ export enum GoogleService {
   CALENDAR = 'CALENDAR',
   DRIVE = 'DRIVE',
   GMAIL = 'GMAIL',
+  ADMIN = 'ADMIN',
 }

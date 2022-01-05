@@ -11,6 +11,7 @@
     "node": ">=14.15.0"
   },
   "dependencies": {
+    "@googleapis/admin": "^4.2.1",
     "@googleapis/calendar": "^0.2.0",
     "@googleapis/drive": "^0.3.1",
     "@googleapis/gmail": "^0.2.0",
