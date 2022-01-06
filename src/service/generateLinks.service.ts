@@ -39,7 +39,9 @@ export const generateLinks = async (event: SNSEvent) => {
         '',
         matchedSubmission.id,
         matchedSubmission.challengeScore,
-        deriveSubmissionStatus(matchedSubmission.challengeScore, jobOrder.passingScore)
+        deriveSubmissionStatus(matchedSubmission.challengeScore, jobOrder.foundationsPassingScore),
+        shouldDowngradeJob(matchedSubmission.challengeScore, jobOrder.foundationsPassingScore, jobOrder.passingScore) &&
+          jobOrder.foundationsJobId
       );
       console.log('Previously existing submission with same challenge existing for submission:');
     } else {
@@ -100,4 +102,12 @@ const deriveSubmissionStatus = (score: string, passingScore: number) => {
     return numberScore >= passingScore ? 'Challenge Passed' : 'R-Challenge Failed';
   }
   return undefined;
+};
+
+const shouldDowngradeJob = (score: string, minimumPassingScore: number, standardPassingScore: number) => {
+  const numberScore = parseInt(score);
+  if (!isNaN(numberScore)) {
+    return numberScore >= minimumPassingScore && numberScore < standardPassingScore;
+  }
+  return false;
 };

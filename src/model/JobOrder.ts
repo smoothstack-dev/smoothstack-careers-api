@@ -7,4 +7,6 @@ export interface JobOrder {
   seStartDate: string;
   challengeName: string;
   passingScore: number;
+  foundationsPassingScore: number;
+  foundationsJobId: number;
 }
