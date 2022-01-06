@@ -773,16 +773,23 @@ export const saveSubmissionChallengeResult = async (
 ): Promise<any> => {
   const { evaluation } = challengeSession;
   const score = Math.round((evaluation.result / evaluation.max_result) * 100);
-  const { jobOrder, candidate } = await fetchSubmission(url, BhRestToken, submissionId);
-  const subStatus = score >= jobOrder.passingScore ? 'Challenge Passed' : 'R-Challenge Failed';
-  const candidateStatus = score >= jobOrder.passingScore ? 'Active' : 'Rejected';
+  const { jobOrder, candidate, challengeLink } = await fetchSubmission(url, BhRestToken, submissionId);
+  const subStatus = score >= jobOrder.foundationsPassingScore ? 'Challenge Passed' : 'R-Challenge Failed';
+  const candidateStatus = score >= jobOrder.foundationsPassingScore ? 'Active' : 'Rejected';
+  const shouldDowngrade = score >= jobOrder.foundationsPassingScore && score < jobOrder.passingScore;
   const submissionUrl = `${url}entity/JobSubmission/${submissionId}`;
   const updateData = {
     customText12: score,
     status: subStatus,
+    ...(shouldDowngrade && { jobOrder: { id: jobOrder.foundationsJobId } }),
   };
+  const resultNoteTitle = shouldDowngrade
+    ? `Moved Submission from Job Id: ${jobOrder.id} to JobId: ${jobOrder.foundationsJobId} (Smoothstack Foundations)`
+    : `${subStatus} (${jobOrder.challengeName}`;
+  const resultNote = `${resultNoteTitle}\n\nChallenge Score: ${score}\n\nChallenge Link: ${challengeLink}`;
   const updates = [
     saveCandidateFields(url, BhRestToken, candidate.id, { status: candidateStatus }),
+    saveCandidateNote(url, BhRestToken, candidate.id, 'Challenge Result', resultNote),
     axios.post(submissionUrl, updateData, {
       params: {
         BhRestToken,
@@ -858,7 +865,8 @@ export const saveSubmissionLinks = async (
   challengeSchedulingLink: string,
   previousChallengeId?: number,
   previousChallengeScore?: string,
-  status?: string
+  status?: string,
+  newJobOrderId?: number
 ) => {
   const submissionUrl = `${url}entity/JobSubmission/${submissionId}`;
   const updateData = {
@@ -867,6 +875,7 @@ export const saveSubmissionLinks = async (
     ...(status && { status }),
     ...(previousChallengeId && { customText14: previousChallengeId }),
     ...(previousChallengeScore && { customText12: previousChallengeScore }),
+    ...(newJobOrderId && { jobOrder: { id: newJobOrderId } }),
   };
   return axios.post(submissionUrl, updateData, {
     params: {
@@ -1031,7 +1040,7 @@ export const fetchSubmission = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText25),jobOrder(customText1,customInt1),dateAdded,customText15,customText10',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText25),jobOrder(id,customText1,customInt1,customInt2,customInt3),dateAdded,customText15,customText10',
     },
   });
 
@@ -1041,7 +1050,13 @@ export const fetchSubmission = async (
     challengeEventId: customText15,
     challengeLink: customText10,
     candidate: { ...submission.candidate, relocation: submission.candidate.customText25 },
-    jobOrder: { challengeName: submission.jobOrder.customText1, passingScore: submission.jobOrder.customInt1 },
+    jobOrder: {
+      id: submission.jobOrder.id,
+      challengeName: submission.jobOrder.customText1,
+      passingScore: submission.jobOrder.customInt1,
+      foundationsPassingScore: submission.jobOrder.customInt2,
+      foundationsJobId: submission.jobOrder.customInt3,
+    },
   };
 };
 
