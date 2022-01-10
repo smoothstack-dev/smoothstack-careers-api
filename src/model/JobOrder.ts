@@ -9,4 +9,5 @@ export interface JobOrder {
   passingScore: number;
   foundationsPassingScore: number;
   foundationsJobId: number;
+  techScreenType: string;
 }

@@ -6,7 +6,7 @@ import {
   ChallengeAppointmentData,
   TechScreenAppointmentData,
 } from 'src/model/AppointmentGenerationRequest';
-import { LinksGenerationRequest } from 'src/model/LinksGenerationRequest';
+import { LinksGenerationRequest } from 'src/model/Links';
 import { DocumentGenerationRequest } from 'src/model/DocumentGenerationRequest';
 import { JobSubmission } from 'src/model/JobSubmission';
 import { WebinarEvent } from 'src/model/WebinarEvent';

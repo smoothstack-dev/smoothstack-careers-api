@@ -1,5 +1,5 @@
 import { SNSEvent } from 'aws-lambda';
-import { generateLinks } from 'src/service/generateLinks.service';
+import { generateLinks } from 'src/service/links.service';
 
 const linksGenerator = async (event: SNSEvent) => {
   try {
