@@ -11,7 +11,7 @@ const getClient = async () => {
 export const sendSignedDocument = async (candidateEmail: string, docType: string, document: string): Promise<void> => {
   const gmailClient = await getClient();
   const mail = new MailComposer({
-    to: 'oscar.cedano@smoothstack.com',
+    to: 'funding@smoothstack.com',
     text: `${candidateEmail} has signed the attached ${docType} Offer Document.`,
     html: `<strong>${candidateEmail} has signed the attached ${docType} Offer Document.</strong>`,
     subject: 'Signed Document Event',
