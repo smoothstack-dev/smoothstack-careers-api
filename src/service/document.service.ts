@@ -8,12 +8,10 @@ import { sendSignedDocument } from './email.service';
 
 const SUB_STATUS_DOCTYPE = {
   'Evaluation Offered': 'Evaluation',
-  'SE Offered': 'SE',
 };
 
 const DOCTYPE_NAME = {
   Evaluation: 'Engagement Offer',
-  SE: 'SE Offer',
 };
 
 export const generateDocument = async (submission: JobSubmission) => {
@@ -38,7 +36,7 @@ const sendSignatureRequest = async (client: HelloSign, templateId: string, submi
   });
   const docType = SUB_STATUS_DOCTYPE[submission.status];
   const opts = {
-    // test_mode: 1,
+    test_mode: 1,
     template_id: templateId,
     subject: 'Smoothstack Document Signature Request',
     message: 'Please sign the following document to confirm enrollment.',
@@ -51,10 +49,20 @@ const sendSignatureRequest = async (client: HelloSign, templateId: string, submi
     ],
     custom_fields: [
       {
+        name: 'todaysDate',
+        value: new Date().toLocaleDateString('en-US', {
+          timeZone: 'America/New_York',
+        }),
+      },
+      {
         name: 'startDate',
         value: new Date(submission.jobOrder[`${docType.toLowerCase()}StartDate`]).toLocaleDateString('en-US', {
           timeZone: 'America/New_York',
         }),
+      },
+      {
+        name: 'trainingLength',
+        value: submission.jobOrder.trainingLength,
       },
       {
         name: 'year1Salary',
