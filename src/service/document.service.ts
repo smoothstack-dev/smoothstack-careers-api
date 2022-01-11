@@ -36,7 +36,7 @@ const sendSignatureRequest = async (client: HelloSign, templateId: string, submi
   });
   const docType = SUB_STATUS_DOCTYPE[submission.status];
   const opts = {
-    // test_mode: 1,
+    test_mode: 1,
     template_id: templateId,
     subject: 'Smoothstack Document Signature Request',
     message: 'Please sign the following document to confirm enrollment.',
