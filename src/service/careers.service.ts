@@ -1018,23 +1018,23 @@ export const fetchUpdatedSubmissions = async (url: string, BhRestToken: string):
     params: {
       BhRestToken,
       fields:
-        'id,candidate(firstName,lastName,email,phone,owner(firstName,lastName,email)),jobOrder(startDate,customDate1,salary,customFloat1),status,isDeleted',
+        'id,candidate(firstName,lastName,email,phone,owner(firstName,lastName,email)),jobOrder(startDate,salary,customFloat1,customText6),status,isDeleted',
     },
   });
 
   const submissionArr = ids.length > 1 ? data.data : [data.data];
 
   const filteredSubs = submissionArr.flatMap((sub) =>
-    !sub.isDeleted && ['Evaluation Offered', 'SE Offered'].includes(sub.status)
+    !sub.isDeleted && ['Evaluation Offered'].includes(sub.status)
       ? [
           {
             ...sub,
             jobOrder: {
               ...sub.jobOrder,
               evaluationStartDate: sub.jobOrder.startDate,
-              seStartDate: sub.jobOrder.customDate1,
               year1Salary: sub.jobOrder.salary,
               year2Salary: sub.jobOrder.customFloat1,
+              trainingLength: sub.jobOrder.customText6,
             },
           },
         ]
