@@ -7,7 +7,7 @@ import {
 } from 'src/model/AppointmentGenerationRequest';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { sendChallengeCalendarInvite, sendTechScreenCalendarInvite } from './calendar.service';
-import { fetchCandidate, fetchCandidateResume, saveSubmissionFields } from './careers.service';
+import { fetchCandidateResume, saveSubmissionFields } from './careers.service';
 import { processResumeFile } from './drive.service';
 
 export const generateAppointment = async (event: SNSEvent) => {
