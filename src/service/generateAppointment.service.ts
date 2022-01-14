@@ -7,7 +7,7 @@ import {
 } from 'src/model/AppointmentGenerationRequest';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { sendChallengeCalendarInvite, sendTechScreenCalendarInvite } from './calendar.service';
-import { fetchCandidateResume, saveCandidateFields, saveSubmissionFields } from './careers.service';
+import { fetchCandidate, fetchCandidateResume, saveSubmissionFields } from './careers.service';
 import { processResumeFile } from './drive.service';
 
 export const generateAppointment = async (event: SNSEvent) => {
@@ -24,17 +24,6 @@ export const generateAppointment = async (event: SNSEvent) => {
   console.log(`Successfully generated ${request.type} appointment.`);
 };
 
-const generateTechScreenAppointment = async (appointmentData: TechScreenAppointmentData) => {
-  const { restUrl, BhRestToken } = await getSessionData();
-  const { candidate, screenerEmail, appointment, jobTitle } = appointmentData;
-  const candidateResume = await fetchCandidateResume(restUrl, BhRestToken, candidate);
-  const driveFile = candidateResume && (await processResumeFile(candidate, candidateResume));
-  const eventId = await sendTechScreenCalendarInvite(candidate, screenerEmail, appointment, driveFile, jobTitle);
-  await saveCandidateFields(restUrl, BhRestToken, candidate.id, {
-    customText11: eventId,
-  });
-};
-
 const generateChallengeAppointment = async (appointmentData: ChallengeAppointmentData) => {
   const { restUrl, BhRestToken } = await getSessionData();
   const candidate = appointmentData.submission.candidate;
@@ -42,5 +31,16 @@ const generateChallengeAppointment = async (appointmentData: ChallengeAppointmen
   const eventId = await sendChallengeCalendarInvite(candidate, challengeLink, appointmentData.appointment);
   await saveSubmissionFields(restUrl, BhRestToken, appointmentData.submission.id, {
     customText15: eventId,
+  });
+};
+
+const generateTechScreenAppointment = async (appointmentData: TechScreenAppointmentData) => {
+  const { restUrl, BhRestToken } = await getSessionData();
+  const { submission, screenerEmail, appointment } = appointmentData;
+  const candidateResume = await fetchCandidateResume(restUrl, BhRestToken, submission.candidate.id);
+  const driveFile = candidateResume && (await processResumeFile(submission.candidate, candidateResume));
+  const eventId = await sendTechScreenCalendarInvite(submission, screenerEmail, appointment, driveFile);
+  await saveSubmissionFields(restUrl, BhRestToken, submission.id, {
+    customText23: eventId,
   });
 };

@@ -8,7 +8,8 @@ const challengeEvents = async (event: APIGatewayEvent) => {
     switch (event.httpMethod) {
       case 'POST': {
         const submissionId = event.queryStringParameters?.submissionId;
-        await processSubmissionChallengeEvent(JSON.parse(event.body), +submissionId);
+        // await processSubmissionChallengeEvent(JSON.parse(event.body), +submissionId);
+        await processSubmissionChallengeEvent(event.body as any, +submissionId);
       }
     }
   } catch (e) {

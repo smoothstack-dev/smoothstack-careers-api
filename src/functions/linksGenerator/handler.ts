@@ -5,7 +5,7 @@ const linksGenerator = async (event: SNSEvent) => {
   try {
     await generateLinks(event);
   } catch (e) {
-    console.error('Error generating challenge: ', e.message);
+    console.error('Error generating links: ', e);
     throw e;
   }
 };

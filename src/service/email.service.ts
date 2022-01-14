@@ -65,7 +65,7 @@ export const sendTechscreenResult = async (
   const gmailClient = await getClient();
   const mail = new MailComposer({
     to: email,
-    html: `Job ID: ${submission.jobOrder.id}<br/>Job Name: ${submission.jobOrder.title}<br/>Candidate ID: ${submission.candidate.id}<br/>Candidate Email: ${submission.candidate.email}<br/>Screener Email: ${screenerEmail}</br>Screener Determination: ${screenerRecommendation}`,
+    html: `Job ID: ${submission.jobOrder.id}<br/>Job Name: ${submission.jobOrder.title}<br/>Candidate ID: ${submission.candidate.id}<br/>Candidate Email: ${submission.candidate.email}<br/>Screener Email: ${screenerEmail}<br/>Screener Determination: ${screenerRecommendation}`,
     subject: 'Tech Screen Results',
     textEncoding: 'base64',
   });

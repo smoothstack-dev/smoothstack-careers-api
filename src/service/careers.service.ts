@@ -7,12 +7,17 @@ import { ChallengeSession } from 'src/model/ChallengeEvent';
 import { FormEntry, PrescreenForm, TechScreenForm, TechScreenResults } from 'src/model/Form';
 import { JobOrder } from 'src/model/JobOrder';
 import { JobSubmission } from 'src/model/JobSubmission';
-import { ChallengeLinksData } from 'src/model/Links';
+import { ChallengeLinksData, TechScreenLinksData } from 'src/model/Links';
 import { ResumeFile } from 'src/model/ResumeFile';
 import { SchedulingType } from 'src/model/SchedulingType';
 import { WebinarRegistration } from 'src/model/WebinarRegistration';
 import { deriveSubmissionStatus, shouldDowngradeJob } from 'src/util/challenge.util';
+import {
+  deriveSubmissionStatus as deriveSubmissionStatusTS,
+  shouldDowngradeJob as shouldDowngradeJobTS,
+} from 'src/util/techscreen.utils';
 import { sendTechscreenResult } from './email.service';
+import { generateTechScreenLinks } from './links.service';
 
 export const createWebResponse = async (careerId: string, application: any, resume: any): Promise<any> => {
   // these are public non-secret values
@@ -37,7 +42,7 @@ export const fetchCandidate = async (url: string, BhRestToken: string, candidate
     params: {
       BhRestToken,
       fields:
-        'id,firstName,lastName,email,phone,customText9,customText25,customText6,submissions(customText10,customText12,customTextBlock1,customText14,jobOrder(customText1,customInt1,customInt2,customText7),customDate2,customText20,customText19,customText21),webResponses(customText10,customText12,customTextBlock1,customText14,jobOrder(customText1,customInt1,customInt2,customText7),customDate2,customText20,customText19,customText21)',
+        'id,firstName,lastName,email,phone,customText9,customText25,customText6,submissions(customText10,customText12,customTextBlock1,customTextBlock2,customText14,jobOrder(customText1,customInt1,customInt2,customText7),customDate2,customText20,customText19,customText21,dateAdded,customText18),webResponses(customText10,customText12,customTextBlock1,customTextBlock2,customText14,jobOrder(customText1,customInt1,customInt2,customText7),customDate2,customText20,customText19,customText21,dateAdded,customText18),fileAttachments(id,type)',
     },
   });
 
@@ -47,6 +52,7 @@ export const fetchCandidate = async (url: string, BhRestToken: string, candidate
     challengeLink: customText9,
     relocation: customText25,
     githubLink: customText6,
+    fileAttachments: candidate.fileAttachments.data,
     submissions: [
       ...submissions.data.map((s) => ({
         id: s.id,
@@ -54,10 +60,13 @@ export const fetchCandidate = async (url: string, BhRestToken: string, candidate
         challengeScore: s.customText12,
         challengeSchedulingLink: s.customTextBlock1,
         previousChallengeId: s.customText14,
+        techScreenSchedulingLink: s.customTextBlock2,
         techScreenDate: s.customDate2,
         techScreenType: s.customText20,
+        techScreenResult: s.customText18,
         screenerDetermination: s.customText19,
         screenerEmail: s.customText21,
+        dateAdded: s.dateAdded,
         jobOrder: {
           challengeName: s.jobOrder.customText1,
           passingScore: s.jobOrder.customInt1,
@@ -71,10 +80,13 @@ export const fetchCandidate = async (url: string, BhRestToken: string, candidate
         challengeScore: w.customText12,
         challengeSchedulingLink: w.customTextBlock1,
         previousChallengeId: w.customText14,
+        techScreenSchedulingLink: w.customTextBlock2,
         techScreenDate: w.customDate2,
         techScreenType: w.customText20,
+        techScreenResult: w.customText18,
         screenerDetermination: w.customText19,
         screenerEmail: w.customText21,
+        dateAdded: w.dateAdded,
         jobOrder: {
           challengeName: w.jobOrder.customText1,
           passingScore: w.jobOrder.customInt1,
@@ -92,23 +104,20 @@ export const findCandidateByEmail = async (url: string, BhRestToken: string, ema
     params: {
       BhRestToken,
       fields:
-        'id,firstName,lastName,email,owner(email),submissions(id,jobOrder(id,title),status),webResponses(id,dateAdded),fileAttachments(id,type),customText9,customTextBlock4,customText36,customText6,customText11,customText38',
+        'id,firstName,lastName,email,owner(email),submissions(id,jobOrder(id,title),status),webResponses(id,dateAdded),fileAttachments(id,type),customText9,customTextBlock4,customText36,customText6',
       query: `email:${email}`,
       count: '1',
     },
   });
 
   if (data.data.length) {
-    const { customText9, customTextBlock4, customText36, customText6, customText11, customText38, ...candidate } =
-      data.data[0];
+    const { customText9, customTextBlock4, customText36, customText6, ...candidate } = data.data[0];
     return {
       ...candidate,
       challengeLink: customText9,
       webinarLink: customTextBlock4,
       webinarRegistrantId: customText36,
       githubLink: customText6,
-      techScreenEventId: customText11,
-      challengeEventId: customText38,
       submissions: candidate.submissions.data,
       webResponses: candidate.webResponses.data,
       fileAttachments: candidate.fileAttachments.data,
@@ -151,29 +160,25 @@ export const findCandidateByAppointment = async (
   schedulingType: SchedulingType
 ): Promise<Candidate> => {
   const candidateQueryUrl = `${url}search/Candidate`;
-  const appointmentIdField =
-    schedulingType === SchedulingType.WEBINAR
-      ? 'customText37'
-      : schedulingType === SchedulingType.TECHSCREEN && 'customText39';
+  const appointmentIdField = schedulingType === SchedulingType.WEBINAR && 'customText37';
+
   const { data } = await axios.get(candidateQueryUrl, {
     params: {
       BhRestToken,
       fields:
-        'id,firstName,lastName,email,owner(email),customText9,customText36,customText11,submissions(id,jobOrder(id,title),status),fileAttachments(id,type),customText38',
+        'id,firstName,lastName,email,owner(email),customText9,customText36,submissions(id,jobOrder(id,title),status),fileAttachments(id,type)',
       query: `${appointmentIdField}:${appointmentId}`,
       count: '1',
     },
   });
 
   if (data.data.length) {
-    const { customText9, customTextBlock4, customText36, customText11, customText38, ...candidate } = data.data[0];
+    const { customText9, customTextBlock4, customText36, ...candidate } = data.data[0];
     return {
       ...candidate,
       webinarLink: customTextBlock4,
       challengeLink: customText9,
       webinarRegistrantId: customText36,
-      techScreenEventId: customText11,
-      challengeEventId: customText38,
       submissions: candidate.submissions.data,
       fileAttachments: candidate.fileAttachments.data,
     };
@@ -188,26 +193,36 @@ const findSubmissionByAppointment = async (
   schedulingType: SchedulingType
 ): Promise<JobSubmission> => {
   const submissionQueryUrl = `${url}search/JobSubmission`;
-  const appointmentIdField = schedulingType === SchedulingType.CHALLENGE && 'customText16';
+  const appointmentIdField =
+    schedulingType === SchedulingType.CHALLENGE
+      ? 'customText16'
+      : schedulingType === SchedulingType.TECHSCREEN && 'customText17';
 
   const { data } = await axios.get(submissionQueryUrl, {
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText25),jobOrder(customText1),dateAdded,customText15,customText10',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(title,customText1),dateAdded,customText15,customText10,customText23,customText20',
       query: `${appointmentIdField}:${appointmentId}`,
       count: '1',
     },
   });
 
   if (data.data.length) {
-    const { customText15, customText10, ...submission } = data.data[0];
+    const { customText15, customText10, customText23, customText20, ...submission } = data.data[0];
     return {
       ...submission,
       challengeEventId: customText15,
       challengeLink: customText10,
-      candidate: { ...submission.candidate, relocation: submission.candidate.customText25 },
-      jobOrder: { challengeName: submission.jobOrder.customText1 },
+      candidate: {
+        ...submission.candidate,
+        githubLink: submission.candidate.customText6,
+        relocation: submission.candidate.customText25,
+        owner: submission.candidate.owner,
+      },
+      jobOrder: { title: submission.jobOrder.title, challengeName: submission.jobOrder.customText1 },
+      techScreenEventId: customText23,
+      techScreenType: customText20,
     };
   }
   return undefined;
@@ -373,10 +388,8 @@ const saveSubmissionTechScreenData = async (
 ): Promise<void> => {
   const submissionUrl = `${url}entity/JobSubmission/${submission.id}`;
   const { respondentEmail, screenerRecommendation, totalResult } = techScreenResults;
-  const screenerDetermination = screenerRecommendation.split('-')[0];
-  const determinationReason = screenerRecommendation.split('-')[1];
-  const submissionStatus = screenerDetermination === 'Fail' ? `R-${determinationReason}` : 'Tech Screen Passed';
-  const shouldDowngrade = screenerDetermination === 'Smoothstack Foundations';
+  const submissionStatus = deriveSubmissionStatusTS(screenerRecommendation);
+  const shouldDowngrade = shouldDowngradeJobTS(screenerRecommendation);
 
   const updateData = {
     customText18: totalResult,
@@ -708,15 +721,6 @@ export const saveSchedulingDataByEmail = async (
       };
       break;
     }
-    case SchedulingType.TECHSCREEN: {
-      updateData = {
-        customText10: status,
-        customText39: appointmentId,
-        customDate5: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
-        customTextBlock7: appointment.confirmationPage,
-      };
-      break;
-    }
   }
 
   await axios.post(candidateUrl, updateData, {
@@ -732,40 +736,49 @@ export const saveSchedulingDataByEmail = async (
 export const saveSchedulingDataBySubmissionId = async (
   url: string,
   BhRestToken: string,
+  submissionId: string,
   status: string,
   appointment: Appointment,
-  type: SchedulingType
+  type: SchedulingType,
+  submissionStatus: string
 ): Promise<JobSubmission> => {
-  const { email, datetime: date } = appointment;
-  const submissionId = email.split('challenge_').pop().split('@')[0];
+  const { datetime: date } = appointment;
   const submission = await fetchSubmission(url, BhRestToken, +submissionId);
   const submissionUrl = `${url}entity/JobSubmission/${submissionId}`;
 
   let updateData: any;
+  let eventType: any;
   switch (type) {
     case SchedulingType.CHALLENGE: {
+      eventType = `${type}(${submission.jobOrder.challengeName})`;
       updateData = {
         customText11: status,
         customDate1: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
         customText16: appointment.id,
+        status: submissionStatus,
+      };
+      break;
+    }
+    case SchedulingType.TECHSCREEN: {
+      eventType = `${type}(${submission.jobOrder.techScreenType})`;
+      updateData = {
+        customText22: status,
+        customDate2: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
+        customText17: appointment.id,
+        status: submissionStatus,
+        customTextBlock3: appointment.confirmationPage,
       };
       break;
     }
   }
 
-  await axios.post(submissionUrl, updateData, {
+  const schedulingReq = axios.post(submissionUrl, updateData, {
     params: {
       BhRestToken,
     },
   });
-  await saveSchedulingNote(
-    url,
-    BhRestToken,
-    submission.candidate.id,
-    `${type}(${submission.jobOrder.challengeName})` as any,
-    status,
-    date
-  );
+  const noteReq = saveSchedulingNote(url, BhRestToken, submission.candidate.id, eventType, status, date);
+  await Promise.all([schedulingReq, noteReq]);
 
   return submission;
 };
@@ -777,19 +790,30 @@ export const saveSubmissionSchedulingDataByAppointmentId = async (
   appointmentId: number,
   date: string,
   type: SchedulingType,
-  submissionStatus?: string
+  submissionStatus: string
 ): Promise<JobSubmission> => {
   const submission = await findSubmissionByAppointment(url, BhRestToken, appointmentId, type);
   if (submission) {
     const submissionUrl = `${url}entity/JobSubmission/${submission.id}`;
 
     let updateData: any;
+    let eventType: any;
     switch (type) {
       case SchedulingType.CHALLENGE: {
+        eventType = `${type}(${submission.jobOrder.challengeName})`;
         updateData = {
           customText11: status,
           customDate1: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
-          ...(submissionStatus && { status: submissionStatus }),
+          status: submissionStatus,
+        };
+        break;
+      }
+      case SchedulingType.TECHSCREEN: {
+        eventType = `${type}(${submission.jobOrder.techScreenType})`;
+        updateData = {
+          customText22: status,
+          customDate2: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
+          status: submissionStatus,
         };
         break;
       }
@@ -800,14 +824,7 @@ export const saveSubmissionSchedulingDataByAppointmentId = async (
         BhRestToken,
       },
     });
-    await saveSchedulingNote(
-      url,
-      BhRestToken,
-      submission.candidate.id,
-      `${type}(${submission.jobOrder.challengeName})` as any,
-      status,
-      date
-    );
+    await saveSchedulingNote(url, BhRestToken, submission.candidate.id, eventType, status, date);
   }
   return submission;
 };
@@ -910,7 +927,8 @@ export const saveSubmissionChallengeResult = async (
       },
     }),
   ];
-  return Promise.all(updates);
+  await Promise.all(updates);
+  subStatus === 'Challenge Passed' && (await generateTechScreenLinks(url, BhRestToken, submissionId));
 };
 
 export const saveSubmissionChallengeSimilarity = async (
@@ -955,14 +973,12 @@ export const saveCandidateLinks = async (
   BhRestToken: string,
   candidateId: number,
   webinarSchedulingLink: string,
-  preScreeningLink: string,
-  techScreenSchedulingLink: string
+  preScreeningLink: string
 ) => {
   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
   const updateData = {
     customTextBlock3: webinarSchedulingLink,
     customTextBlock6: preScreeningLink,
-    customTextBlock5: techScreenSchedulingLink,
   };
   return axios.post(candidateUrl, updateData, {
     params: {
@@ -1077,8 +1093,9 @@ export const saveSubmissionStatus = async (
 export const fetchCandidateResume = async (
   url: string,
   BhRestToken: string,
-  candidate: Candidate
+  candidateId: number
 ): Promise<ResumeFile> => {
+  const candidate = await fetchCandidate(url, BhRestToken, candidateId);
   const resumeId = candidate.fileAttachments.find((file) => file.type === 'Resume')?.id;
   const filesUrl = `${url}file/Candidate/${candidate.id}/${resumeId}`;
 
@@ -1127,11 +1144,20 @@ export const fetchSubmission = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText25),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7),dateAdded,customText15,customText10,customTextBlock2,customDate2,customText20',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7),dateAdded,customText15,customText10,customTextBlock2,customDate2,customText20,customText23',
     },
   });
 
-  const { customText15, customText10, customTextBlock2, customDate2, customText20, ...submission } = data.data;
+  const {
+    customText15,
+    customText10,
+    customTextBlock2,
+    customDate2,
+    customText20,
+    customText17,
+    customText23,
+    ...submission
+  } = data.data;
   return {
     ...submission,
     challengeEventId: customText15,
@@ -1139,7 +1165,13 @@ export const fetchSubmission = async (
     techScreenSchedulingLink: customTextBlock2,
     techScreenDate: customDate2,
     techScreenType: customText20,
-    candidate: { ...submission.candidate, relocation: submission.candidate.customText25 },
+    techScreenEventId: customText23,
+    candidate: {
+      ...submission.candidate,
+      githubLink: submission.candidate.customText6,
+      relocation: submission.candidate.customText25,
+      owner: submission.candidate.owner,
+    },
     jobOrder: {
       id: submission.jobOrder.id,
       title: submission.jobOrder.title,
@@ -1191,6 +1223,40 @@ export const saveChallengeLinks = async (
     ...(submissionStatus && { status: submissionStatus }),
     ...(previousChallengeId && { customText14: previousChallengeId }),
     ...(previousChallengeScore && { customText12: previousChallengeScore }),
+    ...(newJobOrderId && { jobOrder: { id: newJobOrderId } }),
+  };
+  return axios.post(submissionUrl, updateData, {
+    params: {
+      BhRestToken,
+    },
+  });
+};
+
+export const saveTechScreenLinks = async (
+  url: string,
+  BhRestToken: string,
+  submissionId: number,
+  linksData: TechScreenLinksData
+) => {
+  const submissionUrl = `${url}entity/JobSubmission/${submissionId}`;
+  const {
+    techScreenSchedulingLink,
+    techScreenResult,
+    techScreenDate,
+    techScreenType,
+    screenerEmail,
+    screenerDetermination,
+    submissionStatus,
+    newJobOrderId,
+  } = linksData;
+  const updateData = {
+    customTextBlock2: techScreenSchedulingLink,
+    ...(submissionStatus && { status: submissionStatus }),
+    ...(techScreenResult && { customText18: techScreenResult }),
+    ...(techScreenDate && { customDate2: techScreenDate }),
+    ...(techScreenType && { customText20: techScreenType }),
+    ...(screenerEmail && { customText21: screenerEmail }),
+    ...(screenerDetermination && { customText19: screenerDetermination }),
     ...(newJobOrderId && { jobOrder: { id: newJobOrderId } }),
   };
   return axios.post(submissionUrl, updateData, {

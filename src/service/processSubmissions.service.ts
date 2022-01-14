@@ -8,7 +8,7 @@ export const processNewSubmissions = async () => {
 
   const submissions = await fetchNewSubmissions(restUrl, BhRestToken);
 
-  const generationRequests = submissions.map((sub) => publishLinksGenerationRequest(sub.id));
+  const generationRequests = submissions.map((sub) => publishLinksGenerationRequest(sub.id, 'initial'));
   await Promise.all(generationRequests);
 
   console.log('Successfully processed new submissions:');

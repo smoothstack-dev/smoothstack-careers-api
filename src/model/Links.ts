@@ -1,5 +1,7 @@
+export type LinksGenerationType = 'initial' | 'techscreen';
+
 export interface LinksGenerationRequest {
-  type: 'initial' | 'techscreen';
+  type: LinksGenerationType;
   submissionId: number;
 }
 
@@ -8,16 +10,17 @@ export interface ChallengeLinksData {
   challengeSchedulingLink: string;
   previousChallengeScore: string;
   previousChallengeId: number;
-  submissionStatus: string,
-  newJobOrderId: number
+  submissionStatus: string;
+  newJobOrderId: number;
 }
 
 export interface TechScreenLinksData {
   techScreenSchedulingLink: string;
   techScreenResult: string;
   techScreenDate: string;
+  techScreenType: string;
   screenerEmail: string;
   screenerDetermination: string;
-  status: string,
-  newJobOrderId: number
+  submissionStatus: string;
+  newJobOrderId: number;
 }

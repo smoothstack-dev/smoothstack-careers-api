@@ -10,6 +10,7 @@ import {
   saveSubmissionStatus,
   saveTechScreenData,
 } from './careers.service';
+import { publishLinksGenerationRequest } from './sns.service';
 
 export const processFormEvent = async (formType: string, formEvent: any) => {
   switch (formType) {
@@ -23,17 +24,19 @@ export const processFormEvent = async (formType: string, formEvent: any) => {
 };
 
 const processPrescreenEvent = async (prescreenForm: PrescreenForm) => {
-  const { restUrl, BhRestToken } = await getSessionData();
+  // const { restUrl, BhRestToken } = await getSessionData();
 
-  const candidate = await findCandidateByEmail(restUrl, BhRestToken, prescreenForm.candidateEmail.answer);
-  if (candidate) {
-    await saveFormNote(restUrl, BhRestToken, candidate.id, prescreenForm, 'Prescreen');
-    const prescreenResult = await savePrescreenData(restUrl, BhRestToken, candidate.id, prescreenForm);
-    await updateSubmissionStatus(restUrl, BhRestToken, candidate, prescreenResult, [
-      'Prescreen Scheduled',
-      'Webinar Passed',
-    ]);
-  }
+  await publishLinksGenerationRequest(7541, 'initial');
+
+  // const candidate = await findCandidateByEmail(restUrl, BhRestToken, prescreenForm.candidateEmail.answer);
+  // if (candidate) {
+  //   await saveFormNote(restUrl, BhRestToken, candidate.id, prescreenForm, 'Prescreen');
+  //   const prescreenResult = await savePrescreenData(restUrl, BhRestToken, candidate.id, prescreenForm);
+  //   await updateSubmissionStatus(restUrl, BhRestToken, candidate, prescreenResult, [
+  //     'Prescreen Scheduled',
+  //     'Webinar Passed',
+  //   ]);
+  // }
 };
 
 const processTechScreenEvent = async (techScreenForm: TechScreenForm) => {
@@ -41,8 +44,9 @@ const processTechScreenEvent = async (techScreenForm: TechScreenForm) => {
 
   const submission = await fetchSubmission(restUrl, BhRestToken, +techScreenForm.submissionId.answer);
   if (submission) {
-    await saveFormNote(restUrl, BhRestToken, submission.candidate.id, techScreenForm, 'Tech Screen');
-    await saveTechScreenData(restUrl, BhRestToken, submission, techScreenForm);
+    const saveFormNoteReq = saveFormNote(restUrl, BhRestToken, submission.candidate.id, techScreenForm, 'Tech Screen');
+    const saveTSDataReq = saveTechScreenData(restUrl, BhRestToken, submission, techScreenForm);
+    await Promise.all([saveFormNoteReq, saveTSDataReq]);
   }
 };
 
