@@ -202,7 +202,7 @@ const findSubmissionByAppointment = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(title,customText1),dateAdded,customText15,customText10,customText23,customText20',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(title,customText1,customText7),dateAdded,customText15,customText10,customText23,customText20',
       query: `${appointmentIdField}:${appointmentId}`,
       count: '1',
     },
@@ -220,7 +220,7 @@ const findSubmissionByAppointment = async (
         relocation: submission.candidate.customText25,
         owner: submission.candidate.owner,
       },
-      jobOrder: { title: submission.jobOrder.title, challengeName: submission.jobOrder.customText1 },
+      jobOrder: { title: submission.jobOrder.title, challengeName: submission.jobOrder.customText1, techScreenType: submission.jobOrder.customText7 },
       techScreenEventId: customText23,
       techScreenType: customText20,
     };
@@ -354,7 +354,7 @@ export const saveTechScreenData = async (
   const submissionEvent = saveSubmissionTechScreenData(url, BhRestToken, submission, results);
   const noteEvents = getTechScreenNoteEvents(url, BhRestToken, submission.candidate.id, results);
   const notificationEvent = sendTechscreenResult(
-    'oscar.cedano@smoothstack.com',
+    submission.candidate.owner.email,
     submission,
     results.respondentEmail,
     results.screenerRecommendation
