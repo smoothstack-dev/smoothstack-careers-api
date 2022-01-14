@@ -220,7 +220,11 @@ const findSubmissionByAppointment = async (
         relocation: submission.candidate.customText25,
         owner: submission.candidate.owner,
       },
-      jobOrder: { title: submission.jobOrder.title, challengeName: submission.jobOrder.customText1, techScreenType: submission.jobOrder.customText7 },
+      jobOrder: {
+        title: submission.jobOrder.title,
+        challengeName: submission.jobOrder.customText1,
+        techScreenType: submission.jobOrder.customText7,
+      },
       techScreenEventId: customText23,
       techScreenType: customText20,
     };
@@ -371,8 +375,9 @@ const getTechScreenNoteEvents = (url: string, BhRestToken: string, candidateId: 
     results.projectResult,
     screenerDetermination
   );
+  const result = screenerDetermination === 'Fail' ? 'Failed' : 'Passed';
   const failureReason = screenerDetermination === 'Fail' ? `\n\n Failure Reason: ${determinationReason}` : '';
-  const resultNote = `Candidate ${screenerDetermination}ed Tech Screen\n\nTech Screener: ${results.respondentEmail}${failureReason}`;
+  const resultNote = `Candidate ${result} Tech Screen\n\nTech Screener: ${results.respondentEmail}${failureReason}`;
   const resultEvent = saveCandidateNote(url, BhRestToken, candidateId, 'Tech Screen Result', resultNote);
   const discrepancyEvent =
     discrepancy && saveCandidateNote(url, BhRestToken, candidateId, 'Tech Screen Result Mismatch', discrepancy);
