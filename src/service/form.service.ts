@@ -2,6 +2,7 @@ import { Candidate } from 'src/model/Candidate';
 import { PrescreenForm, TechScreenForm } from 'src/model/Form';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import {
+  fetchSubmission,
   findCandidateByEmail,
   saveFormNote,
   saveNoSubmissionNote,
@@ -38,14 +39,11 @@ const processPrescreenEvent = async (prescreenForm: PrescreenForm) => {
 const processTechScreenEvent = async (techScreenForm: TechScreenForm) => {
   const { restUrl, BhRestToken } = await getSessionData();
 
-  const candidate = await findCandidateByEmail(restUrl, BhRestToken, techScreenForm.candidateEmail.answer);
-  if (candidate) {
-    await saveFormNote(restUrl, BhRestToken, candidate.id, techScreenForm, 'Tech Screen');
-    const techScreenResult = await saveTechScreenData(restUrl, BhRestToken, candidate.id, techScreenForm);
-    await updateSubmissionStatus(restUrl, BhRestToken, candidate, techScreenResult, [
-      'Tech Screen Scheduled',
-      'Prescreen Passed',
-    ]);
+  const submission = await fetchSubmission(restUrl, BhRestToken, +techScreenForm.submissionId.answer);
+  if (submission) {
+    const saveFormNoteReq = saveFormNote(restUrl, BhRestToken, submission.candidate.id, techScreenForm, 'Tech Screen');
+    const saveTSDataReq = saveTechScreenData(restUrl, BhRestToken, submission, techScreenForm);
+    await Promise.all([saveFormNoteReq, saveTSDataReq]);
   }
 };
 

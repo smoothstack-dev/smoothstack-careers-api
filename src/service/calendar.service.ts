@@ -3,6 +3,7 @@ import { Appointment } from 'src/model/Appointment';
 import { Candidate } from 'src/model/Candidate';
 import { DriveFile } from 'src/model/DriveFile';
 import { GoogleService } from 'src/model/GoogleCredentials';
+import { JobSubmission } from 'src/model/JobSubmission';
 import { getTechScreeningLink } from 'src/util/links';
 import { v4 as uuidv4 } from 'uuid';
 import { getOauth2Client } from './auth/google.oauth.service';
@@ -13,17 +14,18 @@ const getClient = async () => {
 };
 
 export const sendTechScreenCalendarInvite = async (
-  candidate: Candidate,
+  submission: JobSubmission,
   screenerEmail: string,
   appointment: Appointment,
-  resumeFile: DriveFile,
-  jobTitle: string
+  resumeFile: DriveFile
 ): Promise<string> => {
   const calendarClient = await getClient();
+  const { candidate } = submission;
+  const { title: jobTitle } = submission.jobOrder;
   const jobTitleString = jobTitle ? `<strong>Position Applied for: ${jobTitle}</strong><br/>` : '';
   const event = {
     summary: `Smoothstack Tech Screening - ${candidate.firstName} ${candidate.lastName}`,
-    description: `${jobTitleString}Tech Screen Form Link: <a href="${getTechScreeningLink(candidate, jobTitle)}">${
+    description: `${jobTitleString}Tech Screen Form Link: <a href="${getTechScreeningLink(submission, jobTitle)}">${
       candidate.firstName
     }'s Tech Screening Form</a> (For Tech Screener Use Only)`,
     start: {
