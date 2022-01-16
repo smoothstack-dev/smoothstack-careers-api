@@ -17,7 +17,7 @@ import {
   shouldDowngradeJob as shouldDowngradeJobTS,
 } from 'src/util/techscreen.utils';
 import { sendTechscreenResult } from './email.service';
-import { generateTechScreenLinks } from './links.service';
+import { publishLinksGenerationRequest } from './sns.service';
 
 export const createWebResponse = async (careerId: string, application: any, resume: any): Promise<any> => {
   // these are public non-secret values
@@ -933,7 +933,7 @@ export const saveSubmissionChallengeResult = async (
     }),
   ];
   await Promise.all(updates);
-  subStatus === 'Challenge Passed' && (await generateTechScreenLinks(url, BhRestToken, submissionId));
+  subStatus === 'Challenge Passed' && (await publishLinksGenerationRequest(submissionId, 'techscreen'));
 };
 
 export const saveSubmissionChallengeSimilarity = async (

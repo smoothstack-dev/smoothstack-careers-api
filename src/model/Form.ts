@@ -1,3 +1,10 @@
+export type FormType = 'prescreen' | 'techscreen';
+
+export interface Form {
+  type: FormType;
+  formData: PrescreenForm | TechScreenForm;
+}
+
 export interface PrescreenForm {
   candidateName: FormEntry;
   candidateEmail: FormEntry;

@@ -13,6 +13,7 @@ import updatedSubmissionChecker from '@functions/updatedSubmissionChecker';
 import documentGenerator from '@functions/documentGenerator';
 import documentEvents from '@functions/documentEvents';
 import linksGenerator from '@functions/linksGenerator';
+import formProcessing from '@functions/formProcessing';
 
 const serverlessConfiguration: AWS = {
   service: 'smoothstack-careers-api',
@@ -66,6 +67,7 @@ const serverlessConfiguration: AWS = {
     webinarEvents,
     formEvents,
     appointmentGenerator,
+    formProcessing,
   },
   resources: {
     Resources: {
@@ -91,6 +93,12 @@ const serverlessConfiguration: AWS = {
         Type: 'AWS::SNS::Topic',
         Properties: {
           TopicName: 'smoothstack-appointment-generation-sns-topic',
+        },
+      },
+      FormProcessingTopic: {
+        Type: 'AWS::SNS::Topic',
+        Properties: {
+          TopicName: 'smoothstack-form-processing-sns-topic',
         },
       },
     },
