@@ -18,6 +18,7 @@ import {
   deriveSubmissionStatus as deriveSubmissionStatusTS,
   shouldDowngradeJob as shouldDowngradeJobTS,
 } from 'src/util/techscreen.utils';
+import { publishLinksGenerationRequest } from './sns.service';
 
 export const generateLinks = async (event: SNSEvent) => {
   console.log('Received Links Generation Request.');
@@ -57,7 +58,7 @@ const generateInitialLinks = async (restUrl: string, BhRestToken: string, submis
     ];
     await Promise.all(requests);
     challengeLinksData.submissionStatus === 'Challenge Passed' &&
-      (await generateTechScreenLinks(restUrl, BhRestToken, submissionId));
+      (await publishLinksGenerationRequest(submissionId, 'techscreen'));
     console.log('Successfully generated initial links for submission:');
   } else {
     console.log('Submission already has initial links. Submission not processed:');
