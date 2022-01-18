@@ -918,7 +918,7 @@ export const saveSubmissionChallengeResult = async (
   };
   const resultNoteTitle = shouldDowngrade
     ? `Moved Submission from Job Id: ${jobOrder.id} to JobId: ${jobOrder.foundationsJobId} (Smoothstack Foundations)`
-    : `${subStatus} (${jobOrder.challengeName}`;
+    : `${subStatus} (${jobOrder.challengeName})`;
   const resultNote = `${resultNoteTitle}\n\nChallenge Score: ${score}\n\nChallenge Link: ${challengeLink}`;
   const updates = [
     saveCandidateFields(url, BhRestToken, candidate.id, { status: candidateStatus }),
