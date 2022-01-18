@@ -1,7 +1,9 @@
+import { SNSEvent } from 'aws-lambda';
 import { Candidate } from 'src/model/Candidate';
-import { PrescreenForm, TechScreenForm } from 'src/model/Form';
+import { Form, FormType, PrescreenForm, TechScreenForm } from 'src/model/Form';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import {
+  fetchSubmission,
   findCandidateByEmail,
   saveFormNote,
   saveNoSubmissionNote,
@@ -9,19 +11,33 @@ import {
   saveSubmissionStatus,
   saveTechScreenData,
 } from './careers.service';
+import { publishFormProcesingRequest } from './sns.service';
 
-export const processFormEvent = async (formType: string, formEvent: any) => {
-  switch (formType) {
-    case 'prescreen':
-      await processPrescreenEvent(formEvent);
-      break;
-    case 'techscreen':
-      await processTechScreenEvent(formEvent);
-      break;
-  }
+export const processFormEvent = async (formType: FormType, formData: any) => {
+  const form: Form = {
+    type: formType,
+    formData,
+  };
+  await publishFormProcesingRequest(form);
 };
 
-const processPrescreenEvent = async (prescreenForm: PrescreenForm) => {
+export const processForm = async (event: SNSEvent) => {
+  const message = event.Records[0].Sns.Message;
+  console.log('Received Form Processing Request: ', message);
+  const { type, formData }: Form = JSON.parse(message);
+
+  switch (type) {
+    case 'prescreen':
+      await processPrescreenForm(formData as PrescreenForm);
+      break;
+    case 'techscreen':
+      await processTechScreenForm(formData as TechScreenForm);
+      break;
+  }
+  console.log('Successfully processed form.');
+};
+
+const processPrescreenForm = async (prescreenForm: PrescreenForm) => {
   const { restUrl, BhRestToken } = await getSessionData();
 
   const candidate = await findCandidateByEmail(restUrl, BhRestToken, prescreenForm.candidateEmail.answer);
@@ -35,17 +51,14 @@ const processPrescreenEvent = async (prescreenForm: PrescreenForm) => {
   }
 };
 
-const processTechScreenEvent = async (techScreenForm: TechScreenForm) => {
+const processTechScreenForm = async (techScreenForm: TechScreenForm) => {
   const { restUrl, BhRestToken } = await getSessionData();
 
-  const candidate = await findCandidateByEmail(restUrl, BhRestToken, techScreenForm.candidateEmail.answer);
-  if (candidate) {
-    await saveFormNote(restUrl, BhRestToken, candidate.id, techScreenForm, 'Tech Screen');
-    const techScreenResult = await saveTechScreenData(restUrl, BhRestToken, candidate.id, techScreenForm);
-    await updateSubmissionStatus(restUrl, BhRestToken, candidate, techScreenResult, [
-      'Tech Screen Scheduled',
-      'Prescreen Passed',
-    ]);
+  const submission = await fetchSubmission(restUrl, BhRestToken, +techScreenForm.submissionId.answer);
+  if (submission) {
+    const saveFormNoteReq = saveFormNote(restUrl, BhRestToken, submission.candidate.id, techScreenForm, 'Tech Screen');
+    const saveTSDataReq = saveTechScreenData(restUrl, BhRestToken, submission, techScreenForm);
+    await Promise.all([saveFormNoteReq, saveTSDataReq]);
   }
 };
 

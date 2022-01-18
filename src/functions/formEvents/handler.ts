@@ -1,5 +1,6 @@
 import { middyfy } from '@libs/lambda';
 import { APIGatewayEvent } from 'aws-lambda';
+import { FormType } from 'src/model/Form';
 import { processFormEvent } from 'src/service/form.service';
 
 const formEvents = async (event: APIGatewayEvent) => {
@@ -7,7 +8,7 @@ const formEvents = async (event: APIGatewayEvent) => {
   try {
     switch (event.httpMethod) {
       case 'POST':
-        await processFormEvent(event.queryStringParameters.formType, event.body);
+        await processFormEvent(event.queryStringParameters.formType as FormType, event.body);
     }
   } catch (e) {
     console.error(e);

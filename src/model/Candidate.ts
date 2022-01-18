@@ -7,12 +7,9 @@ export interface Candidate {
   email: string;
   phone: string;
   owner: Owner;
-  challengeLink: string;
   webinarLink: string;
   webinarRegistrantId: string;
   relocation: string;
-  techScreenEventId: string;
-  challengeEventId: string;
   submissions: JobSubmission[];
   webResponses: WebResponse[];
   githubLink: string;

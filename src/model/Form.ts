@@ -1,3 +1,10 @@
+export type FormType = 'prescreen' | 'techscreen';
+
+export interface Form {
+  type: FormType;
+  formData: PrescreenForm | TechScreenForm;
+}
+
 export interface PrescreenForm {
   candidateName: FormEntry;
   candidateEmail: FormEntry;
@@ -35,7 +42,7 @@ export interface PrescreenForm {
 
 export interface TechScreenForm {
   respondentEmail: FormEntry;
-  candidateEmail: FormEntry;
+  submissionId: FormEntry;
   githubLink: FormEntry;
   onTime: FormEntry;
   dressedProfessionally: FormEntry;
@@ -49,4 +56,17 @@ export interface TechScreenForm {
 export interface FormEntry {
   question: string;
   answer: string;
+}
+
+export interface TechScreenResults {
+  respondentEmail: string;
+  screenerRecommendation: string;
+  technicalResult: string;
+  behavioralResult: string;
+  projectResult: string;
+  totalResult: string;
+  githubLink: string;
+  onTime: string;
+  dressedProfessionally: string;
+  communicationSkills: string;
 }

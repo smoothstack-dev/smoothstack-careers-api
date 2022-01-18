@@ -61,15 +61,19 @@ export const processSubmissionChallengeEvent = async ({ event, session }: Challe
   const prevSubmissions = await findSubmissionsByPreviousChallengeId(restUrl, BhRestToken, submissionId);
   const submissionIds = [...prevSubmissions.map((s) => s.id), submissionId];
   switch (event) {
-    case 'result':
-      for (const subId of submissionIds) {
-        await saveSubmissionChallengeResult(restUrl, BhRestToken, session, subId);
-      }
+    case 'result': {
+      const submissionEvents = submissionIds.map((subId) =>
+        saveSubmissionChallengeResult(restUrl, BhRestToken, session, subId)
+      );
+      await Promise.all(submissionEvents);
       break;
-    case 'similarity':
-      for (const subId of submissionIds) {
-        await saveSubmissionChallengeSimilarity(restUrl, BhRestToken, session, subId);
-      }
+    }
+    case 'similarity': {
+      const submissionEvents = submissionIds.map((subId) =>
+        saveSubmissionChallengeSimilarity(restUrl, BhRestToken, session, subId)
+      );
+      await Promise.all(submissionEvents);
       break;
+    }
   }
 };

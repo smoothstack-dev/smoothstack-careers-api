@@ -1,11 +1,11 @@
 import { SNSEvent } from 'aws-lambda';
-import { generateLinks } from 'src/service/generateLinks.service';
+import { generateLinks } from 'src/service/links.service';
 
 const linksGenerator = async (event: SNSEvent) => {
   try {
     await generateLinks(event);
   } catch (e) {
-    console.error('Error generating challenge: ', e.message);
+    console.error('Error generating links: ', e);
     throw e;
   }
 };

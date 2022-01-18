@@ -42,7 +42,7 @@ export const apply = async (event: APIGatewayProxyEvent) => {
     const { jobSubmission, candidate: newCandidate } = await createWebResponse(careerId, webResponseFields, resume);
     await populateCandidateFields(restUrl, BhRestToken, newCandidate.id, candidateFields as any);
     await saveApplicationNote(restUrl, BhRestToken, newCandidate.id, event.queryStringParameters);
-    await publishLinksGenerationRequest(jobSubmission.id);
+    await publishLinksGenerationRequest(jobSubmission.id, 'initial');
 
     console.log('Successfully created new Candidate.');
     return newCandidate;
