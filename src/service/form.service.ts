@@ -34,7 +34,7 @@ export const processForm = async (event: SNSEvent) => {
       await processTechScreenForm(formData as TechScreenForm);
       break;
   }
-  console.log('Successfully processed form');
+  console.log('Successfully processed form.');
 };
 
 const processPrescreenForm = async (prescreenForm: PrescreenForm) => {

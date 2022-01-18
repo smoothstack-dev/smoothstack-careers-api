@@ -42,14 +42,13 @@ export const fetchCandidate = async (url: string, BhRestToken: string, candidate
     params: {
       BhRestToken,
       fields:
-        'id,firstName,lastName,email,phone,customText9,customText25,customText6,submissions(customText10,customText12,customTextBlock1,customTextBlock2,customText14,jobOrder(customText1,customInt1,customInt2,customText7),customDate2,customText20,customText19,customText21,dateAdded,customText18),webResponses(customText10,customText12,customTextBlock1,customTextBlock2,customText14,jobOrder(customText1,customInt1,customInt2,customText7),customDate2,customText20,customText19,customText21,dateAdded,customText18),fileAttachments(id,type)',
+        'id,firstName,lastName,email,phone,customText25,customText6,submissions(customText10,customText12,customTextBlock1,customTextBlock2,customText14,jobOrder(customText1,customInt1,customInt2,customText7),customDate2,customText20,customText19,customText21,dateAdded,customText18),webResponses(customText10,customText12,customTextBlock1,customTextBlock2,customText14,jobOrder(customText1,customInt1,customInt2,customText7),customDate2,customText20,customText19,customText21,dateAdded,customText18),fileAttachments(id,type)',
     },
   });
 
-  const { customText9, customText25, customText6, submissions, webResponses, ...candidate } = data.data;
+  const { customText25, customText6, submissions, webResponses, ...candidate } = data.data;
   return {
     ...candidate,
-    challengeLink: customText9,
     relocation: customText25,
     githubLink: customText6,
     fileAttachments: candidate.fileAttachments.data,
@@ -104,17 +103,16 @@ export const findCandidateByEmail = async (url: string, BhRestToken: string, ema
     params: {
       BhRestToken,
       fields:
-        'id,firstName,lastName,email,owner(email),submissions(id,jobOrder(id,title),status),webResponses(id,dateAdded),fileAttachments(id,type),customText9,customTextBlock4,customText36,customText6',
+        'id,firstName,lastName,email,owner(email),submissions(id,jobOrder(id,title),status),webResponses(id,dateAdded),fileAttachments(id,type),customTextBlock4,customText36,customText6',
       query: `email:${email}`,
       count: '1',
     },
   });
 
   if (data.data.length) {
-    const { customText9, customTextBlock4, customText36, customText6, ...candidate } = data.data[0];
+    const { customTextBlock4, customText36, customText6, ...candidate } = data.data[0];
     return {
       ...candidate,
-      challengeLink: customText9,
       webinarLink: customTextBlock4,
       webinarRegistrantId: customText36,
       githubLink: customText6,
@@ -166,18 +164,17 @@ export const findCandidateByAppointment = async (
     params: {
       BhRestToken,
       fields:
-        'id,firstName,lastName,email,owner(email),customText9,customText36,submissions(id,jobOrder(id,title),status),fileAttachments(id,type)',
+        'id,firstName,lastName,email,owner(email),customText36,submissions(id,jobOrder(id,title),status),fileAttachments(id,type)',
       query: `${appointmentIdField}:${appointmentId}`,
       count: '1',
     },
   });
 
   if (data.data.length) {
-    const { customText9, customTextBlock4, customText36, ...candidate } = data.data[0];
+    const { customTextBlock4, customText36, ...candidate } = data.data[0];
     return {
       ...candidate,
       webinarLink: customTextBlock4,
-      challengeLink: customText9,
       webinarRegistrantId: customText36,
       submissions: candidate.submissions.data,
       fileAttachments: candidate.fileAttachments.data,
@@ -269,7 +266,7 @@ export const populateCandidateFields = async (
     customText3: fields.yearsOfExperience,
     ...(fields.graduationDate && {
       customDate3: fields.graduationDate,
-      customText32: isGraduatingWithin4Months(new Date(fields.graduationDate)),
+      customText9: calculateMonthsToGrad(new Date(fields.graduationDate)),
     }),
     ...(fields.degreeExpected && { degreeList: fields.degreeExpected }),
     ...(fields.highestDegree && { educationDegree: fields.highestDegree }),
@@ -302,7 +299,7 @@ export const savePrescreenData = async (
         new Date(prescreenForm.expectedGraduationDate.answer).getTime() +
           new Date(prescreenForm.expectedGraduationDate.answer).getTimezoneOffset() * 60000
       ).toLocaleDateString('en-US'),
-      customText32: isGraduatingWithin4Months(new Date(prescreenForm.expectedGraduationDate.answer)),
+      customText9: calculateMonthsToGrad(new Date(prescreenForm.expectedGraduationDate.answer)),
     }),
     ...(prescreenForm.highestDegree?.answer && { educationDegree: prescreenForm.highestDegree.answer }),
     ...(prescreenForm.graduationDate?.answer && {
@@ -338,12 +335,12 @@ export const savePrescreenData = async (
   return result === 'Pass' ? 'Prescreen Passed' : ['Reject', 'Snooze'].includes(result) && `R-${resultReason}`;
 };
 
-const isGraduatingWithin4Months = (graduationDate: Date) => {
+const calculateMonthsToGrad = (graduationDate: Date): number => {
   const today = new Date();
   let diff = (today.getTime() - graduationDate.getTime()) / 1000;
   diff /= 60 * 60 * 24 * 7 * 4;
   const result = Math.abs(Math.round(diff));
-  return result <= 4 ? 'Yes' : 'No';
+  return result;
 };
 
 export const saveTechScreenData = async (
