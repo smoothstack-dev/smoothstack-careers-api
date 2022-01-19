@@ -42,8 +42,10 @@ const processPrescreenForm = async (prescreenForm: PrescreenForm) => {
 
   const candidate = await findCandidateByEmail(restUrl, BhRestToken, prescreenForm.candidateEmail.answer);
   if (candidate) {
-    await saveFormNote(restUrl, BhRestToken, candidate.id, prescreenForm, 'Prescreen');
-    const prescreenResult = await savePrescreenData(restUrl, BhRestToken, candidate.id, prescreenForm);
+    const prescreenReq = savePrescreenData(restUrl, BhRestToken, candidate.id, prescreenForm);
+    const noteReq = saveFormNote(restUrl, BhRestToken, candidate.id, prescreenForm, 'Prescreen');
+    const [prescreenResult] = await Promise.all([prescreenReq, noteReq]);
+
     await updateSubmissionStatus(restUrl, BhRestToken, candidate, prescreenResult, [
       'Prescreen Scheduled',
       'Webinar Passed',

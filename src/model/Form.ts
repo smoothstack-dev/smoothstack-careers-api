@@ -38,6 +38,11 @@ export interface PrescreenForm {
   willVaccinate: FormEntry;
   vaccinationNotes: FormEntry;
   county: FormEntry;
+  address1: FormEntry;
+  address2: FormEntry;
+  city: FormEntry;
+  state: FormEntry;
+  zip: FormEntry;
 }
 
 export interface TechScreenForm {

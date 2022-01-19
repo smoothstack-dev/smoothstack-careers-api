@@ -322,6 +322,16 @@ export const savePrescreenData = async (
       customText1: prescreenForm.programmingLanguages.answer,
     }),
     ...(prescreenForm.county?.answer && { customText31: prescreenForm.county.answer }),
+    ...(shouldPopulateAddress(prescreenForm) && {
+      address: {
+        address1: prescreenForm.address1?.answer,
+        address2: prescreenForm.address2?.answer,
+        city: prescreenForm.city?.answer,
+        state: prescreenForm.state?.answer,
+        zip: prescreenForm.zip?.answer,
+        countryID: 1,
+      },
+    }),
     customText27: prescreenForm.result.answer,
     status: candidateStatus,
   };
@@ -333,6 +343,10 @@ export const savePrescreenData = async (
   });
 
   return result === 'Pass' ? 'Prescreen Passed' : ['Reject', 'Snooze'].includes(result) && `R-${resultReason}`;
+};
+
+const shouldPopulateAddress = ({ address1, address2, city, state, zip }: PrescreenForm) => {
+  return !!(address1?.answer || address2?.answer || city?.answer || state?.answer || zip?.answer);
 };
 
 const calculateMonthsToGrad = (graduationDate: Date): number => {
