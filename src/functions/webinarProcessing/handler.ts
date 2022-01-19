@@ -7,6 +7,7 @@ const webinarProcessing = async (event: SNSEvent) => {
     await processWebinarEvent(event);
   } catch (e) {
     console.error('Error processing webinar event: ', e.message);
+    throw e;
   }
 };
 
