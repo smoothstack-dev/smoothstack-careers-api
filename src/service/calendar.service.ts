@@ -24,10 +24,10 @@ export const sendTechScreenCalendarInvite = async (
   const { title: jobTitle } = submission.jobOrder;
   const jobTitleString = jobTitle ? `<strong>Position Applied for: ${jobTitle}</strong><br/>` : '';
   const event = {
-    summary: `Smoothstack Tech Screening - ${candidate.firstName} ${candidate.lastName}`,
+    summary: `Smoothstack Tech Screening/Video Chat - ${candidate.firstName} ${candidate.lastName}`,
     description: `${jobTitleString}Tech Screen Form Link: <a href="${getTechScreeningLink(submission, jobTitle)}">${
       candidate.firstName
-    }'s Tech Screening Form</a> (For Tech Screener Use Only)`,
+    }'s Tech Screening Form</a> (For Tech Screener Use Only)<br/>br/><strong>Note to Candidate:</strong> This is a <strong>videochat</strong> meeting. You must be ready to share your webcam during the call.`,
     start: {
       dateTime: appointment.datetime,
       timeZone: 'America/New_York',

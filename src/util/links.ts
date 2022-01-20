@@ -30,5 +30,5 @@ export const getTechScreeningLink = (submission: JobSubmission, jobTitle: string
     fullName
   )}&entry.1324592995=${encodeURIComponent(email)}&entry.932761525=${encodeURIComponent(
     jobTitle ?? ''
-  )}&entry.1466421106=${encodeURIComponent(githubLink ?? '')}&entry.83916426=${encodeURIComponent(submissionId)}`;
+  )}&entry.1466421106=${encodeURIComponent(githubLink ?? '')}&entry.83916426=${encodeURIComponent(submissionId)}&entry.1832598114=${encodeURIComponent(submission.techScreenSchedulingLink)}`;
 };
