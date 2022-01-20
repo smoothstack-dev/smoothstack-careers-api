@@ -199,18 +199,19 @@ const findSubmissionByAppointment = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(title,customText1,customText7),dateAdded,customText15,customText10,customText23,customText20',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(title,customText1,customText7),dateAdded,customText15,customText10,customText23,customText20,customTextBlock2',
       query: `${appointmentIdField}:${appointmentId}`,
       count: '1',
     },
   });
 
   if (data.data.length) {
-    const { customText15, customText10, customText23, customText20, ...submission } = data.data[0];
+    const { customText15, customText10, customText23, customText20, customTextBlock2, ...submission } = data.data[0];
     return {
       ...submission,
       challengeEventId: customText15,
       challengeLink: customText10,
+      techScreenSchedulingLink: customTextBlock2,
       candidate: {
         ...submission.candidate,
         githubLink: submission.candidate.customText6,
