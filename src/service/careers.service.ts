@@ -934,11 +934,8 @@ export const saveSubmissionChallengeResult = async (
     ? `Moved Submission from Job Id: ${jobOrder.id} to JobId: ${jobOrder.foundationsJobId} (Smoothstack Foundations)`
     : `${subStatus} (${jobOrder.challengeName})`;
   const resultNote = `${resultNoteTitle}\n\nChallenge Score: ${score}\n\nChallenge Link: ${challengeLink}`;
-  const candidateUpdates = [
-    saveCandidateFields(url, BhRestToken, candidate.id, { status: candidateStatus }),
-    saveCandidateNote(url, BhRestToken, candidate.id, 'Challenge Result', resultNote),
-  ];
-  await Promise.all(candidateUpdates);
+  await saveCandidateFields(url, BhRestToken, candidate.id, { status: candidateStatus });
+  await saveCandidateNote(url, BhRestToken, candidate.id, 'Challenge Result', resultNote);
   await axios.post(submissionUrl, updateData, {
     params: {
       BhRestToken,
