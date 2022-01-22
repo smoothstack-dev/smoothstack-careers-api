@@ -1,4 +1,3 @@
-import { middyfy } from '@libs/lambda';
 import { SNSEvent } from 'aws-lambda';
 import { processWebinarEvent } from 'src/service/webinar.service';
 
@@ -11,4 +10,4 @@ const webinarProcessing = async (event: SNSEvent) => {
   }
 };
 
-export const main = middyfy(webinarProcessing);
+export const main = webinarProcessing;
