@@ -199,18 +199,19 @@ const findSubmissionByAppointment = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(title,customText1,customText7),dateAdded,customText15,customText10,customText23,customText20',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(title,customText1,customText7),dateAdded,customText15,customText10,customText23,customText20,customTextBlock2',
       query: `${appointmentIdField}:${appointmentId}`,
       count: '1',
     },
   });
 
   if (data.data.length) {
-    const { customText15, customText10, customText23, customText20, ...submission } = data.data[0];
+    const { customText15, customText10, customText23, customText20, customTextBlock2, ...submission } = data.data[0];
     return {
       ...submission,
       challengeEventId: customText15,
       challengeLink: customText10,
+      techScreenSchedulingLink: customTextBlock2,
       candidate: {
         ...submission.candidate,
         githubLink: submission.candidate.customText6,
@@ -322,6 +323,16 @@ export const savePrescreenData = async (
       customText1: prescreenForm.programmingLanguages.answer,
     }),
     ...(prescreenForm.county?.answer && { customText31: prescreenForm.county.answer }),
+    ...(shouldPopulateAddress(prescreenForm) && {
+      address: {
+        address1: prescreenForm.address1?.answer,
+        address2: prescreenForm.address2?.answer,
+        city: prescreenForm.city?.answer,
+        state: prescreenForm.state?.answer,
+        zip: prescreenForm.zip?.answer,
+        countryID: 1,
+      },
+    }),
     customText27: prescreenForm.result.answer,
     status: candidateStatus,
   };
@@ -333,6 +344,10 @@ export const savePrescreenData = async (
   });
 
   return result === 'Pass' ? 'Prescreen Passed' : ['Reject', 'Snooze'].includes(result) && `R-${resultReason}`;
+};
+
+const shouldPopulateAddress = ({ address1, address2, city, state, zip }: PrescreenForm) => {
+  return !!(address1?.answer || address2?.answer || city?.answer || state?.answer || zip?.answer);
 };
 
 const calculateMonthsToGrad = (graduationDate: Date): number => {
@@ -920,16 +935,13 @@ export const saveSubmissionChallengeResult = async (
     ? `Moved Submission from Job Id: ${jobOrder.id} to JobId: ${jobOrder.foundationsJobId} (Smoothstack Foundations)`
     : `${subStatus} (${jobOrder.challengeName})`;
   const resultNote = `${resultNoteTitle}\n\nChallenge Score: ${score}\n\nChallenge Link: ${challengeLink}`;
-  const updates = [
-    saveCandidateFields(url, BhRestToken, candidate.id, { status: candidateStatus }),
-    saveCandidateNote(url, BhRestToken, candidate.id, 'Challenge Result', resultNote),
-    axios.post(submissionUrl, updateData, {
-      params: {
-        BhRestToken,
-      },
-    }),
-  ];
-  await Promise.all(updates);
+  await saveCandidateFields(url, BhRestToken, candidate.id, { status: candidateStatus });
+  await saveCandidateNote(url, BhRestToken, candidate.id, 'Challenge Result', resultNote);
+  await axios.post(submissionUrl, updateData, {
+    params: {
+      BhRestToken,
+    },
+  });
   subStatus === 'Challenge Passed' && (await publishLinksGenerationRequest(submissionId, 'techscreen'));
 };
 
