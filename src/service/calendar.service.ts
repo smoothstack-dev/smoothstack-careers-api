@@ -1,11 +1,11 @@
 import { calendar } from '@googleapis/calendar';
+import { randomUUID } from 'crypto';
 import { Appointment } from 'src/model/Appointment';
 import { Candidate } from 'src/model/Candidate';
 import { DriveFile } from 'src/model/DriveFile';
 import { GoogleService } from 'src/model/GoogleCredentials';
 import { JobSubmission } from 'src/model/JobSubmission';
 import { getTechScreeningLink } from 'src/util/links';
-import { v4 as uuidv4 } from 'uuid';
 import { getOauth2Client } from './auth/google.oauth.service';
 
 const getClient = async () => {
@@ -50,7 +50,7 @@ export const sendTechScreenCalendarInvite = async (
       ],
     }),
     conferenceData: {
-      createRequest: { requestId: uuidv4() },
+      createRequest: { requestId: randomUUID() },
     },
   };
 

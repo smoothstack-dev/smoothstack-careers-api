@@ -79,3 +79,27 @@ export const sendTechscreenResult = async (
     },
   });
 };
+
+export const sendNewAccountEmail = async (
+  fullName: string,
+  corporateEmail: string,
+  secondaryEmail: string,
+  temporaryPassword: string
+) => {
+  const gmailClient = await getClient();
+  const mail = new MailComposer({
+    to: secondaryEmail,
+    html: `Hi ${fullName},<br/><br/>You have a new Google Account with the Smoothstack organization.<br/><br/>Sign in to your Google Account to access the Google services your organization provides.<br/><br/>Login Url: https://accounts.google.com<br/>Your username: <strong>${corporateEmail}</strong><br/>Your Password: <strong>${temporaryPassword}<strong/><br/><br/>For your security, you must reset your password on initial login.<br/><br/><strong>Regards,<br/>Smoothstack Team<strong/>`,
+    subject: 'Smoothstack Account Activation',
+    textEncoding: 'base64',
+  });
+  const msg = await mail.compile().build();
+  const encodedMessage = Buffer.from(msg).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+  await gmailClient.users.messages.send({
+    userId: 'me',
+    requestBody: {
+      raw: encodedMessage,
+    },
+  });
+};

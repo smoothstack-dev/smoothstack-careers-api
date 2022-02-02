@@ -14,20 +14,35 @@ import documentGenerator from '@functions/documentGenerator';
 import documentEvents from '@functions/documentEvents';
 import linksGenerator from '@functions/linksGenerator';
 import formProcessing from '@functions/formProcessing';
+import { snsResources } from './resources/sns/snsResources';
+import { dbResources } from './resources/db/dbResources';
+import userEvents from '@functions/userEvents';
 
 const serverlessConfiguration: AWS = {
   service: 'smoothstack-careers-api',
-  frameworkVersion: '2',
-  plugins: ['serverless-webpack', 'serverless-offline', 'serverless-offline-sns'],
+  frameworkVersion: '3',
+  plugins: ['serverless-esbuild', 'serverless-offline', 'serverless-offline-sns', 'serverless-dynamodb-local'],
+  package: { individually: true },
   custom: {
+    esbuild: {
+      bundle: true,
+      minify: false,
+      sourcemap: true,
+      exclude: ['aws-sdk'],
+      target: 'node14',
+      define: { 'require.resolve': undefined },
+      platform: 'node',
+    },
     'serverless-offline-sns': {
       port: 4002,
       debug: false,
       accountId: '${opt:aws_account, env: AWS_ACCOUNT}',
     },
-    webpack: {
-      webpackConfig: './webpack.config.js',
-      includeModules: true,
+    dynamodb: {
+      stages: ['local'],
+      start: {
+        migrate: true,
+      },
     },
   },
   provider: {
@@ -68,39 +83,22 @@ const serverlessConfiguration: AWS = {
     formEvents,
     appointmentGenerator,
     formProcessing,
+    userEvents,
   },
   resources: {
+    Conditions: {
+      isLocal: {
+        'Fn::Equals': ['${self:provider.stage}', 'local'],
+      },
+    },
     Resources: {
-      LinksGenerationTopic: {
-        Type: 'AWS::SNS::Topic',
-        Properties: {
-          TopicName: 'smoothstack-links-generation-sns-topic',
+      ...snsResources,
+      ...({
+        UserEventsTable: {
+          ...dbResources.UserEventsTable,
+          Condition: 'isLocal',
         },
-      },
-      DocumentGenerationTopic: {
-        Type: 'AWS::SNS::Topic',
-        Properties: {
-          TopicName: 'smoothstack-document-generation-sns-topic',
-        },
-      },
-      WebinarProcessingTopic: {
-        Type: 'AWS::SNS::Topic',
-        Properties: {
-          TopicName: 'smoothstack-webinar-processing-sns-topic',
-        },
-      },
-      AppointmentGenerationTopic: {
-        Type: 'AWS::SNS::Topic',
-        Properties: {
-          TopicName: 'smoothstack-appointment-generation-sns-topic',
-        },
-      },
-      FormProcessingTopic: {
-        Type: 'AWS::SNS::Topic',
-        Properties: {
-          TopicName: 'smoothstack-form-processing-sns-topic',
-        },
-      },
+      } as any),
     },
   },
 };
