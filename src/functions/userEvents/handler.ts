@@ -8,13 +8,15 @@ const userEvents = async (event: APIGatewayEvent) => {
   try {
     switch (event.httpMethod) {
       case 'POST':
-        console.log(event)
-        const userEvent: UserEvent = {
-          eventId: randomUUID(),
-          eventType: event.headers['X-Goog-Resource-State'],
-          primaryEmail: event.body['primaryEmail'],
-        };
-        await processUserEvent(userEvent);
+        const eventType = event.headers['X-Goog-Resource-State'];
+        if (eventType !== 'sync') {
+          const userEvent: UserEvent = {
+            eventId: randomUUID(),
+            eventType,
+            primaryEmail: event.body['primaryEmail'],
+          };
+          await processUserEvent(userEvent);
+        }
         break;
     }
   } catch (e) {
