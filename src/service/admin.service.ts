@@ -2,8 +2,11 @@ import { admin, admin_directory_v1 } from '@googleapis/admin';
 import { Candidate } from 'src/model/Candidate';
 import { GoogleService } from 'src/model/GoogleCredentials';
 import { getOauth2Client } from './auth/google.oauth.service';
+import { generate as generatePassword } from 'generate-password';
+import { sendNewAccountEmail } from './email.service';
+import { getDynamoClient } from '@libs/dynamo';
 
-const getClient = async () => {
+export const getClient = async () => {
   const oauth2Client = await getOauth2Client(GoogleService.ADMIN);
   return admin({ version: 'directory_v1', auth: oauth2Client });
 };
@@ -14,6 +17,10 @@ export const addUser = async (candidate: Candidate): Promise<void> => {
   const firstName = givenName.split(' ')[0].toLowerCase();
   const lastName = familyName.split(' ')[0].toLowerCase();
   const primaryEmail = await derivePrimaryEmail(adminClient, firstName, lastName);
+  const tempPassword = generatePassword({
+    length: 10,
+    numbers: true,
+  });
 
   await adminClient.users.insert({
     requestBody: {
@@ -23,14 +30,14 @@ export const addUser = async (candidate: Candidate): Promise<void> => {
       },
       primaryEmail,
       recoveryEmail: externalEmail,
-      password: 'y7KnDTYRZpuA8Z6j',
+      password: tempPassword,
       changePasswordAtNextLogin: true,
     },
   });
+  await sendNewAccountEmail(`${givenName} ${familyName}`, primaryEmail, externalEmail, tempPassword);
 };
 
 const derivePrimaryEmail = async (client: admin_directory_v1.Admin, firstName: string, lastName: string) => {
-  //TODO: Match existing users with digits only
   const existingUsers = await findDuplicateUsers(client, firstName, lastName);
   if (existingUsers?.length) {
     const highestDigit = existingUsers.reduce((acc, u) => {
@@ -42,42 +49,50 @@ const derivePrimaryEmail = async (client: admin_directory_v1.Admin, firstName: s
   return `${firstName}.${lastName}@smoothstack.com`;
 };
 
-//TODO: Incorporate Deleted Users
 const findDuplicateUsers = async (client: admin_directory_v1.Admin, firstName: string, lastName: string) => {
+  const requests = [findNameAlikeUsers(client, firstName, lastName), findNameAlikeDeletedUsers(firstName, lastName)];
+  const users = (await Promise.all(requests)).flat();
+  const pattern = /^[a-z]+\.[a-z]+(\d*)@smoothstack\.com$/;
+  return users.filter((u) => pattern.test(u.primaryEmail.toLowerCase()));
+};
+
+export const findNameAlikeUsers = async (client: admin_directory_v1.Admin, firstName: string, lastName: string) => {
   const { data } = await client.users.list({
     customer: 'my_customer',
     query: `email:${`${firstName}.${lastName}`}*`,
   });
-  return data.users;
+  return data.users ?? [];
 };
 
-export const deleteUser = async () => {
-  const adminClient = await getClient();
-  await adminClient.users.delete({
-    userKey: 'silvaro.test@smoothstack.com',
-  });
+const findNameAlikeDeletedUsers = async (firstName: string, lastName: string) => {
+  const dynamoClient = getDynamoClient();
+  var params = {
+    TableName: 'smoothstack-user-events-table',
+    IndexName: 'typeEmailIndex',
+    ExpressionAttributeValues: {
+      ':s': 'delete',
+      ':e': `${firstName}.${lastName}`,
+    },
+    KeyConditionExpression: 'eventType = :s and begins_with(primaryEmail, :e)',
+  };
+  const data = await dynamoClient.query(params).promise();
+  return data.Items;
 };
 
-export const findDupeUsers = async (firstName: string, lastName: string) => {
-  const adminClient = await getClient();
-  const { data } = await adminClient.users.list({
-    customer: 'my_customer',
-    query: `email:${`${firstName}.${lastName}`}*`,
-    showDeleted: 'true',
-  });
-  return data.users;
-};
+// //TODO: Implement user deletion
+// export const deleteUser = async () => {
+//   const adminClient = await getClient();
+//   await adminClient.users.delete({
+//     userKey: '{primaryEmail}',
+//   });
+// };
 
-export const getDeletedUsers = async (): Promise<admin_directory_v1.Schema$User[]> => {
-  const adminClient = await getClient();
-  let nextPageToken: string;
-  let deletedUsers = [];
-  do {
-    const { data } = await adminClient.users.list({
-      customer: 'my_customer',
-      showDeleted: 'true',
-    });
-    deletedUsers.push(data.users);
-  } while (nextPageToken);
-  return deletedUsers;
-};
+// export const findDeletedUsers = async () => {
+//   const adminClient = await getClient();
+//   const { data } = await adminClient.users.list({
+//     customer: 'my_customer',
+//     maxResults: 100,
+//     showDeleted: 'true',
+//   });
+//   return data;
+// };
