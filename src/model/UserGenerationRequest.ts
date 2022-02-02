@@ -1,6 +1,5 @@
-import { Candidate } from "./Candidate";
+import { Candidate } from './Candidate';
 
 export interface UserGenerationRequest {
-    candidate: Candidate
-  }
-  
+  candidate: Candidate;
+}
