@@ -3,7 +3,7 @@ import { dbResources } from './dbResources';
 
 const serverlessConfiguration: AWS = {
   service: 'smoothstack-user-events-db',
-  frameworkVersion: '3',
+  frameworkVersion: '2',
   provider: {
     name: 'aws',
     region: 'us-east-1',

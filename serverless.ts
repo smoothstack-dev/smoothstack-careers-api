@@ -20,7 +20,7 @@ import userEvents from '@functions/userEvents';
 
 const serverlessConfiguration: AWS = {
   service: 'smoothstack-careers-api',
-  frameworkVersion: '3',
+  frameworkVersion: '2',
   plugins: ['serverless-esbuild', 'serverless-offline', 'serverless-offline-sns', 'serverless-dynamodb-local'],
   package: { individually: true },
   custom: {
