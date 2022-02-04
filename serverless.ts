@@ -17,6 +17,7 @@ import formProcessing from '@functions/formProcessing';
 import { snsResources } from './resources/sns/snsResources';
 import { dbResources } from './resources/db/dbResources';
 import userEvents from '@functions/userEvents';
+import webhookRenewer from '@functions/webhookRenewer';
 
 const serverlessConfiguration: AWS = {
   service: 'smoothstack-careers-api',
@@ -84,6 +85,7 @@ const serverlessConfiguration: AWS = {
     appointmentGenerator,
     formProcessing,
     userEvents,
+    webhookRenewer,
   },
   resources: {
     Conditions: {

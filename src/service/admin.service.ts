@@ -5,6 +5,8 @@ import { getOauth2Client } from './auth/google.oauth.service';
 import { generate as generatePassword } from 'generate-password';
 import { sendNewAccountEmail } from './email.service';
 import { getDynamoClient } from '@libs/dynamo';
+import { randomUUID } from 'crypto';
+import { getGoogleSecrets } from './secrets.service';
 
 export const getClient = async () => {
   const oauth2Client = await getOauth2Client(GoogleService.ADMIN);
@@ -77,6 +79,23 @@ const findNameAlikeDeletedUsers = async (firstName: string, lastName: string) =>
   };
   const data = await dynamoClient.query(params).promise();
   return data.Items;
+};
+
+export const renewDeletedUsersWebhook = async (): Promise<void> => {
+  const [adminClient, { USERS_CALLBACK_URL }] = await Promise.all([getClient(), getGoogleSecrets()]);
+
+  await adminClient.users.watch({
+    customer: 'my_customer',
+    event: 'delete',
+    requestBody: {
+      id: randomUUID(),
+      type: 'web_hook',
+      address: USERS_CALLBACK_URL,
+      params: {
+        ttl: '172800',
+      },
+    },
+  });
 };
 
 // //TODO: Implement user deletion
