@@ -8,7 +8,7 @@ import { getDynamoClient } from '@libs/dynamo';
 import { randomUUID } from 'crypto';
 import { getGoogleSecrets } from './secrets.service';
 
-export const getClient = async () => {
+const getClient = async () => {
   const oauth2Client = await getOauth2Client(GoogleService.ADMIN);
   return admin({ version: 'directory_v1', auth: oauth2Client });
 };
@@ -58,7 +58,7 @@ const findDuplicateUsers = async (client: admin_directory_v1.Admin, firstName: s
   return users.filter((u) => pattern.test(u.primaryEmail.toLowerCase()));
 };
 
-export const findNameAlikeUsers = async (client: admin_directory_v1.Admin, firstName: string, lastName: string) => {
+const findNameAlikeUsers = async (client: admin_directory_v1.Admin, firstName: string, lastName: string) => {
   const { data } = await client.users.list({
     customer: 'my_customer',
     query: `email:${`${firstName}.${lastName}`}*`,
