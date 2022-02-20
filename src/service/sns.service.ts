@@ -8,7 +8,7 @@ import {
 } from 'src/model/AppointmentGenerationRequest';
 import { LinksGenerationRequest, LinksGenerationType } from 'src/model/Links';
 import { DocumentGenerationRequest } from 'src/model/DocumentGenerationRequest';
-import { JobSubmission } from 'src/model/JobSubmission';
+import { JobSubmission, SAJobSubmission } from 'src/model/JobSubmission';
 import { WebinarEvent } from 'src/model/WebinarEvent';
 import { getSNSConfig } from 'src/util/sns.util';
 import { WEBINAR_TOPIC, WEBINAR_TYPE } from './webinar.service';
@@ -68,11 +68,15 @@ export const publishAppointmentGenerationRequest = async (
   await sns.publish(message).promise();
 };
 
-export const publishDocumentGenerationRequest = async (submission: JobSubmission) => {
+export const publishDocumentGenerationRequest = async (
+  submission: JobSubmission | SAJobSubmission,
+  type: 'staffAug' | 'regular'
+) => {
   const sns = new AWS.SNS(getSNSConfig(process.env.ENV));
   const topic = `arn:aws:sns:us-east-1:${process.env.AWS_ACCOUNT}:smoothstack-document-generation-sns-topic`;
   const request: DocumentGenerationRequest = {
     submission,
+    type,
   };
   const message: PublishInput = {
     Message: JSON.stringify(request),

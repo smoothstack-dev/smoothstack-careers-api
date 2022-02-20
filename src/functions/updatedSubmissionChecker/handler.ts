@@ -1,11 +1,12 @@
 import { ScheduledEvent } from 'aws-lambda';
-import { processUpdatedSubmissions } from 'src/service/processSubmissions.service';
+import { processUpdatedSASubmissions, processUpdatedSubmissions } from 'src/service/processSubmissions.service';
 
 const updatedSubmissionChecker = async (event: ScheduledEvent) => {
   try {
     await processUpdatedSubmissions();
+    await processUpdatedSASubmissions();
   } catch (e) {
-    console.error('Error Processing Updated Submissions: ', e.message);
+    console.error('Error Processing Updated Submissions: ', e);
     throw e;
   }
 };

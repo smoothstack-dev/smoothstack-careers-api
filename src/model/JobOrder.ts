@@ -11,3 +11,12 @@ export interface JobOrder {
   foundationsJobId: number;
   techScreenType: string;
 }
+
+export interface SAJobOrder {
+  title: string;
+  clientCorporation: SAClient;
+}
+
+interface SAClient {
+  name: string;
+}

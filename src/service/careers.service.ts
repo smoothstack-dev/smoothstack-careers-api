@@ -552,7 +552,7 @@ const getResultDiscrepancy = (
     : '';
 };
 
-const saveCandidateNote = async (
+export const saveCandidateNote = async (
   url: string,
   BhRestToken: string,
   candidateId: number,
@@ -1021,7 +1021,12 @@ export const fetchNewSubmissions = async (url: string, BhRestToken: string): Pro
   return filteredSubs;
 };
 
-export const fetchUpdatedSubmissions = async (url: string, BhRestToken: string): Promise<any[]> => {
+export const fetchUpdatedSubmissions = async (
+  url: string,
+  BhRestToken: string,
+  updateStatus: string,
+  fields: string
+): Promise<any[]> => {
   const ids = await fetchUpdatedJobSubmissionsIds(url, BhRestToken);
   if (!ids.length) {
     return [];
@@ -1031,18 +1036,24 @@ export const fetchUpdatedSubmissions = async (url: string, BhRestToken: string):
   const { data } = await axios.get(submissionsUrl, {
     params: {
       BhRestToken,
-      fields:
-        'id,candidate(firstName,lastName,email,phone,owner(firstName,lastName,email)),jobOrder(startDate,salary,customFloat1,customText6),status,isDeleted',
+      fields,
     },
   });
 
   const submissionArr = ids.length > 1 ? data.data : [data.data];
 
   const filteredSubs = submissionArr.flatMap((sub) =>
-    !sub.isDeleted && ['Evaluation Offered'].includes(sub.status)
+    !sub.isDeleted && [updateStatus].includes(sub.status)
       ? [
           {
             ...sub,
+            candidate: {
+              ...sub.candidate,
+              pto: sub.candidate.customText1,
+              federalHolidays: sub.candidate.customText2,
+              healthBenefits: sub.candidate.customText3,
+              retirement: sub.candidate.customText4,
+            },
             jobOrder: {
               ...sub.jobOrder,
               evaluationStartDate: sub.jobOrder.startDate,

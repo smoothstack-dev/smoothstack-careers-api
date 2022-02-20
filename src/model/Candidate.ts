@@ -32,3 +32,16 @@ export interface WebResponse {
   id: number;
   dateAdded: number;
 }
+
+export interface SACandidate {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  willRelocate: string;
+  employeeType: string;
+  pto: string;
+  federalHolidays: string;
+  healthBenefits: string;
+  retirement: string;
+}

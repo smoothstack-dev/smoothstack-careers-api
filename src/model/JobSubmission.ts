@@ -1,5 +1,5 @@
-import { Candidate } from './Candidate';
-import { JobOrder } from './JobOrder';
+import { Candidate, SACandidate } from './Candidate';
+import { JobOrder, SAJobOrder } from './JobOrder';
 
 export interface JobSubmission {
   id: number;
@@ -19,4 +19,12 @@ export interface JobSubmission {
   techScreenResult: string;
   screenerDetermination: string;
   screenerEmail: string;
+}
+
+export interface SAJobSubmission {
+  id: number;
+  status: string;
+  payRate: number;
+  candidate: SACandidate;
+  jobOrder: SAJobOrder;
 }

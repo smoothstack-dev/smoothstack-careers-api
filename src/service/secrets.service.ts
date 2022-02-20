@@ -16,6 +16,16 @@ export const getBullhornSecrets = async (): Promise<BullhornCredentials> => {
   return JSON.parse(res.SecretString);
 };
 
+export const getBullhornStaffAugSecrets = async (): Promise<BullhornCredentials> => {
+  const secretPath = 'smoothstack/staffaug-bullhorn-credentials';
+  const client = new SecretsManager({
+    region: 'us-east-1',
+  });
+
+  const res = await client.getSecretValue({ SecretId: secretPath }).promise();
+  return JSON.parse(res.SecretString);
+};
+
 export const getCodilitySecrets = async (): Promise<CodilitySecrets> => {
   const secretPath = 'smoothstack/codility-credentials';
   const client = new SecretsManager({
