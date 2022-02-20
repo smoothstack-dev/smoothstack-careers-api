@@ -36,7 +36,7 @@ const sendSignatureRequest = async (client: HelloSign, templateId: string, submi
   });
   const docType = SUB_STATUS_DOCTYPE[submission.status];
   const opts = {
-    test_mode: 1,
+    // test_mode: 1,
     template_id: templateId,
     subject: 'Smoothstack Document Signature Request',
     message: 'Please sign the following document to confirm enrollment.',
@@ -143,10 +143,8 @@ const processStaffAugDocEvent = async (eventReq: DocumentEventRequest) => {
   const signature = eventReq.signature_request.signatures.find((s) => s.signer_role === 'Candidate');
   const submissionId = eventReq.signature_request.metadata.jobSubmissionId;
   const submission = signature && (await fetchSubmission(restUrl, BhRestToken, submissionId));
-  if (submission) {
-    if (submission.status === 'Send RTR') {
-      await saveSubmissionStatus(restUrl, BhRestToken, submissionId, 'RTR Signed');
-    }
+  if (submission?.status === 'Send RTR') {
+    await saveSubmissionStatus(restUrl, BhRestToken, submissionId, 'RTR Signed');
   }
 };
 
@@ -188,7 +186,7 @@ const sendStaffAugSignatureRequest = async (client: HelloSign, templateId: strin
   });
   const contractAnswer = submission.candidate.employeeType !== 'W2' && 'N/A';
   const opts = {
-    test_mode: 1,
+    // test_mode: 1,
     template_id: templateId,
     subject: 'Smoothstack Document Signature Request',
     message: 'Please sign the following Right to Represent document.',

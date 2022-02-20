@@ -6,7 +6,7 @@ const updatedSubmissionChecker = async (event: ScheduledEvent) => {
     await processUpdatedSubmissions();
     await processUpdatedSASubmissions();
   } catch (e) {
-    console.error('Error Processing Updated Submissions: ', e);
+    console.error('Error Processing Updated Submissions: ', e.message);
     throw e;
   }
 };
