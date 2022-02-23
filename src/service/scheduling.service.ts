@@ -76,7 +76,7 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
       break;
     }
     case 'rescheduled': {
-      if (!hasFailedPreviousChallenge(restUrl, BhRestToken, 'appointment', appointment.id)) {
+      if (!(await hasFailedPreviousChallenge(restUrl, BhRestToken, 'appointment', appointment.id))) {
         const submission = await saveSubmissionSchedulingDataByAppointmentId(
           restUrl,
           BhRestToken,
