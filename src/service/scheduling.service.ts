@@ -2,6 +2,8 @@ import axios from 'axios';
 import { Appointment } from '../model/Appointment';
 import { SchedulingEvent } from '../model/SchedulingEvent';
 import {
+  fetchSubmissionHistory,
+  fetchSubmissionHistoryByAppointmentId,
   saveSchedulingDataByAppointmentId,
   saveSchedulingDataBySubmissionId,
   saveSubmissionSchedulingDataByAppointmentId,
@@ -49,40 +51,20 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
       const existingAppointment = await findExistingAppointment(apiKey, userId, appointment);
       const status = existingAppointment ? 'rescheduled' : 'scheduled';
       const submissionId = appointment.email.split('challenge_').pop().split('@')[0];
-      const submission = await saveSchedulingDataBySubmissionId(
-        restUrl,
-        BhRestToken,
-        submissionId,
-        status,
-        appointment,
-        schedulingType,
-        'Challenge Scheduled'
-      );
-      if (existingAppointment) {
-        await cancelAppointment(apiKey, userId, existingAppointment.id);
-        await cancelCalendarInvite(submission.challengeEventId);
-      }
-      await publishAppointmentGenerationRequest(
-        {
-          submission,
+      if (!(await hasFailedPreviousChallenge(restUrl, BhRestToken, 'submission', submissionId))) {
+        const submission = await saveSchedulingDataBySubmissionId(
+          restUrl,
+          BhRestToken,
+          submissionId,
+          status,
           appointment,
-        },
-        AppointmentType.CHALLENGE
-      );
-      break;
-    }
-    case 'rescheduled': {
-      const submission = await saveSubmissionSchedulingDataByAppointmentId(
-        restUrl,
-        BhRestToken,
-        eventType,
-        appointment.id,
-        appointment.datetime,
-        schedulingType,
-        'Challenge Scheduled'
-      );
-      if (submission) {
-        await cancelCalendarInvite(submission.challengeEventId);
+          schedulingType,
+          'Challenge Scheduled'
+        );
+        if (existingAppointment) {
+          await cancelAppointment(apiKey, userId, existingAppointment.id);
+          await cancelCalendarInvite(submission.challengeEventId);
+        }
         await publishAppointmentGenerationRequest(
           {
             submission,
@@ -90,6 +72,30 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
           },
           AppointmentType.CHALLENGE
         );
+      }
+      break;
+    }
+    case 'rescheduled': {
+      if (!hasFailedPreviousChallenge(restUrl, BhRestToken, 'appointment', appointment.id)) {
+        const submission = await saveSubmissionSchedulingDataByAppointmentId(
+          restUrl,
+          BhRestToken,
+          eventType,
+          appointment.id,
+          appointment.datetime,
+          schedulingType,
+          'Challenge Scheduled'
+        );
+        if (submission) {
+          await cancelCalendarInvite(submission.challengeEventId);
+          await publishAppointmentGenerationRequest(
+            {
+              submission,
+              appointment,
+            },
+            AppointmentType.CHALLENGE
+          );
+        }
       }
       break;
     }
@@ -309,4 +315,18 @@ const findCalendarEmail = async (apiKey: string, userId: string, calendarId: num
   });
 
   return data.find((c: any) => c.id === calendarId).email;
+};
+
+const hasFailedPreviousChallenge = async (
+  url: string,
+  BhRestToken: string,
+  byType: 'appointment' | 'submission',
+  id: string | number
+) => {
+  const submissionHistory =
+    byType === 'submission'
+      ? await fetchSubmissionHistory(url, BhRestToken, id)
+      : await fetchSubmissionHistoryByAppointmentId(url, BhRestToken, id);
+
+  return submissionHistory.some((h) => h.status === 'R-Challenge Failed');
 };

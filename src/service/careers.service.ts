@@ -1291,3 +1291,31 @@ export const saveTechScreenLinks = async (
     },
   });
 };
+
+export const fetchSubmissionHistory = async (url: string, BhRestToken: string, submissionId: string | number) => {
+  const submissionHistoryUrl = `${url}query/JobSubmissionHistory`;
+  const { data } = await axios.get(submissionHistoryUrl, {
+    params: {
+      BhRestToken,
+      where: `jobSubmission.id=${submissionId}`,
+      fields: 'status',
+    },
+  });
+  return data.data;
+};
+
+export const fetchSubmissionHistoryByAppointmentId = async (
+  url: string,
+  BhRestToken: string,
+  appointmentId: string | number
+) => {
+  const submissionHistoryUrl = `${url}query/JobSubmissionHistory`;
+  const { data } = await axios.get(submissionHistoryUrl, {
+    params: {
+      BhRestToken,
+      where: `jobSubmission.customText16='${appointmentId}'`,
+      fields: 'status',
+    },
+  });
+  return data.data;
+};
