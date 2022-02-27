@@ -5,6 +5,7 @@ import {
   findCandidateByEmailOrPhone,
   populateCandidateFields,
   saveApplicationNote,
+  saveSubmissionFields,
 } from './careers.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { publishLinksGenerationRequest } from './sns.service';
@@ -41,6 +42,8 @@ export const apply = async (event: APIGatewayProxyEvent) => {
 
     const { jobSubmission, candidate: newCandidate } = await createWebResponse(careerId, webResponseFields, resume);
     await populateCandidateFields(restUrl, BhRestToken, newCandidate.id, candidateFields as any);
+    extraFields.utmSource &&
+      (await saveSubmissionFields(restUrl, BhRestToken, jobSubmission.id, { customText24: extraFields.utmSource }));
     await saveApplicationNote(restUrl, BhRestToken, newCandidate.id, event.queryStringParameters);
     await publishLinksGenerationRequest(jobSubmission.id, 'initial');
 
