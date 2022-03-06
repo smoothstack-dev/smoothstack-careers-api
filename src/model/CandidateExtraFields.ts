@@ -1,18 +1,17 @@
 export interface CandidateExtraFields {
-  nickName: string;
   phone: string;
   city: string;
   state: string;
   zip: string;
+  status: string;
   workAuthorization: string;
   relocation: string;
   codingAbility: string;
   yearsOfExperience: string;
-  currentlyStudent: string;
+  nickName?: string;
   graduationDate?: Date;
   degreeExpected?: string;
   highestDegree?: string;
-  major?: string;
   militaryStatus: string;
   militaryBranch?: string;
 }

@@ -257,6 +257,7 @@ export const populateCandidateFields = async (
   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
   const updateData = {
     ...(fields.nickName && { nickName: fields.nickName }),
+    status: fields.status,
     city: fields.city,
     state: fields.state,
     zip: fields.zip,
@@ -351,8 +352,12 @@ const shouldPopulateAddress = ({ address1, address2, city, state, zip }: Prescre
   return !!(address1?.answer || address2?.answer || city?.answer || state?.answer || zip?.answer);
 };
 
-const calculateMonthsToGrad = (graduationDate: Date): number => {
-  const today = new Date();
+export const calculateMonthsToGrad = (graduationDate: Date): number => {
+  const today = new Date(
+    new Date().toLocaleDateString('en-US', {
+      timeZone: 'America/New_York',
+    })
+  );
   let diff = (today.getTime() - graduationDate.getTime()) / 1000;
   diff /= 60 * 60 * 24 * 7 * 4;
   const result = Math.abs(Math.round(diff));
@@ -972,14 +977,21 @@ export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId
   const { data } = await axios.get(jobOrdersUrl, {
     params: {
       BhRestToken,
-      fields: 'id,customText1',
+      fields: 'id,customText1,customText4,willRelocate,customText8,customText9,educationDegree',
     },
   });
 
-  const { customText1, ...jobOrder } = data.data;
+  const { customText1, customText4, willRelocate, customText8, customText9, educationDegree, ...jobOrder } = data.data;
   return {
     ...jobOrder,
     challengeName: customText1,
+    knockout: {
+      requiredWorkAuthorization: customText4,
+      relocationRequired: willRelocate,
+      maxMonthsToGraduation: customText8,
+      minYearsOfExperience: customText9,
+      minRequiredDegree: educationDegree,
+    },
   };
 };
 
@@ -1235,17 +1247,9 @@ export const saveChallengeLinks = async (
   linksData: ChallengeLinksData
 ) => {
   const submissionUrl = `${url}entity/JobSubmission/${submissionId}`;
-  const {
-    challengeLink,
-    challengeSchedulingLink,
-    previousChallengeId,
-    previousChallengeScore,
-    newJobOrderId,
-    submissionStatus,
-  } = linksData;
+  const { challengeLink, previousChallengeId, previousChallengeScore, newJobOrderId, submissionStatus } = linksData;
   const updateData = {
     customText10: challengeLink,
-    customTextBlock1: challengeSchedulingLink,
     ...(submissionStatus && { status: submissionStatus }),
     ...(previousChallengeId && { customText14: previousChallengeId }),
     ...(previousChallengeScore && { customText12: previousChallengeScore }),

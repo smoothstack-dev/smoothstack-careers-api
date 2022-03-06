@@ -6,6 +6,7 @@ import {
   fetchSubmission,
   saveCandidateLinks,
   saveChallengeLinks,
+  saveSubmissionFields,
   saveTechScreenLinks,
 } from './careers.service';
 import { generateChallengeLink, getChallengeDetails } from './challenge.service';
@@ -38,84 +39,33 @@ export const generateLinks = async (event: SNSEvent) => {
 
 const generateInitialLinks = async (restUrl: string, BhRestToken: string, submissionId: number) => {
   const submission = await fetchSubmission(restUrl, BhRestToken, submissionId);
-  const { candidate, challengeLink, jobOrder } = submission;
+  const { candidate, jobOrder } = submission;
 
-  if (!challengeLink) {
-    const { submissions } = await fetchCandidate(restUrl, BhRestToken, candidate.id);
-    const challengeLinksData = await getChallengeLinksData(submissions, submission);
-    const webinarSchedulingLink = getSchedulingLink(
-      candidate.firstName,
-      candidate.lastName,
-      candidate.email,
-      candidate.phone,
-      SchedulingTypeId.WEBINAR
-    );
-    const preScreeningLink = getPrescreeningLink(candidate);
+  const webinarSchedulingLink = getSchedulingLink(
+    candidate.firstName,
+    candidate.lastName,
+    candidate.email,
+    candidate.phone,
+    SchedulingTypeId.WEBINAR
+  );
+  const preScreeningLink = getPrescreeningLink(candidate);
+  const challengeSchedulingLink = getSchedulingLink(
+    submission.candidate.firstName,
+    submission.candidate.lastName,
+    `coding_challenge_${submissionId}@smoothstack.com`,
+    submission.candidate.phone,
+    SchedulingTypeId.CHALLENGE
+  );
 
-    const requests = [
-      saveChallengeLinks(restUrl, BhRestToken, submissionId, challengeLinksData),
-      saveCandidateLinks(restUrl, BhRestToken, candidate.id, webinarSchedulingLink, preScreeningLink),
-    ];
-    await Promise.all(requests);
-    challengeLinksData.submissionStatus === 'Challenge Passed' &&
-      (await publishLinksGenerationRequest(submissionId, 'techscreen'));
-    console.log('Successfully generated initial links for submission:');
-  } else {
-    console.log('Submission already has initial links. Submission not processed:');
-  }
+  const requests = [
+    saveSubmissionFields(restUrl, BhRestToken, submissionId, { customTextBlock1: challengeSchedulingLink }),
+    saveCandidateLinks(restUrl, BhRestToken, candidate.id, webinarSchedulingLink, preScreeningLink),
+  ];
+  await Promise.all(requests);
+
+  console.log('Successfully generated initial links for submission:');
   console.log(`Submission ID: ${submissionId}`);
   console.log({ jobOrder, candidate });
-};
-
-const getChallengeLinksData = async (
-  existingSubmissions: JobSubmission[],
-  newSubmission: JobSubmission
-): Promise<ChallengeLinksData> => {
-  const matchedSubmission = existingSubmissions.find(
-    (s) =>
-      s.id !== newSubmission.id &&
-      s.challengeLink &&
-      s.jobOrder.challengeName === newSubmission.jobOrder.challengeName &&
-      !s.previousChallengeId
-  );
-  const submissionStatus = deriveSubmissionStatus(
-    matchedSubmission?.challengeScore,
-    newSubmission.jobOrder.foundationsPassingScore
-  );
-  const newJobOrderId =
-    shouldDowngradeJob(
-      matchedSubmission?.challengeScore,
-      newSubmission.jobOrder.foundationsPassingScore,
-      newSubmission.jobOrder.passingScore
-    ) && newSubmission.jobOrder.foundationsJobId;
-
-  return {
-    challengeSchedulingLink: matchedSubmission
-      ? ''
-      : getSchedulingLink(
-          newSubmission.candidate.firstName,
-          newSubmission.candidate.lastName,
-          `coding_challenge_${newSubmission.id}@smoothstack.com`,
-          newSubmission.candidate.phone,
-          SchedulingTypeId.CHALLENGE
-        ),
-    challengeLink: matchedSubmission?.challengeLink || (await getNewChallengeLink(newSubmission)),
-    previousChallengeId: matchedSubmission?.id,
-    previousChallengeScore: matchedSubmission?.challengeScore,
-    submissionStatus,
-    newJobOrderId,
-  };
-};
-
-const getNewChallengeLink = async ({ jobOrder, candidate, id: submissionId }: JobSubmission): Promise<string> => {
-  const { BEARER_TOKEN, CALLBACK_URL } = await getCodilitySecrets();
-  const { id: challengeId } = await getChallengeDetails(jobOrder.challengeName, BEARER_TOKEN);
-  return await generateChallengeLink(
-    challengeId,
-    candidate,
-    BEARER_TOKEN,
-    `${CALLBACK_URL}?submissionId=${submissionId}`
-  );
 };
 
 export const generateTechScreenLinks = async (restUrl: string, BhRestToken: string, submissionId: number) => {
@@ -175,4 +125,63 @@ const isRecentSubmission = (existingSubmission: JobSubmission, newSubmission: Jo
   const timeDiff = newSubmission.dateAdded - existingSubmission.dateAdded;
   const dayDiff = timeDiff / (1000 * 3600 * 24);
   return dayDiff < DAY_DIFF;
+};
+
+export const generateChallengeLinks = async (restUrl: string, BhRestToken: string, submissionId: number) => {
+  const submission = await fetchSubmission(restUrl, BhRestToken, submissionId);
+  const { candidate, challengeLink } = submission;
+
+  if (!challengeLink) {
+    const { submissions } = await fetchCandidate(restUrl, BhRestToken, candidate.id);
+    const challengeLinksData = await getChallengeLinksData(submissions, submission);
+    await saveChallengeLinks(restUrl, BhRestToken, submissionId, challengeLinksData);
+    challengeLinksData.submissionStatus === 'Challenge Passed' &&
+      (await publishLinksGenerationRequest(submissionId, 'techscreen'));
+    if (!challengeLinksData.submissionStatus) {
+      return challengeLinksData.challengeLink;
+    }
+  }
+  return challengeLink;
+};
+
+const getChallengeLinksData = async (
+  existingSubmissions: JobSubmission[],
+  newSubmission: JobSubmission
+): Promise<ChallengeLinksData> => {
+  const matchedSubmission = existingSubmissions.find(
+    (s) =>
+      s.id !== newSubmission.id &&
+      s.challengeLink &&
+      s.jobOrder.challengeName === newSubmission.jobOrder.challengeName &&
+      !s.previousChallengeId
+  );
+  const submissionStatus = deriveSubmissionStatus(
+    matchedSubmission?.challengeScore,
+    newSubmission.jobOrder.foundationsPassingScore
+  );
+  const newJobOrderId =
+    shouldDowngradeJob(
+      matchedSubmission?.challengeScore,
+      newSubmission.jobOrder.foundationsPassingScore,
+      newSubmission.jobOrder.passingScore
+    ) && newSubmission.jobOrder.foundationsJobId;
+
+  return {
+    challengeLink: matchedSubmission?.challengeLink || (await getNewChallengeLink(newSubmission)),
+    previousChallengeId: matchedSubmission?.id,
+    previousChallengeScore: matchedSubmission?.challengeScore,
+    submissionStatus,
+    newJobOrderId,
+  };
+};
+
+const getNewChallengeLink = async ({ jobOrder, candidate, id: submissionId }: JobSubmission): Promise<string> => {
+  const { BEARER_TOKEN, CALLBACK_URL } = await getCodilitySecrets();
+  const { id: challengeId } = await getChallengeDetails(jobOrder.challengeName, BEARER_TOKEN);
+  return await generateChallengeLink(
+    challengeId,
+    candidate,
+    BEARER_TOKEN,
+    `${CALLBACK_URL}?submissionId=${submissionId}`
+  );
 };

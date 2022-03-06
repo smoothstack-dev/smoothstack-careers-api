@@ -1,3 +1,5 @@
+import { KnockoutRequirements } from "./Knockout";
+
 export interface JobOrder {
   id: number;
   title: string;
@@ -10,6 +12,7 @@ export interface JobOrder {
   foundationsPassingScore: number;
   foundationsJobId: number;
   techScreenType: string;
+  knockout: KnockoutRequirements
 }
 
 export interface SAJobOrder {
