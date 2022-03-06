@@ -11,14 +11,14 @@ import {
   saveSubmissionStatus,
   saveTechScreenData,
 } from './careers.service';
-import { publishFormProcesingRequest } from './sns.service';
+import { publishFormProcessingRequest } from './sns.service';
 
 export const processFormEvent = async (formType: FormType, formData: any) => {
   const form: Form = {
     type: formType,
     formData,
   };
-  await publishFormProcesingRequest(form);
+  await publishFormProcessingRequest(form);
 };
 
 export const processForm = async (event: SNSEvent) => {

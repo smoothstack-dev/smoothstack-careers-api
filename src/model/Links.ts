@@ -7,7 +7,6 @@ export interface LinksGenerationRequest {
 
 export interface ChallengeLinksData {
   challengeLink: string;
-  challengeSchedulingLink: string;
   previousChallengeScore: string;
   previousChallengeId: number;
   submissionStatus: string;

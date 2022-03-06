@@ -31,4 +31,10 @@ export const snsResources: AWS['resources']['Resources'] = {
       TopicName: 'smoothstack-form-processing-sns-topic',
     },
   },
+  ApplicationProcessingTopic: {
+    Type: 'AWS::SNS::Topic',
+    Properties: {
+      TopicName: 'smoothstack-application-processing-sns-topic',
+    },
+  },
 };

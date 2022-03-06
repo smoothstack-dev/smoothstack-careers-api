@@ -97,7 +97,8 @@ export const sendChallengeCalendarInvite = async (
 
 export const cancelCalendarInvite = async (eventId: string) => {
   const calendarClient = await getClient();
-  await calendarClient.events.delete({ calendarId: 'primary', eventId });
+
+  eventId && (await calendarClient.events.delete({ calendarId: 'primary', eventId }));
 };
 
 const generateChallengeDescription = (firstName: string, challengeLink: string, confirmationLink: string) => {
