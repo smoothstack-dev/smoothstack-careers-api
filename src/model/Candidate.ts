@@ -9,7 +9,12 @@ export interface Candidate {
   owner: Owner;
   webinarLink: string;
   webinarRegistrantId: string;
+  workAuthorization: string;
   relocation: string;
+  yearsOfExperience: string;
+  graduationDate: string;
+  degreeExpected: string;
+  educationDegree: string;
   submissions: JobSubmission[];
   webResponses: WebResponse[];
   githubLink: string;

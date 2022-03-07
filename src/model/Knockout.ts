@@ -9,8 +9,8 @@ export interface KnockoutRequirements {
 export interface KnockoutFields {
   workAuthorization: string;
   relocation: string;
-  monthsToGraduation?: number;
   yearsOfExperience: string;
+  graduationDate?: string;
   educationDegree?: string;
   degreeExpected?: string;
 }

@@ -1,6 +1,19 @@
-import { fetchNewSubmissions, fetchUpdatedSubmissions } from './careers.service';
+import {
+  fetchNewSubmissions,
+  fetchSubmission,
+  fetchUpdatedSubmissions,
+  saveCandidateFields,
+  saveCandidateNote,
+  saveSubmissionFields,
+} from './careers.service';
 import { getSessionData, getStaffAugSessionData } from './auth/bullhorn.oauth.service';
-import { publishLinksGenerationRequest, publishDocumentGenerationRequest } from './sns.service';
+import {
+  publishLinksGenerationRequest,
+  publishDocumentGenerationRequest,
+  publishIntSubmissionProcessingRequest,
+} from './sns.service';
+import { calculateKnockout, isKnockoutPopulated } from 'src/util/knockout.util';
+import { KNOCKOUT_NOTE, KNOCKOUT_STATUS } from 'src/model/Knockout';
 
 export const processNewSubmissions = async () => {
   console.log('Received request to process new job submissions.');
@@ -8,11 +21,46 @@ export const processNewSubmissions = async () => {
 
   const submissions = await fetchNewSubmissions(restUrl, BhRestToken);
 
-  const generationRequests = submissions.map((sub) => publishLinksGenerationRequest(sub.id, 'initial'));
+  const generationRequests = submissions.map((sub) => publishIntSubmissionProcessingRequest({ submissionId: sub.id }));
   await Promise.all(generationRequests);
 
   console.log('Successfully processed new submissions:');
   console.log(submissions);
+};
+
+export const processInternalSubmission = async (restUrl: string, BhRestToken: string, submissionId: number) => {
+  const { candidate, jobOrder } = await fetchSubmission(restUrl, BhRestToken, submissionId);
+  const knockoutFields = {
+    workAuthorization: candidate.workAuthorization,
+    relocation: candidate.relocation,
+    graduationDate: candidate.graduationDate,
+    yearsOfExperience: candidate.yearsOfExperience,
+    educationDegree: candidate.educationDegree,
+    degreeExpected: candidate.degreeExpected,
+  };
+  const shouldProcessKnockout = isKnockoutPopulated(knockoutFields);
+  if (shouldProcessKnockout) {
+    const knockout = calculateKnockout(jobOrder.knockout, knockoutFields);
+    await saveCandidateFields(restUrl, BhRestToken, candidate.id, {
+      status: KNOCKOUT_STATUS[knockout].candidateStatus,
+    });
+    await saveSubmissionFields(restUrl, BhRestToken, submissionId, {
+      status: KNOCKOUT_STATUS[knockout].submissionStatus,
+    });
+    await saveCandidateNote(restUrl, BhRestToken, candidate.id, 'Knockout', KNOCKOUT_NOTE[knockout]);
+  } else {
+    await saveSubmissionFields(restUrl, BhRestToken, submissionId, {
+      status: 'Incomplete Application',
+    });
+    await saveCandidateNote(
+      restUrl,
+      BhRestToken,
+      candidate.id,
+      'Knockout',
+      'Candidate is Missing Fields for Knockout Calculation.'
+    );
+  }
+  await publishLinksGenerationRequest(submissionId, 'initial');
 };
 
 export const processUpdatedSubmissions = async () => {
