@@ -1024,12 +1024,12 @@ export const fetchNewSubmissions = async (url: string, BhRestToken: string): Pro
   const { data } = await axios.get(submissionsUrl, {
     params: {
       BhRestToken,
-      fields: 'id,isDeleted',
+      fields: 'id,isDeleted,status',
     },
   });
 
   const submissionArr = ids.length > 1 ? data.data : [data.data];
-  const filteredSubs = submissionArr.filter((sub) => !sub.isDeleted);
+  const filteredSubs = submissionArr.filter((sub) => !sub.isDeleted && sub.status === 'Internally Submitted');
 
   return filteredSubs;
 };
@@ -1182,7 +1182,7 @@ export const fetchSubmission = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7),dateAdded,customText15,customText10,customTextBlock2,customDate2,customText20,customText23',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email),customText4,customText3,customDate3,degreeList,educationDegree),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7,customText4,willRelocate,customText8,customText9,educationDegree),dateAdded,customText15,customText10,customTextBlock2,customDate2,customText20,customText23',
     },
   });
 
@@ -1207,7 +1207,12 @@ export const fetchSubmission = async (
     candidate: {
       ...submission.candidate,
       githubLink: submission.candidate.customText6,
+      workAuthorization: submission.candidate.customText4,
       relocation: submission.candidate.customText25,
+      yearsOfExperience: submission.candidate.customText3,
+      graduationDate: submission.candidate.customDate3,
+      degreeExpected: submission.candidate.degreeList,
+      educationDegree: submission.candidate.educationDegree,
       owner: submission.candidate.owner,
     },
     jobOrder: {
@@ -1218,6 +1223,13 @@ export const fetchSubmission = async (
       foundationsPassingScore: submission.jobOrder.customInt2,
       foundationsJobId: submission.jobOrder.customInt3,
       techScreenType: submission.jobOrder.customText7,
+      knockout: {
+        requiredWorkAuthorization: submission.jobOrder.customText4,
+        relocationRequired: submission.jobOrder.willRelocate,
+        maxMonthsToGraduation: submission.jobOrder.customText8,
+        minYearsOfExperience: submission.jobOrder.customText9,
+        minRequiredDegree: submission.jobOrder.educationDegree,
+      },
     },
   };
 };

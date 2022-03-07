@@ -14,6 +14,7 @@ import { getSNSConfig } from 'src/util/sns.util';
 import { WEBINAR_TOPIC, WEBINAR_TYPE } from './webinar.service';
 import { Form } from 'src/model/Form';
 import { ApplicationProcessingRequest } from 'src/model/ApplicationProcessingRequest';
+import { IntSubmissionProcessingRequest } from 'src/model/IntSubmissionProcessingRequest';
 
 export const publishLinksGenerationRequest = async (submissionId: number, type: LinksGenerationType) => {
   const sns = new AWS.SNS(getSNSConfig(process.env.ENV));
@@ -103,6 +104,17 @@ export const publishApplicationProcessingRequest = async (application: Applicati
   const snsTopic = `arn:aws:sns:us-east-1:${process.env.AWS_ACCOUNT}:smoothstack-application-processing-sns-topic`;
   const message: PublishInput = {
     Message: JSON.stringify(application),
+    TopicArn: snsTopic,
+  };
+
+  await sns.publish(message).promise();
+};
+
+export const publishIntSubmissionProcessingRequest = async (request: IntSubmissionProcessingRequest) => {
+  const sns = new AWS.SNS(getSNSConfig(process.env.ENV));
+  const snsTopic = `arn:aws:sns:us-east-1:${process.env.AWS_ACCOUNT}:smoothstack-int-submission-processing-sns-topic`;
+  const message: PublishInput = {
+    Message: JSON.stringify(request),
     TopicArn: snsTopic,
   };
 

@@ -19,6 +19,7 @@ import { dbResources } from './resources/db/dbResources';
 import userEvents from '@functions/userEvents';
 import webhookRenewer from '@functions/webhookRenewer';
 import applicationProcessor from '@functions/applicationProcessor';
+import internalSubmissionProcessor from '@functions/internalSubmissionProcessor';
 
 const serverlessConfiguration: AWS = {
   service: 'smoothstack-careers-api',
@@ -88,6 +89,7 @@ const serverlessConfiguration: AWS = {
     userEvents,
     webhookRenewer,
     applicationProcessor,
+    internalSubmissionProcessor,
   },
   resources: {
     Conditions: {

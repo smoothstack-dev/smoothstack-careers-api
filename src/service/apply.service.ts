@@ -1,7 +1,6 @@
 import { APIGatewayProxyEvent } from 'aws-lambda';
 import { parse } from 'aws-multipart-parser';
 import {
-  calculateMonthsToGrad,
   createWebResponse,
   fetchJobOrder,
   findCandidateByEmailOrPhone,
@@ -15,9 +14,10 @@ import { publishApplicationProcessingRequest, publishLinksGenerationRequest } fr
 import { WebResponse } from 'src/model/Candidate';
 import { JobSubmission } from 'src/model/JobSubmission';
 import { ApplicationProcessingRequest } from 'src/model/ApplicationProcessingRequest';
-import { Knockout, KnockoutFields, KnockoutRequirements, KNOCKOUT_NOTE, KNOCKOUT_STATUS } from 'src/model/Knockout';
+import { Knockout, KNOCKOUT_NOTE, KNOCKOUT_STATUS } from 'src/model/Knockout';
 import { getSchedulingLink } from 'src/util/links';
 import { SchedulingTypeId } from 'src/model/SchedulingType';
+import { calculateKnockout } from 'src/util/knockout.util';
 
 const DAY_DIFF = 90;
 
@@ -46,7 +46,7 @@ export const apply = async (event: APIGatewayProxyEvent) => {
     const knockout = calculateKnockout(jobOrder.knockout, {
       workAuthorization,
       relocation,
-      ...(graduationDate && { monthsToGraduation: calculateMonthsToGrad(new Date(graduationDate)) }),
+      graduationDate,
       yearsOfExperience,
       educationDegree,
       degreeExpected,
@@ -98,53 +98,6 @@ const hasRecentApplication = (applications: (WebResponse | JobSubmission)[]): bo
     const dayDiff = timeDiff / (1000 * 3600 * 24);
     return dayDiff < DAY_DIFF;
   });
-};
-
-const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: KnockoutFields) => {
-  const {
-    requiredWorkAuthorization,
-    relocationRequired,
-    maxMonthsToGraduation,
-    minYearsOfExperience,
-    minRequiredDegree,
-  } = knockoutReqs;
-  const { workAuthorization, relocation, monthsToGraduation, yearsOfExperience, educationDegree, degreeExpected } =
-    fields;
-
-  if (!requiredWorkAuthorization.includes(workAuthorization)) {
-    return Knockout.WORK_AUTH;
-  }
-  if (relocationRequired && relocation === 'No') {
-    return Knockout.RELOCATION;
-  }
-  if (maxMonthsToGraduation !== 'Not Specified' && (monthsToGraduation ?? 0) > +maxMonthsToGraduation) {
-    return Knockout.GRADUATION;
-  }
-  if (!hasMinYearsOfExperience(minYearsOfExperience, yearsOfExperience)) {
-    return Knockout.YEARS_OF_EXP;
-  }
-  if (!hasMinDegree(minRequiredDegree, educationDegree ?? degreeExpected)) {
-    return Knockout.DEGREE;
-  }
-  return Knockout.PASS;
-};
-
-const hasMinYearsOfExperience = (minYears: string, years: string) => {
-  const EXP_MAP = {
-    'Not Specified': 0,
-    '0-1': 0,
-    '1-2': 1,
-    '2-3': 2,
-    '3+': 3,
-  };
-  return EXP_MAP[years] >= EXP_MAP[minYears];
-};
-
-const hasMinDegree = (minDegree: string, educationDegree: string) => {
-  const noDegreeList = ['None', 'GED', 'High School'];
-  const validDegreeList = ['Not Specifed', "Associate's", "Bachelor's", "Master's", 'PhD'];
-  const degree = noDegreeList.includes(educationDegree) ? 'Not Specified' : educationDegree;
-  return validDegreeList.indexOf(degree) >= validDegreeList.indexOf(minDegree);
 };
 
 const sendApplicationForProcessing = async (
