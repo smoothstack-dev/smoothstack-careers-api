@@ -140,11 +140,26 @@ const processRegularDocEvent = async (eventReq: DocumentEventRequest) => {
 
 const processStaffAugDocEvent = async (eventReq: DocumentEventRequest) => {
   const { restUrl, BhRestToken } = await getStaffAugSessionData();
+  const { API_KEY } = await getHelloSignSecrets();
+  const client = new HelloSign({ key: API_KEY });
   const signature = eventReq.signature_request.signatures.find((s) => s.signer_role === 'Candidate');
   const submissionId = eventReq.signature_request.metadata.jobSubmissionId;
   const submission = signature && (await fetchSubmission(restUrl, BhRestToken, submissionId));
-  if (submission?.status === 'Send RTR') {
-    await saveSubmissionStatus(restUrl, BhRestToken, submissionId, 'RTR Signed');
+
+  if (submission) {
+    const signatureReqId = eventReq.signature_request.signature_request_id;
+    if (submission.status === 'Send RTR') {
+      await saveSubmissionStatus(restUrl, BhRestToken, submissionId, 'RTR Signed');
+    }
+    const signedFile = await downloadSignedFile(client, signatureReqId);
+    await uploadCandidateFile(
+      restUrl,
+      BhRestToken,
+      submission.candidate.id,
+      signedFile,
+      `Signed_RTR_Document.pdf`,
+      'RTR Document'
+    );
   }
 };
 
