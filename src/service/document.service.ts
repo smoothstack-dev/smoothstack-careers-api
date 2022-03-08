@@ -158,7 +158,7 @@ const processStaffAugDocEvent = async (eventReq: DocumentEventRequest) => {
       submission.candidate.id,
       signedFile,
       `Signed_RTR_Document.pdf`,
-      'RTR Document'
+      'Other'
     );
   }
 };
