@@ -158,7 +158,7 @@ const processStaffAugDocEvent = async (eventReq: DocumentEventRequest) => {
       submission.candidate.id,
       signedFile,
       `Signed_RTR_Document.pdf`,
-      'Other'
+      'RTR'
     );
   }
 };
@@ -203,7 +203,7 @@ const sendStaffAugSignatureRequest = async (client: HelloSign, templateId: strin
   const opts = {
     // test_mode: 1,
     template_id: templateId,
-    subject: 'Smoothstack Document Signature Request',
+    subject: 'Smoothstack Right to Represent Signature Request',
     message: 'Please sign the following Right to Represent document.',
     signers: [
       {
