@@ -360,7 +360,7 @@ export const calculateMonthsToGrad = (graduationDate: Date): number => {
   );
   let diff = (today.getTime() - graduationDate.getTime()) / 1000;
   diff /= 60 * 60 * 24 * 7 * 4;
-  const result = Math.abs(Math.round(diff));
+  const result = -Math.round(diff);
   return result;
 };
 
