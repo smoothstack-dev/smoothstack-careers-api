@@ -4,6 +4,7 @@ export interface KnockoutRequirements {
   maxMonthsToGraduation: string;
   minYearsOfExperience: string;
   minRequiredDegree: string;
+  minSelfRank: number;
 }
 
 export interface KnockoutFields {
@@ -13,6 +14,7 @@ export interface KnockoutFields {
   graduationDate?: string;
   educationDegree?: string;
   degreeExpected?: string;
+  codingAbility: number;
 }
 
 export enum Knockout {
@@ -22,6 +24,7 @@ export enum Knockout {
   GRADUATION = 'GRADUATION',
   YEARS_OF_EXP = 'YEARS_OF_EXP',
   DEGREE = 'DEGREE',
+  SELF_RANK = 'SELF_RANK',
 }
 
 export const KNOCKOUT_STATUS = {
@@ -31,6 +34,7 @@ export const KNOCKOUT_STATUS = {
   [Knockout.GRADUATION]: { submissionStatus: 'R-Timing', candidateStatus: 'Snooze' },
   [Knockout.YEARS_OF_EXP]: { submissionStatus: 'R-Years of Experience', candidateStatus: 'Snooze' },
   [Knockout.DEGREE]: { submissionStatus: 'R-Education', candidateStatus: 'Snooze' },
+  [Knockout.SELF_RANK]: { submissionStatus: 'R-Self-Rank', candidateStatus: 'Rejected' },
 };
 
 export const KNOCKOUT_NOTE = {
@@ -41,4 +45,5 @@ export const KNOCKOUT_NOTE = {
     'Candidate Snoozed as they are currently in school and not graduating within a reasonable timeframe.',
   [Knockout.YEARS_OF_EXP]: 'Candidate rejected for years of experience. Potentially eligible for another role.',
   [Knockout.DEGREE]: 'Candidate rejected for education. Potentially eligible for another role.',
+  [Knockout.SELF_RANK]: 'Candidate rejected for coding self-rank ability.',
 };

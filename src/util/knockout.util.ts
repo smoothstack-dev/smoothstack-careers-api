@@ -8,8 +8,17 @@ export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: Kn
     maxMonthsToGraduation,
     minYearsOfExperience,
     minRequiredDegree,
+    minSelfRank,
   } = knockoutReqs;
-  const { workAuthorization, relocation, graduationDate, yearsOfExperience, educationDegree, degreeExpected } = fields;
+  const {
+    workAuthorization,
+    relocation,
+    graduationDate,
+    yearsOfExperience,
+    educationDegree,
+    degreeExpected,
+    codingAbility,
+  } = fields;
   const monthsToGraduation = graduationDate ? calculateMonthsToGrad(new Date(graduationDate)) : 0;
 
   if (!requiredWorkAuthorization.includes(workAuthorization)) {
@@ -26,6 +35,9 @@ export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: Kn
   }
   if (!hasMinDegree(minRequiredDegree, educationDegree ?? degreeExpected)) {
     return Knockout.DEGREE;
+  }
+  if(codingAbility <  minSelfRank){
+    return Knockout.SELF_RANK
   }
   return Knockout.PASS;
 };
@@ -49,7 +61,7 @@ const hasMinDegree = (minDegree: string, educationDegree: string) => {
 };
 
 export const isKnockoutPopulated = (knockoutFields: KnockoutFields) => {
-  const requiredFields = ['workAuthorization', 'relocation', 'yearsOfExperience'];
+  const requiredFields = ['workAuthorization', 'relocation', 'yearsOfExperience', 'codingAbility'];
   const { graduationDate, degreeExpected, educationDegree } = knockoutFields;
   for (const reqField of requiredFields) {
     if (knockoutFields[reqField] === null || knockoutFields[reqField] === undefined) {

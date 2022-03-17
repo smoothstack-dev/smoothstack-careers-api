@@ -15,6 +15,7 @@ export interface Candidate {
   graduationDate: string;
   degreeExpected: string;
   educationDegree: string;
+  codingAbility: number;
   submissions: JobSubmission[];
   webResponses: WebResponse[];
   githubLink: string;
