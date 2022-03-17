@@ -37,6 +37,7 @@ export const processInternalSubmission = async (restUrl: string, BhRestToken: st
     yearsOfExperience: candidate.yearsOfExperience,
     educationDegree: candidate.educationDegree,
     degreeExpected: candidate.degreeExpected,
+    codingAbility: candidate.codingAbility,
   };
   const shouldProcessKnockout = isKnockoutPopulated(knockoutFields);
   if (shouldProcessKnockout) {

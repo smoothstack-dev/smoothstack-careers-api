@@ -977,11 +977,20 @@ export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId
   const { data } = await axios.get(jobOrdersUrl, {
     params: {
       BhRestToken,
-      fields: 'id,customText1,customText4,willRelocate,customText8,customText9,educationDegree',
+      fields: 'id,customText1,customText4,willRelocate,customText8,customText9,educationDegree,customText10',
     },
   });
 
-  const { customText1, customText4, willRelocate, customText8, customText9, educationDegree, ...jobOrder } = data.data;
+  const {
+    customText1,
+    customText4,
+    willRelocate,
+    customText8,
+    customText9,
+    educationDegree,
+    customText10,
+    ...jobOrder
+  } = data.data;
   return {
     ...jobOrder,
     challengeName: customText1,
@@ -991,6 +1000,7 @@ export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId
       maxMonthsToGraduation: customText8,
       minYearsOfExperience: customText9,
       minRequiredDegree: educationDegree,
+      minSelfRank: customText10,
     },
   };
 };
@@ -1182,7 +1192,7 @@ export const fetchSubmission = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email),customText4,customText3,customDate3,degreeList,educationDegree),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7,customText4,willRelocate,customText8,customText9,educationDegree),dateAdded,customText15,customText10,customTextBlock2,customDate2,customText20,customText23',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email),customText4,customText3,customDate3,degreeList,educationDegree,customText7),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7,customText4,willRelocate,customText8,customText9,educationDegree,customText10),dateAdded,customText15,customText10,customTextBlock2,customDate2,customText20,customText23',
     },
   });
 
@@ -1214,6 +1224,7 @@ export const fetchSubmission = async (
       degreeExpected: submission.candidate.degreeList,
       educationDegree: submission.candidate.educationDegree,
       owner: submission.candidate.owner,
+      codingAbility: submission.candidate.customText7,
     },
     jobOrder: {
       id: submission.jobOrder.id,
@@ -1229,6 +1240,7 @@ export const fetchSubmission = async (
         maxMonthsToGraduation: submission.jobOrder.customText8,
         minYearsOfExperience: submission.jobOrder.customText9,
         minRequiredDegree: submission.jobOrder.educationDegree,
+        minSelfRank: submission.jobOrder.customText10,
       },
     },
   };

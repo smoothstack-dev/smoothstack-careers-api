@@ -42,6 +42,7 @@ export const apply = async (event: APIGatewayProxyEvent) => {
       yearsOfExperience,
       highestDegree: educationDegree,
       degreeExpected,
+      codingAbility,
     } = extraFields;
     const knockout = calculateKnockout(jobOrder.knockout, {
       workAuthorization,
@@ -50,6 +51,7 @@ export const apply = async (event: APIGatewayProxyEvent) => {
       yearsOfExperience,
       educationDegree,
       degreeExpected,
+      codingAbility: +codingAbility,
     });
     const webResponseFields = {
       firstName,
