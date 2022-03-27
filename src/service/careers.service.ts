@@ -42,7 +42,7 @@ export const fetchCandidate = async (url: string, BhRestToken: string, candidate
     params: {
       BhRestToken,
       fields:
-        'id,firstName,lastName,email,phone,customText25,customText6,submissions(customText10,customText12,customTextBlock1,customTextBlock2,customText14,jobOrder(customText1,customInt1,customInt2,customText7),customDate2,customText20,customText19,customText21,dateAdded,customText18),webResponses(customText10,customText12,customTextBlock1,customTextBlock2,customText14,jobOrder(customText1,customInt1,customInt2,customText7),customDate2,customText20,customText19,customText21,dateAdded,customText18),fileAttachments(id,type)',
+        'id,firstName,lastName,email,phone,customText25,customText6,submissions(customTextBlock4,customText12,customTextBlock1,customTextBlock2,customText14,jobOrder(customText1,customInt1,customInt2,customText7),customDate2,customText20,customText19,customText21,dateAdded,customText18),webResponses(customTextBlock4,customText12,customTextBlock1,customTextBlock2,customText14,jobOrder(customText1,customInt1,customInt2,customText7),customDate2,customText20,customText19,customText21,dateAdded,customText18),fileAttachments(id,type)',
     },
   });
 
@@ -55,7 +55,7 @@ export const fetchCandidate = async (url: string, BhRestToken: string, candidate
     submissions: [
       ...submissions.data.map((s) => ({
         id: s.id,
-        challengeLink: s.customText10,
+        challengeLink: s.customTextBlock4,
         challengeScore: s.customText12,
         challengeSchedulingLink: s.customTextBlock1,
         previousChallengeId: s.customText14,
@@ -75,7 +75,7 @@ export const fetchCandidate = async (url: string, BhRestToken: string, candidate
       })),
       ...webResponses.data.map((w) => ({
         id: w.id,
-        challengeLink: w.customText10,
+        challengeLink: w.customTextBlock4,
         challengeScore: w.customText12,
         challengeSchedulingLink: w.customTextBlock1,
         previousChallengeId: w.customText14,
@@ -199,18 +199,19 @@ const findSubmissionByAppointment = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(title,customText1,customText7),dateAdded,customText15,customText10,customText23,customText20,customTextBlock2',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(title,customText1,customText7),dateAdded,customText15,customTextBlock4,customText23,customText20,customTextBlock2',
       query: `${appointmentIdField}:${appointmentId}`,
       count: '1',
     },
   });
 
   if (data.data.length) {
-    const { customText15, customText10, customText23, customText20, customTextBlock2, ...submission } = data.data[0];
+    const { customText15, customTextBlock4, customText23, customText20, customTextBlock2, ...submission } =
+      data.data[0];
     return {
       ...submission,
       challengeEventId: customText15,
-      challengeLink: customText10,
+      challengeLink: customTextBlock4,
       techScreenSchedulingLink: customTextBlock2,
       candidate: {
         ...submission.candidate,
@@ -876,13 +877,6 @@ export const saveSchedulingDataByAppointmentId = async (
         };
         break;
       }
-      case SchedulingType.TECHSCREEN: {
-        updateData = {
-          customText10: status,
-          customDate5: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
-        };
-        break;
-      }
     }
 
     await axios.post(candidateUrl, updateData, {
@@ -924,7 +918,7 @@ export const saveSubmissionChallengeResult = async (
   BhRestToken: string,
   challengeSession: ChallengeSession,
   submissionId: number
-): Promise<any> => {
+) => {
   const { evaluation } = challengeSession;
   const score = Math.round((evaluation.result / evaluation.max_result) * 100);
   const { jobOrder, candidate, challengeLink } = await fetchSubmission(url, BhRestToken, submissionId);
@@ -935,6 +929,7 @@ export const saveSubmissionChallengeResult = async (
   const updateData = {
     customText12: score,
     status: subStatus,
+    ...(evaluation.plagiarism !== undefined && { customText13: evaluation.plagiarism }),
     ...(shouldDowngrade && { jobOrder: { id: jobOrder.foundationsJobId } }),
   };
   const resultNoteTitle = shouldDowngrade
@@ -951,6 +946,7 @@ export const saveSubmissionChallengeResult = async (
   subStatus === 'Challenge Passed' && (await publishLinksGenerationRequest(submissionId, 'techscreen'));
 };
 
+// TODO: Remove
 export const saveSubmissionChallengeSimilarity = async (
   url: string,
   BhRestToken: string,
@@ -1192,13 +1188,13 @@ export const fetchSubmission = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email),customText4,customText3,customDate3,degreeList,educationDegree,customText7),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7,customText4,willRelocate,customText8,customText9,educationDegree,customText10),dateAdded,customText15,customText10,customTextBlock2,customDate2,customText20,customText23',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email),customText4,customText3,customDate3,degreeList,educationDegree,customText7),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7,customText4,willRelocate,customText8,customText9,educationDegree,customText10),dateAdded,customText15,customTextBlock4,customTextBlock2,customDate2,customText20,customText23',
     },
   });
 
   const {
     customText15,
-    customText10,
+    customTextBlock4,
     customTextBlock2,
     customDate2,
     customText20,
@@ -1209,7 +1205,7 @@ export const fetchSubmission = async (
   return {
     ...submission,
     challengeEventId: customText15,
-    challengeLink: customText10,
+    challengeLink: customTextBlock4,
     techScreenSchedulingLink: customTextBlock2,
     techScreenDate: customDate2,
     techScreenType: customText20,
@@ -1273,7 +1269,7 @@ export const saveChallengeLinks = async (
   const submissionUrl = `${url}entity/JobSubmission/${submissionId}`;
   const { challengeLink, previousChallengeId, previousChallengeScore, newJobOrderId, submissionStatus } = linksData;
   const updateData = {
-    customText10: challengeLink,
+    customTextBlock4: challengeLink,
     ...(submissionStatus && { status: submissionStatus }),
     ...(previousChallengeId && { customText14: previousChallengeId }),
     ...(previousChallengeScore && { customText12: previousChallengeScore }),
