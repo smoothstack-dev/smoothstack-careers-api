@@ -2,6 +2,7 @@ import { SecretsManager } from 'aws-sdk';
 import { BullhornCredentials } from 'src/model/BullhornCredentials';
 import { CodilitySecrets } from 'src/model/CodilitySecrets';
 import { GoogleCredentials } from 'src/model/GoogleCredentials';
+import { HackerRankSecrets } from 'src/model/HackerRankSecrets';
 import { HelloSignCredentials } from 'src/model/HelloSignCredentials';
 import { SquareSpaceCredentials } from 'src/model/SquareSpaceCredentials';
 import { ZoomCredentials } from 'src/model/ZoomCredentials';
@@ -26,6 +27,7 @@ export const getBullhornStaffAugSecrets = async (): Promise<BullhornCredentials>
   return JSON.parse(res.SecretString);
 };
 
+// TODO: Remove
 export const getCodilitySecrets = async (): Promise<CodilitySecrets> => {
   const secretPath = 'smoothstack/codility-credentials';
   const client = new SecretsManager({
@@ -68,6 +70,16 @@ export const getGoogleSecrets = async (): Promise<GoogleCredentials> => {
 
 export const getHelloSignSecrets = async (): Promise<HelloSignCredentials> => {
   const secretPath = 'smoothstack/hellosign-credentials';
+  const client = new SecretsManager({
+    region: 'us-east-1',
+  });
+
+  const res = await client.getSecretValue({ SecretId: secretPath }).promise();
+  return JSON.parse(res.SecretString);
+};
+
+export const getHackerRankSecrets = async (): Promise<HackerRankSecrets> => {
+  const secretPath = 'smoothstack/hackerrank-credentials';
   const client = new SecretsManager({
     region: 'us-east-1',
   });

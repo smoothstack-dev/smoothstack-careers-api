@@ -10,6 +10,7 @@ import {
   saveTechScreenLinks,
 } from './careers.service';
 import { generateChallengeLink, getChallengeDetails } from './challenge.service';
+import { generateChallengeLink as generateChallengeLinkV2 } from './challenge.v2.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { getCodilitySecrets } from './secrets.service';
 import { SchedulingTypeId } from 'src/model/SchedulingType';
@@ -175,8 +176,9 @@ const getChallengeLinksData = async (
   };
 };
 
-const getNewChallengeLink = async ({ jobOrder, candidate, id: submissionId }: JobSubmission): Promise<string> => {
+const getNewChallengeLink = async (jobSubmission: JobSubmission): Promise<string> => {
   const { BEARER_TOKEN, CALLBACK_URL } = await getCodilitySecrets();
+  const { jobOrder, candidate, id: submissionId } = jobSubmission;
   const { id: challengeId } = await getChallengeDetails(jobOrder.challengeName, BEARER_TOKEN);
   return await generateChallengeLink(
     challengeId,
@@ -184,4 +186,7 @@ const getNewChallengeLink = async ({ jobOrder, candidate, id: submissionId }: Jo
     BEARER_TOKEN,
     `${CALLBACK_URL}?submissionId=${submissionId}`
   );
+  /* TODO: Uncomment
+  return await generateChallengeLinkV2(jobSubmission);
+  */
 };

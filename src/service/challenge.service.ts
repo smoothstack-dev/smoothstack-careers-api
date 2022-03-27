@@ -9,6 +9,7 @@ import { getSessionData } from './auth/bullhorn.oauth.service';
 
 const BASE_URL = `https://codility.com/api/tests`;
 
+// TODO: Remove
 export const getChallengeDetails = async (name: string, token: string) => {
   const { data } = await axios.get(BASE_URL, {
     headers: {
@@ -19,6 +20,7 @@ export const getChallengeDetails = async (name: string, token: string) => {
   return data.results.find((t: any) => t.name === name);
 };
 
+// TODO: Remove
 export const generateChallengeLink = async (
   challengeId: string,
   candidate: any,
@@ -56,6 +58,7 @@ export const generateChallengeLink = async (
   return data.candidates[0].test_link;
 };
 
+// TODO: Remove
 export const processSubmissionChallengeEvent = async ({ event, session }: ChallengeEvent, submissionId: number) => {
   const { restUrl, BhRestToken } = await getSessionData();
   const prevSubmissions = await findSubmissionsByPreviousChallengeId(restUrl, BhRestToken, submissionId);
