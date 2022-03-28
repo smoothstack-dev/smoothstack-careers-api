@@ -725,6 +725,7 @@ export const saveSchedulingDataByEmail = async (
   url: string,
   BhRestToken: string,
   status: string,
+  candidateStatus: string,
   appointment: Appointment,
   type: SchedulingType,
   webinarRegistration?: WebinarRegistration
@@ -737,6 +738,7 @@ export const saveSchedulingDataByEmail = async (
   switch (type) {
     case SchedulingType.WEBINAR: {
       updateData = {
+        status: candidateStatus,
         customText30: status,
         customText37: appointmentId,
         customDate13: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
@@ -764,7 +766,8 @@ export const saveSchedulingDataBySubmissionId = async (
   status: string,
   appointment: Appointment,
   type: SchedulingType,
-  submissionStatus: string
+  submissionStatus: string,
+  candidateStatus: string
 ): Promise<JobSubmission> => {
   const { datetime: date } = appointment;
   const submission = await fetchSubmission(url, BhRestToken, +submissionId);
@@ -780,6 +783,7 @@ export const saveSchedulingDataBySubmissionId = async (
         customDate1: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
         customText16: appointment.id,
         status: submissionStatus,
+        candidate: { status: candidateStatus },
       };
       break;
     }
@@ -791,6 +795,7 @@ export const saveSchedulingDataBySubmissionId = async (
         customText17: appointment.id,
         status: submissionStatus,
         customTextBlock3: appointment.confirmationPage,
+        candidate: { status: candidateStatus },
       };
       break;
     }
@@ -814,7 +819,8 @@ export const saveSubmissionSchedulingDataByAppointmentId = async (
   appointmentId: number,
   date: string,
   type: SchedulingType,
-  submissionStatus: string
+  submissionStatus: string,
+  candidateStatus: string
 ): Promise<JobSubmission> => {
   const submission = await findSubmissionByAppointment(url, BhRestToken, appointmentId, type);
   if (submission) {
@@ -829,6 +835,7 @@ export const saveSubmissionSchedulingDataByAppointmentId = async (
           customText11: status,
           customDate1: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
           status: submissionStatus,
+          candidate: { status: candidateStatus },
         };
         break;
       }
@@ -838,6 +845,7 @@ export const saveSubmissionSchedulingDataByAppointmentId = async (
           customText22: status,
           customDate2: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
           status: submissionStatus,
+          candidate: { status: candidateStatus },
         };
         break;
       }
@@ -857,6 +865,7 @@ export const saveSchedulingDataByAppointmentId = async (
   url: string,
   BhRestToken: string,
   status: string,
+  candidateStatus: string,
   appointmentId: number,
   date: string,
   type: SchedulingType,
@@ -870,6 +879,7 @@ export const saveSchedulingDataByAppointmentId = async (
     switch (type) {
       case SchedulingType.WEBINAR: {
         updateData = {
+          status: candidateStatus,
           customText30: status,
           customDate13: date.split('T')[0].replace(/(\d{4})\-(\d{2})\-(\d{2})/, '$2/$3/$1'),
           ...(webinarRegistration && { customTextBlock4: webinarRegistration.joinUrl }),

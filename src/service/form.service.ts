@@ -1,14 +1,12 @@
 import { SNSEvent } from 'aws-lambda';
-import { Candidate } from 'src/model/Candidate';
 import { Form, FormType, PrescreenForm, TechScreenForm } from 'src/model/Form';
+import { updateSubmissionStatus } from 'src/util/status.util';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import {
   fetchSubmission,
   findCandidateByEmail,
   saveFormNote,
-  saveNoSubmissionNote,
   savePrescreenData,
-  saveSubmissionStatus,
   saveTechScreenData,
 } from './careers.service';
 import { publishFormProcessingRequest } from './sns.service';
@@ -62,20 +60,4 @@ const processTechScreenForm = async (techScreenForm: TechScreenForm) => {
     const saveTSDataReq = saveTechScreenData(restUrl, BhRestToken, submission, techScreenForm);
     await Promise.all([saveFormNoteReq, saveTSDataReq]);
   }
-};
-
-const updateSubmissionStatus = async (
-  url: string,
-  token: string,
-  candidate: Candidate,
-  result: string,
-  searchStatuses: string[]
-) => {
-  const firstPrioritySubmissions = candidate.submissions.filter((sub) => sub.status === searchStatuses[0]);
-  const secondPrioritySubmissions = candidate.submissions.filter((sub) => sub.status === searchStatuses[1]);
-  const jobSubmissions = firstPrioritySubmissions.length ? firstPrioritySubmissions : secondPrioritySubmissions;
-  for (const submission of jobSubmissions) {
-    await saveSubmissionStatus(url, token, submission.id, result);
-  }
-  !jobSubmissions.length && (await saveNoSubmissionNote(url, token, candidate.id, result, searchStatuses));
 };
