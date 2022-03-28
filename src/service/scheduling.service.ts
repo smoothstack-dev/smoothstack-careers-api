@@ -142,7 +142,10 @@ const processWebinarScheduling = async (event: SchedulingEvent) => {
         schedulingType,
         registration
       );
-      await updateSubmissionStatus(restUrl, BhRestToken, candidate, 'Webinar Scheduled', ['Challenge Passed']);
+      await updateSubmissionStatus(restUrl, BhRestToken, candidate, 'Webinar Scheduled', [
+        'Challenge Passed',
+        'Webinar Scheduled',
+      ]);
       if (existingAppointment) {
         await cancelAppointment(apiKey, userId, existingAppointment.id);
         candidate && (await cancelWebinarRegistration(candidate.webinarRegistrantId));
