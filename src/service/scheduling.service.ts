@@ -158,6 +158,10 @@ const processWebinarScheduling = async (event: SchedulingEvent) => {
         schedulingType,
         registration
       );
+      await updateSubmissionStatus(restUrl, BhRestToken, candidate, 'Webinar Scheduled', [
+        'Webinar Scheduled',
+        'R-Webinar no show',
+      ]);
       candidate && (await cancelWebinarRegistration(candidate.webinarRegistrantId));
       break;
     }
