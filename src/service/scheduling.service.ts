@@ -17,7 +17,6 @@ import { publishAppointmentGenerationRequest } from './sns.service';
 import { cancelCalendarInvite } from './calendar.service';
 import { AppointmentType } from 'src/model/AppointmentGenerationRequest';
 import { sendChallengeSchedulingAlert } from './email.service';
-import { updateSubmissionStatus } from 'src/util/status.util';
 
 const baseUrl = 'https://acuityscheduling.com/api/v1';
 
@@ -60,8 +59,7 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
           status,
           appointment,
           schedulingType,
-          'Challenge Scheduled',
-          'Active'
+          'Challenge Scheduled'
         );
         if (existingAppointment) {
           await cancelAppointment(apiKey, userId, existingAppointment.id);
@@ -86,8 +84,7 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
           appointment.id,
           appointment.datetime,
           schedulingType,
-          'Challenge Scheduled',
-          'Active'
+          'Challenge Scheduled'
         );
         if (submission) {
           await cancelCalendarInvite(submission.challengeEventId);
@@ -110,8 +107,7 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
         appointment.id,
         '',
         schedulingType,
-        'R-Challenge Canceled',
-        'Rejected'
+        'R-Challenge Canceled'
       );
       submission && (await cancelCalendarInvite(submission.challengeEventId));
       break;
@@ -134,12 +130,10 @@ const processWebinarScheduling = async (event: SchedulingEvent) => {
         restUrl,
         BhRestToken,
         status,
-        'Active',
         appointment,
         schedulingType,
         registration
       );
-      await updateSubmissionStatus(restUrl, BhRestToken, candidate, 'Webinar Scheduled', ['Challenge Passed']);
       if (existingAppointment) {
         await cancelAppointment(apiKey, userId, existingAppointment.id);
         candidate && (await cancelWebinarRegistration(candidate.webinarRegistrantId));
@@ -152,16 +146,11 @@ const processWebinarScheduling = async (event: SchedulingEvent) => {
         restUrl,
         BhRestToken,
         eventType,
-        'Active',
         appointment.id,
         appointment.datetime,
         schedulingType,
         registration
       );
-      await updateSubmissionStatus(restUrl, BhRestToken, candidate, 'Webinar Scheduled', [
-        'Webinar Scheduled',
-        'R-Webinar no show',
-      ]);
       candidate && (await cancelWebinarRegistration(candidate.webinarRegistrantId));
       break;
     }
@@ -170,13 +159,11 @@ const processWebinarScheduling = async (event: SchedulingEvent) => {
         restUrl,
         BhRestToken,
         eventType,
-        'Rejected',
         appointment.id,
         '',
         schedulingType,
         { joinUrl: '', registrantId: '' }
       );
-      await updateSubmissionStatus(restUrl, BhRestToken, candidate, 'R-Webinar Canceled', ['Webinar Scheduled']);
       candidate && (await cancelWebinarRegistration(candidate.webinarRegistrantId));
       break;
     }
@@ -202,8 +189,7 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
         status,
         appointment,
         schedulingType,
-        'Tech Screen Scheduled',
-        'Active'
+        'Tech Screen Scheduled'
       );
       const [screenerEmail, submission] = await Promise.all([calendarEmailReq, submissionReq]);
 
@@ -231,8 +217,7 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
         appointment.id,
         appointment.datetime,
         schedulingType,
-        'Tech Screen Scheduled',
-        'Active'
+        'Tech Screen Scheduled'
       );
       const [screenerEmail, submission] = await Promise.all([calendarEmailReq, submissionReq]);
       if (submission) {
@@ -257,8 +242,7 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
         appointment.id,
         '',
         schedulingType,
-        'R-Tech Screen Canceled',
-        'Rejected'
+        'R-Tech Screen Canceled'
       );
       submission && (await cancelCalendarInvite(submission.techScreenEventId));
       break;
