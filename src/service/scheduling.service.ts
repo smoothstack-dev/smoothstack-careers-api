@@ -4,6 +4,7 @@ import { SchedulingEvent } from '../model/SchedulingEvent';
 import {
   fetchSubmissionHistory,
   fetchSubmissionHistoryByAppointmentId,
+  saveCandidateFields,
   saveSchedulingDataByAppointmentId,
   saveSchedulingDataBySubmissionId,
   saveSubmissionSchedulingDataByAppointmentId,
@@ -60,9 +61,9 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
           status,
           appointment,
           schedulingType,
-          'Challenge Scheduled',
-          'Active'
+          'Challenge Scheduled'
         );
+        await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Active' });
         if (existingAppointment) {
           await cancelAppointment(apiKey, userId, existingAppointment.id);
           await cancelCalendarInvite(submission.challengeEventId);
@@ -86,10 +87,10 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
           appointment.id,
           appointment.datetime,
           schedulingType,
-          'Challenge Scheduled',
-          'Active'
+          'Challenge Scheduled'
         );
         if (submission) {
+          await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Active' });
           await cancelCalendarInvite(submission.challengeEventId);
           await publishAppointmentGenerationRequest(
             {
@@ -110,10 +111,12 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
         appointment.id,
         '',
         schedulingType,
-        'R-Challenge Canceled',
-        'Rejected'
+        'R-Challenge Canceled'
       );
-      submission && (await cancelCalendarInvite(submission.challengeEventId));
+      if (submission) {
+        await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Rejected' });
+        await cancelCalendarInvite(submission.challengeEventId);
+      }
       break;
     }
   }
@@ -158,11 +161,13 @@ const processWebinarScheduling = async (event: SchedulingEvent) => {
         schedulingType,
         registration
       );
-      await updateSubmissionStatus(restUrl, BhRestToken, candidate, 'Webinar Scheduled', [
-        'Webinar Scheduled',
-        'R-Webinar no show',
-      ]);
-      candidate && (await cancelWebinarRegistration(candidate.webinarRegistrantId));
+      if (candidate) {
+        await updateSubmissionStatus(restUrl, BhRestToken, candidate, 'Webinar Scheduled', [
+          'Webinar Scheduled',
+          'R-Webinar no show',
+        ]);
+        await cancelWebinarRegistration(candidate.webinarRegistrantId);
+      }
       break;
     }
     case 'canceled': {
@@ -176,8 +181,10 @@ const processWebinarScheduling = async (event: SchedulingEvent) => {
         schedulingType,
         { joinUrl: '', registrantId: '' }
       );
-      await updateSubmissionStatus(restUrl, BhRestToken, candidate, 'R-Webinar Canceled', ['Webinar Scheduled']);
-      candidate && (await cancelWebinarRegistration(candidate.webinarRegistrantId));
+      if (candidate) {
+        await updateSubmissionStatus(restUrl, BhRestToken, candidate, 'R-Webinar Canceled', ['Webinar Scheduled']);
+        await cancelWebinarRegistration(candidate.webinarRegistrantId);
+      }
       break;
     }
   }
@@ -202,11 +209,10 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
         status,
         appointment,
         schedulingType,
-        'Tech Screen Scheduled',
-        'Active'
+        'Tech Screen Scheduled'
       );
       const [screenerEmail, submission] = await Promise.all([calendarEmailReq, submissionReq]);
-
+      await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Active' });
       if (existingAppointment) {
         const cancelAppReq = cancelAppointment(apiKey, userId, existingAppointment.id);
         const cancelCalReq = cancelCalendarInvite(submission.techScreenEventId);
@@ -231,11 +237,11 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
         appointment.id,
         appointment.datetime,
         schedulingType,
-        'Tech Screen Scheduled',
-        'Active'
+        'Tech Screen Scheduled'
       );
       const [screenerEmail, submission] = await Promise.all([calendarEmailReq, submissionReq]);
       if (submission) {
+        await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Active' });
         const cancelReq = cancelCalendarInvite(submission.techScreenEventId);
         const publishReq = publishAppointmentGenerationRequest(
           {
@@ -257,10 +263,12 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
         appointment.id,
         '',
         schedulingType,
-        'R-Tech Screen Canceled',
-        'Rejected'
+        'R-Tech Screen Canceled'
       );
-      submission && (await cancelCalendarInvite(submission.techScreenEventId));
+      if (submission) {
+        await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Rejected' });
+        await cancelCalendarInvite(submission.techScreenEventId);
+      }
       break;
     }
   }
