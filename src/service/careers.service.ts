@@ -933,7 +933,7 @@ export const saveSubmissionChallengeResult = async (
   const updateData = {
     customText12: score,
     status: subStatus,
-    ...(evaluation.plagiarism !== undefined && { customText13: evaluation.plagiarism }),
+    ...(evaluation.plagiarism && { customText13: 'Potential Plagiarism' }),
     ...(shouldDowngrade && { jobOrder: { id: jobOrder.foundationsJobId } }),
   };
   const resultNoteTitle = shouldDowngrade

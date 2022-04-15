@@ -9,10 +9,8 @@ import {
   saveSubmissionFields,
   saveTechScreenLinks,
 } from './careers.service';
-import { generateChallengeLink, getChallengeDetails } from './challenge.service';
-import { generateChallengeLink as generateChallengeLinkV2 } from './challenge.v2.service';
+import { generateChallengeLink } from './challenge.v2.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
-import { getCodilitySecrets } from './secrets.service';
 import { SchedulingTypeId } from 'src/model/SchedulingType';
 import { JobSubmission } from 'src/model/JobSubmission';
 import { deriveSubmissionStatus, shouldDowngradeJob } from 'src/util/challenge.util';
@@ -168,25 +166,10 @@ const getChallengeLinksData = async (
     ) && newSubmission.jobOrder.foundationsJobId;
 
   return {
-    challengeLink: matchedSubmission?.challengeLink || (await getNewChallengeLink(newSubmission)),
+    challengeLink: matchedSubmission?.challengeLink || (await generateChallengeLink(newSubmission)),
     previousChallengeId: matchedSubmission?.id,
     previousChallengeScore: matchedSubmission?.challengeScore,
     submissionStatus,
     newJobOrderId,
   };
-};
-
-const getNewChallengeLink = async (jobSubmission: JobSubmission): Promise<string> => {
-  const { BEARER_TOKEN, CALLBACK_URL } = await getCodilitySecrets();
-  const { jobOrder, candidate, id: submissionId } = jobSubmission;
-  const { id: challengeId } = await getChallengeDetails(jobOrder.challengeName, BEARER_TOKEN);
-  return await generateChallengeLink(
-    challengeId,
-    candidate,
-    BEARER_TOKEN,
-    `${CALLBACK_URL}?submissionId=${submissionId}`
-  );
-  /* TODO: Uncomment
-  return await generateChallengeLinkV2(jobSubmission);
-  */
 };
