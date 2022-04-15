@@ -9,7 +9,7 @@ import {
   saveSubmissionFields,
   saveTechScreenLinks,
 } from './careers.service';
-import { generateChallengeLink as generateChallengeLinkV2 } from './challenge.v2.service';
+import { generateChallengeLink } from './challenge.v2.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { SchedulingTypeId } from 'src/model/SchedulingType';
 import { JobSubmission } from 'src/model/JobSubmission';
@@ -166,7 +166,7 @@ const getChallengeLinksData = async (
     ) && newSubmission.jobOrder.foundationsJobId;
 
   return {
-    challengeLink: matchedSubmission?.challengeLink || (await generateChallengeLinkV2(newSubmission)),
+    challengeLink: matchedSubmission?.challengeLink || (await generateChallengeLink(newSubmission)),
     previousChallengeId: matchedSubmission?.id,
     previousChallengeScore: matchedSubmission?.challengeScore,
     submissionStatus,
