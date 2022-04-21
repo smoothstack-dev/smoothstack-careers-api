@@ -3,6 +3,7 @@ import { parse } from 'aws-multipart-parser';
 import {
   createWebResponse,
   fetchJobOrder,
+  fetchSubmission,
   findCandidateByEmailOrPhone,
   populateCandidateFields,
   saveApplicationNote,
@@ -148,8 +149,10 @@ const saveApplicationData = async (
 ) => {
   const candidateFieldsWStatus = { ...candidateFields, status: KNOCKOUT_STATUS[knockout].candidateStatus };
   await populateCandidateFields(url, BhRestToken, candidateId, candidateFieldsWStatus);
+  const { status: subStatus } = await fetchSubmission(url, BhRestToken, submissionId);
   await saveSubmissionFields(url, BhRestToken, submissionId, {
-    status: KNOCKOUT_STATUS[knockout].submissionStatus,
+    status: subStatus,
+    ...(subStatus === 'New Lead' && { status: KNOCKOUT_STATUS[knockout].submissionStatus }),
     ...(submissionFields.utmSource && { customText24: submissionFields.utmSource }),
   });
   await saveCandidateNote(url, BhRestToken, candidateId, 'Knockout', KNOCKOUT_NOTE[knockout]);
