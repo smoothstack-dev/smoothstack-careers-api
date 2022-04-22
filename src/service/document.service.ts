@@ -42,7 +42,7 @@ const sendSignatureRequest = async (client: HelloSign, templateId: string, submi
   });
   const docType = SUB_STATUS_DOCTYPE[submission.status];
   const opts = {
-    test_mode: 1,
+    // test_mode: 1,
     template_id: templateId,
     subject: 'Smoothstack Document Signature Request',
     message: 'Please sign the following document to confirm enrollment.',
@@ -209,7 +209,7 @@ const sendStaffAugSignatureRequest = async (client: HelloSign, templateId: strin
   const contractAnswer = submission.candidate.employeeType !== 'W2' && 'N/A';
   const includeRate = submission.candidate.includeRate === 'Yes';
   const opts = {
-    test_mode: 1,
+    // test_mode: 1,
     template_id: templateId,
     subject: 'Smoothstack Right to Represent Signature Request',
     message: 'Please sign the following Right to Represent document.',
