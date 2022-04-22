@@ -50,4 +50,5 @@ export interface SACandidate {
   federalHolidays: string;
   healthBenefits: string;
   retirement: string;
+  includeRate: string;
 }
