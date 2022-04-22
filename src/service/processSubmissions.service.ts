@@ -86,7 +86,7 @@ export const processUpdatedSASubmissions = async () => {
   const { restUrl, BhRestToken } = await getStaffAugSessionData();
   const status = 'Send RTR';
   const submissionFields =
-    'id,candidate(firstName,lastName,email,employeeType,willRelocate,customText1,customText2,customText3,customText4),jobOrder(title,clientCorporation(name)),payRate,status,isDeleted';
+    'id,candidate(firstName,lastName,email,employeeType,willRelocate,customText1,customText2,customText3,customText4,customText6),jobOrder(title,clientCorporation(name)),payRate,status,isDeleted';
   const submissions = await fetchUpdatedSubmissions(restUrl, BhRestToken, status, submissionFields);
 
   const generationRequests = submissions.map((sub) => publishDocumentGenerationRequest(sub, 'staffAug'));

@@ -3,7 +3,13 @@ import { JobSubmission, SAJobSubmission } from 'src/model/JobSubmission';
 import { getHelloSignSecrets } from './secrets.service';
 import { DocumentEventRequest } from 'src/model/DocumentEvent';
 import { getSessionData, getStaffAugSessionData } from './auth/bullhorn.oauth.service';
-import { fetchSubmission, saveCandidateNote, saveSubmissionStatus, uploadCandidateFile } from './careers.service';
+import {
+  fetchSubmission,
+  saveCandidateFields,
+  saveCandidateNote,
+  saveSubmissionStatus,
+  uploadCandidateFile,
+} from './careers.service';
 import { sendSignedDocument } from './email.service';
 
 const SUB_STATUS_DOCTYPE = {
@@ -36,7 +42,7 @@ const sendSignatureRequest = async (client: HelloSign, templateId: string, submi
   });
   const docType = SUB_STATUS_DOCTYPE[submission.status];
   const opts = {
-    // test_mode: 1,
+    test_mode: 1,
     template_id: templateId,
     subject: 'Smoothstack Document Signature Request',
     message: 'Please sign the following document to confirm enrollment.',
@@ -134,6 +140,7 @@ const processRegularDocEvent = async (eventReq: DocumentEventRequest) => {
     await sendSignedDocument(submission.candidate.email, docType, signedFile);
     if (submission.status === `${docType} Offered`) {
       await saveSubmissionStatus(restUrl, BhRestToken, submissionId, `${docType} Signed`);
+      await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Signed' });
     }
   }
 };
@@ -200,8 +207,9 @@ const sendStaffAugSignatureRequest = async (client: HelloSign, templateId: strin
     maximumFractionDigits: 0,
   });
   const contractAnswer = submission.candidate.employeeType !== 'W2' && 'N/A';
+  const includeRate = submission.candidate.includeRate === 'Yes';
   const opts = {
-    // test_mode: 1,
+    test_mode: 1,
     template_id: templateId,
     subject: 'Smoothstack Right to Represent Signature Request',
     message: 'Please sign the following Right to Represent document.',
@@ -223,7 +231,7 @@ const sendStaffAugSignatureRequest = async (client: HelloSign, templateId: strin
       },
       {
         name: 'payRate',
-        value: salaryFormatter.format(submission.payRate),
+        value: includeRate ? salaryFormatter.format(submission.payRate) : 'TBD With Employer',
       },
       {
         name: 'employeeType',

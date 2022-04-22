@@ -152,6 +152,7 @@ const saveApplicationData = async (
   const { status: subStatus } = await fetchSubmission(url, BhRestToken, submissionId);
   await saveSubmissionFields(url, BhRestToken, submissionId, {
     status: subStatus,
+    customText25: candidateFields.workAuthorization,
     ...(subStatus === 'New Lead' && { status: KNOCKOUT_STATUS[knockout].submissionStatus }),
     ...(submissionFields.utmSource && { customText24: submissionFields.utmSource }),
   });
