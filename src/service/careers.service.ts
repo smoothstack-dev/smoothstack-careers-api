@@ -199,18 +199,18 @@ const findSubmissionByAppointment = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(title,customText1,customText7),dateAdded,customText15,customTextBlock4,customText23,customText20,customTextBlock2',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(title,customText1,customText7),dateAdded,customTextBlock5,customTextBlock4,customText23,customText20,customTextBlock2',
       query: `${appointmentIdField}:${appointmentId}`,
       count: '1',
     },
   });
 
   if (data.data.length) {
-    const { customText15, customTextBlock4, customText23, customText20, customTextBlock2, ...submission } =
+    const { customTextBlock5, customTextBlock4, customText23, customText20, customTextBlock2, ...submission } =
       data.data[0];
     return {
       ...submission,
-      challengeEventId: customText15,
+      challengeEventId: customTextBlock5,
       challengeLink: customTextBlock4,
       techScreenSchedulingLink: customTextBlock2,
       candidate: {
@@ -1193,12 +1193,12 @@ export const fetchSubmission = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email),customText4,customText3,customDate3,degreeList,educationDegree,customText7),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7,customText4,willRelocate,customText8,customText9,educationDegree,customText10),dateAdded,customText15,customTextBlock4,customTextBlock2,customDate2,customText20,customText23',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email),customText4,customText3,customDate3,degreeList,educationDegree,customText7),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7,customText4,willRelocate,customText8,customText9,educationDegree,customText10),dateAdded,customTextBlock5,customTextBlock4,customTextBlock2,customDate2,customText20,customText23',
     },
   });
 
   const {
-    customText15,
+    customTextBlock5,
     customTextBlock4,
     customTextBlock2,
     customDate2,
@@ -1209,7 +1209,7 @@ export const fetchSubmission = async (
   } = data.data;
   return {
     ...submission,
-    challengeEventId: customText15,
+    challengeEventId: customTextBlock5,
     challengeLink: customTextBlock4,
     techScreenSchedulingLink: customTextBlock2,
     techScreenDate: customDate2,
