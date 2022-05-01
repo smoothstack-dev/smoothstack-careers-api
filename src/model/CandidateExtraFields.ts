@@ -14,4 +14,5 @@ export interface CandidateExtraFields {
   highestDegree?: string;
   militaryStatus: string;
   militaryBranch?: string;
+  major?: string;
 }

@@ -275,6 +275,7 @@ export const populateCandidateFields = async (
     ...(fields.highestDegree && { educationDegree: fields.highestDegree }),
     customText2: fields.militaryStatus,
     ...(fields.militaryBranch && { customText10: fields.militaryBranch }),
+    ...(fields.major && { customText38: fields.major }),
   };
   const { data } = await axios.post(candidateUrl, updateData, {
     params: {
