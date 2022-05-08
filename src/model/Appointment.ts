@@ -9,4 +9,18 @@ export interface Appointment {
   calendarID: number;
   duration: number;
   confirmationPage: string;
+  forms: AppointmentForm[];
+}
+
+interface AppointmentForm {
+  id: number;
+  name: string;
+  values: AppointmentFormValue[];
+}
+
+interface AppointmentFormValue {
+  id: number;
+  fieldID: number;
+  value: string;
+  name: string;
 }

@@ -51,9 +51,10 @@ const generateInitialLinks = async (restUrl: string, BhRestToken: string, submis
   const challengeSchedulingLink = getSchedulingLink(
     submission.candidate.firstName,
     submission.candidate.lastName,
-    `coding_challenge_${submissionId}@smoothstack.com`,
+    submission.candidate.email,
     submission.candidate.phone,
-    SchedulingTypeId.CHALLENGE
+    SchedulingTypeId.CHALLENGE_V2,
+    submission.id
   );
 
   const requests = [

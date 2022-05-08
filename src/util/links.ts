@@ -7,11 +7,15 @@ export const getSchedulingLink = (
   lastName: string,
   email: string,
   phone: string,
-  typeId: SchedulingTypeId
+  typeId: SchedulingTypeId,
+  submissionId?: number
 ) => {
-  return `https://app.squarespacescheduling.com/schedule.php?owner=23045512&appointmentType=${typeId}&firstName=${encodeURIComponent(
-    firstName
-  )}&lastName=${encodeURIComponent(lastName)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}`;
+  return (
+    `https://app.squarespacescheduling.com/schedule.php?owner=23045512&appointmentType=${typeId}&firstName=${encodeURIComponent(
+      firstName
+    )}&lastName=${encodeURIComponent(lastName)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}` +
+    (submissionId ? `&field:11569425=${encodeURIComponent(submissionId)}` : '')
+  );
 };
 
 export const getPrescreeningLink = (candidate: Candidate) => {
