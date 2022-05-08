@@ -84,9 +84,10 @@ export const apply = async (event: APIGatewayProxyEvent) => {
         schedulingLink: getSchedulingLink(
           firstName,
           lastName,
-          `coding_challenge_${jobSubmission.id}@smoothstack.com`,
+          formattedEmail,
           formattedPhone,
-          SchedulingTypeId.CHALLENGE
+          SchedulingTypeId.CHALLENGE_V2,
+          jobSubmission.id
         ),
       }),
     };

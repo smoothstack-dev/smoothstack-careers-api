@@ -29,6 +29,9 @@ export const processSchedulingEvent = async (event: SchedulingEvent) => {
     case SchedulingTypeId.CHALLENGE:
       await processChallengeScheduling(event);
       break;
+    case SchedulingTypeId.CHALLENGE_V2:
+      await processChallengeSchedulingV2(event);
+      break;
     case SchedulingTypeId.WEBINAR:
       await processWebinarScheduling(event);
       break;
@@ -38,6 +41,89 @@ export const processSchedulingEvent = async (event: SchedulingEvent) => {
   }
 };
 
+const processChallengeSchedulingV2 = async (event: SchedulingEvent) => {
+  const { restUrl, BhRestToken } = await getSessionData();
+  const { apiKey, userId } = await getSquareSpaceSecrets();
+  const appointment = await fetchAppointment(apiKey, userId, event.id);
+  const eventType = event.action.split('.')[1];
+  const schedulingType = SchedulingType.CHALLENGE;
+  switch (eventType) {
+    case 'scheduled': {
+      const existingAppointment = await findExistingAppointment(apiKey, userId, appointment);
+      const status = existingAppointment ? 'rescheduled' : 'scheduled';
+      const submissionId = appointment.forms
+        .find((f) => f.id === 2075339)
+        .values.find((v) => v.fieldID === 11569425).value;
+      if (!(await hasFailedPreviousChallenge(restUrl, BhRestToken, 'submission', submissionId))) {
+        const submission = await saveSchedulingDataBySubmissionId(
+          restUrl,
+          BhRestToken,
+          submissionId,
+          status,
+          appointment,
+          schedulingType,
+          'Challenge Scheduled'
+        );
+        await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Active' });
+        if (existingAppointment) {
+          await cancelAppointment(apiKey, userId, existingAppointment.id);
+          await cancelCalendarInvite(submission.challengeEventId);
+        }
+        await publishAppointmentGenerationRequest(
+          {
+            submission,
+            appointment,
+          },
+          AppointmentType.CHALLENGE
+        );
+      }
+      break;
+    }
+    case 'rescheduled': {
+      if (!(await hasFailedPreviousChallenge(restUrl, BhRestToken, 'appointment', appointment.id))) {
+        const submission = await saveSubmissionSchedulingDataByAppointmentId(
+          restUrl,
+          BhRestToken,
+          eventType,
+          appointment.id,
+          appointment.datetime,
+          schedulingType,
+          'Challenge Scheduled'
+        );
+        if (submission) {
+          await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Active' });
+          await cancelCalendarInvite(submission.challengeEventId);
+          await publishAppointmentGenerationRequest(
+            {
+              submission,
+              appointment,
+            },
+            AppointmentType.CHALLENGE
+          );
+        }
+      }
+      break;
+    }
+    case 'canceled': {
+      const submission = await saveSubmissionSchedulingDataByAppointmentId(
+        restUrl,
+        BhRestToken,
+        eventType,
+        appointment.id,
+        '',
+        schedulingType,
+        'R-Challenge Canceled'
+      );
+      if (submission) {
+        await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Rejected' });
+        await cancelCalendarInvite(submission.challengeEventId);
+      }
+      break;
+    }
+  }
+};
+
+// TODO: Remove when old challenges are cleared
 const processChallengeScheduling = async (event: SchedulingEvent) => {
   const { restUrl, BhRestToken } = await getSessionData();
   const { apiKey, userId } = await getSquareSpaceSecrets();
