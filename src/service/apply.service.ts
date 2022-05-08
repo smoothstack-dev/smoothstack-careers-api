@@ -24,7 +24,7 @@ const DAY_DIFF = 90;
 
 export const apply = async (event: APIGatewayProxyEvent) => {
   console.log('Received Candidate Application Request: ', event.queryStringParameters);
-  const { firstName, lastName, email, format, phone, utmSource, ...extraFields } = event.queryStringParameters;
+  const { firstName, lastName, email, format, phone, utmSource, utmMedium, utmCampaign, ...extraFields } = event.queryStringParameters;
   const { careerId } = event.pathParameters;
   const { resume } = parse(event, true);
   const { restUrl, BhRestToken } = await getSessionData();
@@ -67,6 +67,8 @@ export const apply = async (event: APIGatewayProxyEvent) => {
     };
     const submissionFields = {
       ...(utmSource && { utmSource }),
+      ...(utmMedium && { utmMedium }),
+      ...(utmCampaign && { utmCampaign }),
     };
     const { jobSubmission, candidate: newCandidate } = await createWebResponse(careerId, webResponseFields, resume);
     await sendApplicationForProcessing(
@@ -155,7 +157,9 @@ const saveApplicationData = async (
     status: subStatus,
     customText25: candidateFields.workAuthorization,
     ...(subStatus === 'New Lead' && { status: KNOCKOUT_STATUS[knockout].submissionStatus }),
-    ...(submissionFields.utmSource && { customText24: submissionFields.utmSource }),
+    ...(submissionFields.utmSource && { source: submissionFields.utmSource }),
+    ...(submissionFields.utmMedium && { customText24: submissionFields.utmMedium }),
+    ...(submissionFields.utmCampaign && { customText6: submissionFields.utmCampaign }),
   });
   await saveCandidateNote(url, BhRestToken, candidateId, 'Knockout', KNOCKOUT_NOTE[knockout]);
 };

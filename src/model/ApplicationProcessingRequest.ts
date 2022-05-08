@@ -14,6 +14,8 @@ export interface ApplicationProcessingRequest {
     id: number;
     fields: {
       utmSource?: string;
+      utmMedium?: string;
+      utmCampaign?: string;
     };
   };
   candidate: {
