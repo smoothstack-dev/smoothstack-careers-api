@@ -11,7 +11,7 @@ const applicationProcessor = async (event: SNSEvent) => {
     await processApplication(restUrl, BhRestToken, request);
     console.log('Successfully processed application: ', request);
   } catch (e) {
-    console.error('Error processing application: ', e.message);
+    console.error('Error processing application: ', e);
     throw e;
   }
 };
