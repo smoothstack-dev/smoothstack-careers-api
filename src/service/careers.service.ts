@@ -19,10 +19,16 @@ import {
 import { sendTechscreenResult } from './email.service';
 import { publishLinksGenerationRequest } from './sns.service';
 
-export const createWebResponse = async (careerId: string, application: any, resume: any): Promise<any> => {
+export const createWebResponse = async (careerId: string, application: any, resume: any, isStaffAugTeam: boolean = false): Promise<any> => {
   // these are public non-secret values
-  const corpId = '7xjpg0';
-  const swimlane = '32';
+  let corpId = '7xjpg0';
+  let swimlane = '32';
+  if(isStaffAugTeam){
+    // TODO: change to staffingaugteam's ids
+    corpId = '7xjpg0';
+    swimlane = '32';
+  }
+  
   const webResponseUrl = `https://public-rest${swimlane}.bullhornstaffing.com/rest-services/${corpId}/apply/${careerId}/raw`;
 
   const form = new FormData();
@@ -975,6 +981,7 @@ export const saveSubmissionChallengeSimilarity = async (
 
 export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId: number): Promise<JobOrder> => {
   const jobOrdersUrl = `${url}entity/JobOrder/${jobOrderId}`;
+  
   const { data } = await axios.get(jobOrdersUrl, {
     params: {
       BhRestToken,
@@ -982,6 +989,7 @@ export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId
     },
   });
 
+  // TODO: check custom text from StaffAugTeam service
   const {
     customText1,
     customText4,
