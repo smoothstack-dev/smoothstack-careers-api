@@ -199,7 +199,7 @@ const findSubmissionByAppointment = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(title,customText1,customText7),dateAdded,customTextBlock5,customTextBlock4,customText20,customTextBlock2,customTextBlock5',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(title,customText1,customText7),dateAdded,customTextBlock5,customTextBlock4,customText20,customTextBlock2',
       query: `${appointmentIdField}:${appointmentId}`,
       count: '1',
     },
