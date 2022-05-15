@@ -66,7 +66,7 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
         await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Active' });
         if (existingAppointment) {
           await cancelAppointment(apiKey, userId, existingAppointment.id);
-          await cancelCalendarInvite(submission.challengeEventId);
+          await cancelCalendarInvite(submission.eventId);
         }
         await publishAppointmentGenerationRequest(
           {
@@ -91,7 +91,7 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
         );
         if (submission) {
           await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Active' });
-          await cancelCalendarInvite(submission.challengeEventId);
+          await cancelCalendarInvite(submission.eventId);
           await publishAppointmentGenerationRequest(
             {
               submission,
@@ -115,7 +115,7 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
       );
       if (submission) {
         await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Rejected' });
-        await cancelCalendarInvite(submission.challengeEventId);
+        await cancelCalendarInvite(submission.eventId);
       }
       break;
     }
@@ -218,7 +218,7 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
       await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Active' });
       if (existingAppointment) {
         const cancelAppReq = cancelAppointment(apiKey, userId, existingAppointment.id);
-        const cancelCalReq = cancelCalendarInvite(submission.techScreenEventId);
+        const cancelCalReq = cancelCalendarInvite(submission.eventId);
         await Promise.all([cancelAppReq, cancelCalReq]);
       }
       await publishAppointmentGenerationRequest(
@@ -245,7 +245,7 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
       const [screenerEmail, submission] = await Promise.all([calendarEmailReq, submissionReq]);
       if (submission) {
         await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Active' });
-        const cancelReq = cancelCalendarInvite(submission.techScreenEventId);
+        const cancelReq = cancelCalendarInvite(submission.eventId);
         const publishReq = publishAppointmentGenerationRequest(
           {
             submission,
@@ -270,7 +270,7 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
       );
       if (submission) {
         await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Rejected' });
-        await cancelCalendarInvite(submission.techScreenEventId);
+        await cancelCalendarInvite(submission.eventId);
       }
       break;
     }

@@ -199,18 +199,18 @@ const findSubmissionByAppointment = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(title,customText1,customText7),dateAdded,customTextBlock5,customTextBlock4,customText23,customText20,customTextBlock2',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email)),jobOrder(title,customText1,customText7),dateAdded,customTextBlock5,customTextBlock4,customText20,customTextBlock2,customTextBlock5',
       query: `${appointmentIdField}:${appointmentId}`,
       count: '1',
     },
   });
 
   if (data.data.length) {
-    const { customTextBlock5, customTextBlock4, customText23, customText20, customTextBlock2, ...submission } =
+    const { customTextBlock5, customTextBlock4, customText20, customTextBlock2, ...submission } =
       data.data[0];
     return {
       ...submission,
-      challengeEventId: customTextBlock5,
+      eventId: customTextBlock5,
       challengeLink: customTextBlock4,
       techScreenSchedulingLink: customTextBlock2,
       candidate: {
@@ -224,7 +224,6 @@ const findSubmissionByAppointment = async (
         challengeName: submission.jobOrder.customText1,
         techScreenType: submission.jobOrder.customText7,
       },
-      techScreenEventId: customText23,
       techScreenType: customText20,
     };
   }
@@ -1193,7 +1192,7 @@ export const fetchSubmission = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email),customText4,customText3,customDate3,degreeList,educationDegree,customText7),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7,customText4,willRelocate,customText8,customText9,educationDegree,customText10),dateAdded,customTextBlock5,customTextBlock4,customTextBlock2,customDate2,customText20,customText23',
+        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email),customText4,customText3,customDate3,degreeList,educationDegree,customText7),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7,customText4,willRelocate,customText8,customText9,educationDegree,customText10),dateAdded,customTextBlock5,customTextBlock4,customTextBlock2,customDate2,customText20',
     },
   });
 
@@ -1204,17 +1203,15 @@ export const fetchSubmission = async (
     customDate2,
     customText20,
     customText17,
-    customText23,
     ...submission
   } = data.data;
   return {
     ...submission,
-    challengeEventId: customTextBlock5,
+    eventId: customTextBlock5,
     challengeLink: customTextBlock4,
     techScreenSchedulingLink: customTextBlock2,
     techScreenDate: customDate2,
     techScreenType: customText20,
-    techScreenEventId: customText23,
     candidate: {
       ...submission.candidate,
       githubLink: submission.candidate.customText6,

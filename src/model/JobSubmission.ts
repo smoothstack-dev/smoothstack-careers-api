@@ -7,13 +7,12 @@ export interface JobSubmission {
   candidate: Candidate;
   jobOrder: JobOrder;
   dateAdded: number;
-  challengeEventId: string;
+  eventId: string;
   challengeLink: string;
   challengeScore: string;
   challengeSchedulingLink: string;
   techScreenSchedulingLink: string;
   previousChallengeId: string;
-  techScreenEventId: string;
   techScreenDate: string;
   techScreenType: string;
   techScreenResult: string;
