@@ -1,104 +1,167 @@
-import { calendar } from '@googleapis/calendar';
-import { randomUUID } from 'crypto';
+import axios from 'axios';
 import { Appointment } from 'src/model/Appointment';
 import { Candidate } from 'src/model/Candidate';
-import { DriveFile } from 'src/model/DriveFile';
-import { GoogleService } from 'src/model/GoogleCredentials';
 import { JobSubmission } from 'src/model/JobSubmission';
+import { ResumeFile } from 'src/model/ResumeFile';
 import { getTechScreeningLink } from 'src/util/links';
-import { getOauth2Client } from './auth/google.oauth.service';
+import { getMSToken } from './auth/microsoft.oauth.service';
 
-const getClient = async () => {
-  const oauth2Client = await getOauth2Client(GoogleService.CALENDAR);
-  return calendar({ version: 'v3', auth: oauth2Client });
-};
-
-export const sendTechScreenCalendarInvite = async (
-  submission: JobSubmission,
-  screenerEmail: string,
-  appointment: Appointment,
-  resumeFile: DriveFile
-): Promise<string> => {
-  const calendarClient = await getClient();
-  const { candidate } = submission;
-  const { title: jobTitle } = submission.jobOrder;
-  const jobTitleString = jobTitle ? `<strong>Position Applied for: ${jobTitle}</strong><br/>` : '';
-  const event = {
-    summary: `Smoothstack Tech Screening/Video Chat - ${candidate.firstName} ${candidate.lastName}`,
-    description: `${jobTitleString}Tech Screen Form Link: <a href="${getTechScreeningLink(submission, jobTitle)}">${
-      candidate.firstName
-    }'s Tech Screening Form</a> (For Tech Screener Use Only)<br/><br/><strong>Note to Candidate:</strong> This is a <strong>videochat</strong> meeting. You must be ready to share your webcam during the call.`,
-    start: {
-      dateTime: appointment.datetime,
-      timeZone: 'America/New_York',
-    },
-    end: {
-      dateTime: new Date(+new Date(appointment.datetime) + appointment.duration * 60000).toISOString(),
-      timeZone: 'America/New_York',
-    },
-    attendees: [
-      { email: candidate.email },
-      { email: screenerEmail },
-      ...(candidate.owner ? [{ email: candidate.owner.email }] : []),
-    ],
-    ...(resumeFile && {
-      attachments: [
-        {
-          fileUrl: resumeFile.webViewLink,
-          title: resumeFile.name,
-        },
-      ],
-    }),
-    conferenceData: {
-      createRequest: { requestId: randomUUID() },
-    },
-  };
-
-  const { data } = await calendarClient.events.insert({
-    calendarId: 'primary',
-    sendNotifications: true,
-    supportsAttachments: true,
-    conferenceDataVersion: 1,
-    requestBody: event,
-  });
-
-  return data.id;
-};
+const BASE_URL = `https://graph.microsoft.com/v1.0/users/info@smoothstack.com/calendar`;
 
 export const sendChallengeCalendarInvite = async (
   candidate: Candidate,
   challengeLink: string,
   appointment: Appointment
 ): Promise<string> => {
-  const calendarClient = await getClient();
+  const authToken = await getMSToken();
   const event = {
-    summary: `Smoothstack Coding Challenge - ${candidate.firstName} ${candidate.lastName}`,
-    location: challengeLink,
-    description: generateChallengeDescription(candidate.firstName, challengeLink, appointment.confirmationPage),
+    subject: `Smoothstack Coding Challenge - ${candidate.firstName} ${candidate.lastName}`,
+    body: {
+      contentType: 'HTML',
+      content: generateChallengeDescription(candidate.firstName, challengeLink, appointment.confirmationPage),
+    },
     start: {
       dateTime: appointment.datetime,
-      timeZone: 'America/New_York',
+      timeZone: 'Eastern Standard Time',
     },
     end: {
       dateTime: new Date(+new Date(appointment.datetime) + appointment.duration * 60000).toISOString(),
-      timeZone: 'America/New_York',
+      timeZone: 'Eastern Standard Time',
     },
-    attendees: [{ email: candidate.email }],
+    location: {
+      displayName: challengeLink,
+    },
+    attendees: [
+      {
+        emailAddress: {
+          address: candidate.email,
+          name: `${candidate.firstName} ${candidate.lastName}`,
+        },
+        type: 'required',
+      },
+    ],
   };
 
-  const { data } = await calendarClient.events.insert({
-    calendarId: 'primary',
-    sendNotifications: true,
-    requestBody: event,
+  const { data } = await axios.post(`${BASE_URL}/events`, event, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
   });
-
   return data.id;
 };
 
-export const cancelCalendarInvite = async (eventId: string) => {
-  const calendarClient = await getClient();
+export const sendTechScreenCalendarInvite = async (
+  submission: JobSubmission,
+  screenerEmail: string,
+  appointment: Appointment,
+  resumeFile: ResumeFile
+): Promise<string> => {
+  const authToken = await getMSToken();
+  const eventId = await createTechScreenEvent(authToken, submission, appointment);
+  await attachResumeToEvent(authToken, eventId, submission.candidate, resumeFile);
+  await addAttendeesToEvent(authToken, eventId, submission.candidate, screenerEmail);
+  return eventId;
+};
 
-  eventId && (await calendarClient.events.delete({ calendarId: 'primary', eventId }));
+const createTechScreenEvent = async (
+  authToken: string,
+  submission: JobSubmission,
+  appointment: Appointment
+): Promise<string> => {
+  const { candidate } = submission;
+  const { title: jobTitle } = submission.jobOrder;
+  const jobTitleString = jobTitle ? `<strong>Position Applied for: ${jobTitle}</strong><br/>` : '';
+
+  const event = {
+    subject: `Smoothstack Tech Screening/Video Chat - ${candidate.firstName} ${candidate.lastName}`,
+    body: {
+      contentType: 'HTML',
+      content: `${jobTitleString}Tech Screen Form Link: <a href="${getTechScreeningLink(submission, jobTitle)}">${
+        candidate.firstName
+      }'s Tech Screening Form</a> (For Tech Screener Use Only)<br/><br/><strong>Note to Candidate:</strong> This is a <strong>videochat</strong> meeting. You must be ready to share your webcam during the call.`,
+    },
+    start: {
+      dateTime: appointment.datetime,
+      timeZone: 'Eastern Standard Time',
+    },
+    end: {
+      dateTime: new Date(+new Date(appointment.datetime) + appointment.duration * 60000).toISOString(),
+      timeZone: 'Eastern Standard Time',
+    },
+    isOnlineMeeting: true,
+    onlineMeetingProvider: 'teamsForBusiness',
+  };
+  const { data } = await axios.post(`${BASE_URL}/events`, event, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+  return data.id;
+};
+
+const addAttendeesToEvent = async (authToken: string, eventId: string, candidate: Candidate, screenerEmail: string) => {
+  const update = {
+    attendees: [
+      {
+        emailAddress: {
+          address: candidate.email,
+          name: `${candidate.firstName} ${candidate.lastName}`,
+        },
+        type: 'required',
+      },
+      {
+        emailAddress: {
+          address: screenerEmail,
+        },
+        type: 'required',
+      },
+      {
+        emailAddress: {
+          address: candidate.owner.email,
+        },
+        type: 'optional',
+      },
+    ],
+  };
+  await axios.patch(`${BASE_URL}/events/${eventId}`, update, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+};
+
+const attachResumeToEvent = async (
+  authToken: string,
+  eventId: string,
+  candidate: Candidate,
+  resumeFile: ResumeFile
+) => {
+  const fileExt = resumeFile.name.substring(resumeFile.name.lastIndexOf('.') + 1);
+  const attachment = {
+    '@odata.type': '#microsoft.graph.fileAttachment',
+    name: `RESUME_${candidate.firstName.toUpperCase()}_${candidate.lastName.toUpperCase()}.${fileExt}`,
+    contentBytes: resumeFile.fileContent,
+  };
+  await axios.post(`${BASE_URL}/events/${eventId}/attachments`, attachment, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+};
+
+export const cancelCalendarInvite = async (eventId: string) => {
+  const authToken = await getMSToken();
+  const url = `${BASE_URL}/events/${eventId}/cancel`;
+  eventId &&
+    (await axios.post(
+      url,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      }
+    ));
 };
 
 const generateChallengeDescription = (firstName: string, challengeLink: string, confirmationLink: string) => {

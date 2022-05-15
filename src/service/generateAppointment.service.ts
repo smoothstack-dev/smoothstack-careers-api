@@ -6,9 +6,9 @@ import {
   TechScreenAppointmentData,
 } from 'src/model/AppointmentGenerationRequest';
 import { getSessionData } from './auth/bullhorn.oauth.service';
-import { sendChallengeCalendarInvite, sendTechScreenCalendarInvite } from './calendar.service';
+import { sendTechScreenCalendarInvite } from './calendar.service';
+import { sendChallengeCalendarInvite } from './calendar.service';
 import { fetchCandidateResume, saveSubmissionFields } from './careers.service';
-import { processResumeFile } from './drive.service';
 import { generateChallengeLinks } from './links.service';
 
 export const generateAppointment = async (event: SNSEvent) => {
@@ -32,7 +32,7 @@ const generateChallengeAppointment = async (appointmentData: ChallengeAppointmen
   if (challengeLink) {
     const eventId = await sendChallengeCalendarInvite(candidate, challengeLink, appointmentData.appointment);
     await saveSubmissionFields(restUrl, BhRestToken, appointmentData.submission.id, {
-      customText15: eventId,
+      customTextBlock5: eventId,
     });
   }
 };
@@ -41,9 +41,8 @@ const generateTechScreenAppointment = async (appointmentData: TechScreenAppointm
   const { restUrl, BhRestToken } = await getSessionData();
   const { submission, screenerEmail, appointment } = appointmentData;
   const candidateResume = await fetchCandidateResume(restUrl, BhRestToken, submission.candidate.id);
-  const driveFile = candidateResume && (await processResumeFile(submission.candidate, candidateResume));
-  const eventId = await sendTechScreenCalendarInvite(submission, screenerEmail, appointment, driveFile);
+  const eventId = await sendTechScreenCalendarInvite(submission, screenerEmail, appointment, candidateResume);
   await saveSubmissionFields(restUrl, BhRestToken, submission.id, {
-    customText23: eventId,
+    customTextBlock5: eventId,
   });
 };
