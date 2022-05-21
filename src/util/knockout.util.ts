@@ -19,7 +19,7 @@ export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: Kn
     degreeExpected,
     codingAbility,
   } = fields;
- 
+  
 
   if (!requiredWorkAuthorization.includes(workAuthorization)) {
     return Knockout.WORK_AUTH;
@@ -28,8 +28,8 @@ export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: Kn
     return Knockout.RELOCATION;
   } 
   if(!isStaffAugTeam){
-
-  const monthsToGraduation = graduationDate ? calculateMonthsToGrad(new Date(graduationDate)) : 0;
+    
+    const monthsToGraduation = graduationDate ? calculateMonthsToGrad(new Date(graduationDate)) : 0;
     if (maxMonthsToGraduation !== 'Not Specified' && monthsToGraduation > +maxMonthsToGraduation) {
       return Knockout.GRADUATION;
     }

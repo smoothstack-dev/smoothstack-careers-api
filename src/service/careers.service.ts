@@ -24,9 +24,8 @@ export const createWebResponse = async (careerId: string, application: any, resu
   let corpId = '7xjpg0';
   let swimlane = '32';
   if(isStaffAugTeam){
-    // TODO: change to staffingaugteam's ids
-    corpId = '7xjpg0';
-    swimlane = '32';
+    corpId = '8yy144';
+    swimlane = '33';
   }
   
   const webResponseUrl = `https://public-rest${swimlane}.bullhornstaffing.com/rest-services/${corpId}/apply/${careerId}/raw`;
@@ -979,7 +978,7 @@ export const saveSubmissionChallengeSimilarity = async (
   }
 };
 
-export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId: number): Promise<JobOrder> => {
+export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId: number,isStaffAugTeam:boolean = false): Promise<JobOrder> => {
   const jobOrdersUrl = `${url}entity/JobOrder/${jobOrderId}`;
   
   const { data } = await axios.get(jobOrdersUrl, {
@@ -989,7 +988,6 @@ export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId
     },
   });
 
-  // TODO: check custom text from StaffAugTeam service
   const {
     customText1,
     customText4,
@@ -1000,18 +998,29 @@ export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId
     customText10,
     ...jobOrder
   } = data.data;
-  return {
-    ...jobOrder,
-    challengeName: customText1,
-    knockout: {
-      requiredWorkAuthorization: customText4,
-      relocationRequired: willRelocate,
-      maxMonthsToGraduation: customText8,
-      minYearsOfExperience: customText9,
-      minRequiredDegree: educationDegree,
-      minSelfRank: customText10,
-    },
-  };
+  if(isStaffAugTeam){
+    return {
+      ...jobOrder,
+      knockout: {
+        requiredWorkAuthorization: customText1,
+        relocationRequired: willRelocate,
+      },
+    };
+  }else{
+    return {
+      ...jobOrder,
+      challengeName: customText1,
+      knockout: {
+        requiredWorkAuthorization: customText4,
+        relocationRequired: willRelocate,
+        maxMonthsToGraduation: customText8,
+        minYearsOfExperience: customText9,
+        minRequiredDegree: educationDegree,
+        minSelfRank: customText10,
+      },
+    };
+  }
+ 
 };
 
 export const saveCandidateLinks = async (

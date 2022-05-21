@@ -24,8 +24,8 @@ const DAY_DIFF = 90;
 
 export const apply = async (event: APIGatewayProxyEvent) => {
   console.log('Received Candidate Application Request: ', event.queryStringParameters);
-  const { firstName, lastName, email, format, phone, utmSource, utmMedium, utmCampaign, ...extraFields } = event.queryStringParameters;
-  const { careerId,serviceNum } = event.pathParameters;
+  const { serviceNum, firstName, lastName, email, format, phone, utmSource, utmMedium, utmCampaign, ...extraFields } = event.queryStringParameters;
+  const { careerId } = event.pathParameters;
   const isStaffAugTeam = serviceNum === "service2";
   // serviceNum = service1, service2 (staffaugteam)
   const { resume } = parse(event, true);
@@ -33,15 +33,12 @@ export const apply = async (event: APIGatewayProxyEvent) => {
 
   const formattedEmail = email.toLowerCase();
   const formattedPhone = phone.replace(/\D+/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-  // TODO: do we want to check both sides of the applications?
   const candidate = await findCandidateByEmailOrPhone(restUrl, BhRestToken, formattedEmail, formattedPhone);
   const existingApplications = [...(candidate?.webResponses ?? []), ...(candidate?.submissions ?? [])];
 
   if (!hasRecentApplication(existingApplications)) {
-    // TODO: update fetchJobOrder with different fields
-    const jobOrder = await fetchJobOrder(restUrl, BhRestToken, +careerId);
+    const jobOrder = await fetchJobOrder(restUrl, BhRestToken, +careerId,isStaffAugTeam);
 
-    // TODO: check if it's okay to send undefined.
     const {
       workAuthorization,
       relocation,
@@ -126,6 +123,7 @@ const sendApplicationForProcessing = async (
     candidate: { id: candidateId, fields: candidateFields },
     knockout,
   };
+  console.log("application",application)
   await publishApplicationProcessingRequest(application);
 };
 
