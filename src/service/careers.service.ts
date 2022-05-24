@@ -950,28 +950,6 @@ export const saveSubmissionChallengeResult = async (
   subStatus === 'Challenge Passed' && (await publishLinksGenerationRequest(submissionId, 'techscreen'));
 };
 
-// TODO: Remove
-export const saveSubmissionChallengeSimilarity = async (
-  url: string,
-  BhRestToken: string,
-  challengeSession: ChallengeSession,
-  submissionId: number
-): Promise<void> => {
-  const { similarity } = challengeSession;
-  if (similarity) {
-    const submissionUrl = `${url}entity/JobSubmission/${submissionId}`;
-    const updateData = {
-      customText13: similarity.text,
-    };
-
-    return axios.post(submissionUrl, updateData, {
-      params: {
-        BhRestToken,
-      },
-    });
-  }
-};
-
 export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId: number): Promise<JobOrder> => {
   const jobOrdersUrl = `${url}entity/JobOrder/${jobOrderId}`;
   const { data } = await axios.get(jobOrdersUrl, {

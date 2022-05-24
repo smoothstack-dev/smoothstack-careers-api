@@ -9,7 +9,7 @@ import {
   saveSubmissionFields,
   saveTechScreenLinks,
 } from './careers.service';
-import { generateChallengeLink } from './challenge.v2.service';
+import { generateChallengeLink } from './challenge.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { SchedulingTypeId } from 'src/model/SchedulingType';
 import { JobSubmission } from 'src/model/JobSubmission';
@@ -53,7 +53,7 @@ const generateInitialLinks = async (restUrl: string, BhRestToken: string, submis
     submission.candidate.lastName,
     submission.candidate.email,
     submission.candidate.phone,
-    SchedulingTypeId.CHALLENGE_V2,
+    SchedulingTypeId.CHALLENGE,
     submission.id
   );
 

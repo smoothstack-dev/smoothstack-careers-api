@@ -88,7 +88,7 @@ export const apply = async (event: APIGatewayProxyEvent) => {
           lastName,
           formattedEmail,
           formattedPhone,
-          SchedulingTypeId.CHALLENGE_V2,
+          SchedulingTypeId.CHALLENGE,
           jobSubmission.id
         ),
       }),
