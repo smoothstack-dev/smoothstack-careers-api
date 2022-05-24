@@ -1,9 +1,3 @@
-// TODO: Remove
-export interface ChallengeEvent {
-  event: string;
-  session: ChallengeSession;
-}
-
 export interface ChallengeSession {
   id?: string;
   candidate?: string;
@@ -21,7 +15,7 @@ interface ChallengeSimilarity {
   text: string;
 }
 
-export interface ChallengeEventV2 {
+export interface ChallengeEvent {
   id: string;
   score: number;
   max_score: number;

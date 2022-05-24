@@ -15,6 +15,7 @@
 //   return admin({ version: 'directory_v1', auth: oauth2Client });
 // };
 
+export const addUser = async (candidate: any): Promise<void> => {};
 // export const addUser = async (candidate: Candidate): Promise<void> => {
 //   const adminClient = await getClient();
 //   const { firstName: givenName, lastName: familyName, email: externalEmail } = candidate;
@@ -99,6 +100,8 @@
 //     },
 //   });
 // };
+
+export const renewDeletedUsersWebhook = async (): Promise<void> => {};
 
 // //TODO: Implement user deletion
 // export const deleteUser = async () => {

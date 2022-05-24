@@ -36,31 +36,6 @@ export const sendSignedDocument = async (candidateEmail: string, docType: string
   });
 };
 
-export const sendChallengeSchedulingAlert = async (email: string): Promise<void> => {
-  const authToken = await getMSToken();
-  const message = {
-    message: {
-      subject: 'Smoothstack Coding Challenge Scheduling Failure',
-      body: {
-        contentType: 'HTML',
-        content: `Greetings,<br/><br/>Thank you for scheduling a Coding Challenge with Smoothstack.<br/>Unfortunately, scheduling your challenge has failed for the following reason:<br/><br/>- The email address (<strong>${email}</strong>) you have entered is invalid.<br/><br/>Please try to reschedule your challenge using the scheduling link previously sent to you <strong>without</strong> modifying the prepopulated email address within the scheduling url. The email address should be in the following format: <strong>coding_challenge_xxxx@smoothstack.com</strong> or <strong>xxxx@smoothstack.com</strong>.`,
-      },
-      toRecipients: [
-        {
-          emailAddress: {
-            address: email,
-          },
-        },
-      ],
-    },
-  };
-  await axios.post(`${BASE_URL}`, message, {
-    headers: {
-      Authorization: `Bearer ${authToken}`,
-    },
-  });
-};
-
 export const sendTechscreenResult = async (
   email: string,
   submission: JobSubmission,
@@ -108,7 +83,6 @@ export const sendNewAccountEmail = async (
   // });
   // const msg = await mail.compile().build();
   // const encodedMessage = Buffer.from(msg).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
   // await gmailClient.users.messages.send({
   //   userId: 'me',
   //   requestBody: {
