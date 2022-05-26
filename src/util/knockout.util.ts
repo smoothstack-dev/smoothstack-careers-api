@@ -19,27 +19,26 @@ export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: Kn
     degreeExpected,
     codingAbility,
   } = fields;
-  
-    if (!requiredWorkAuthorization.includes(workAuthorization)) {
-      return Knockout.WORK_AUTH;
-    }
-    if (relocationRequired && relocation === 'No') {
-      return Knockout.RELOCATION;
-    } 
-    const monthsToGraduation = graduationDate ? calculateMonthsToGrad(new Date(graduationDate)) : 0;
-    if (maxMonthsToGraduation !== 'Not Specified' && monthsToGraduation > +maxMonthsToGraduation) {
-      return Knockout.GRADUATION;
-    }
-    if (!hasMinYearsOfExperience(minYearsOfExperience, yearsOfExperience)) {
-      return Knockout.YEARS_OF_EXP;
-    }
-    if (!hasMinDegree(minRequiredDegree, educationDegree ?? degreeExpected)) {
-      return Knockout.DEGREE;
-    }
-    if(codingAbility <  minSelfRank){
-      return Knockout.SELF_RANK
-    }
-    
+  const monthsToGraduation = graduationDate ? calculateMonthsToGrad(new Date(graduationDate)) : 0;
+
+  if (!requiredWorkAuthorization.includes(workAuthorization)) {
+    return Knockout.WORK_AUTH;
+  }
+  if (relocationRequired && relocation === 'No') {
+    return Knockout.RELOCATION;
+  }
+  if (maxMonthsToGraduation !== 'Not Specified' && monthsToGraduation > +maxMonthsToGraduation) {
+    return Knockout.GRADUATION;
+  }
+  if (!hasMinYearsOfExperience(minYearsOfExperience, yearsOfExperience)) {
+    return Knockout.YEARS_OF_EXP;
+  }
+  if (!hasMinDegree(minRequiredDegree, educationDegree ?? degreeExpected)) {
+    return Knockout.DEGREE;
+  }
+  if (codingAbility < minSelfRank) {
+    return Knockout.SELF_RANK;
+  }
   return Knockout.PASS;
 };
 
