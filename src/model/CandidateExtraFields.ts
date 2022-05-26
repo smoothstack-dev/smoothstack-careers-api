@@ -16,3 +16,9 @@ export interface CandidateExtraFields {
   militaryBranch?: string;
   major?: string;
 }
+
+export interface SACandidateExtraFields {
+  phone: string;
+  workAuthorization: string;
+  relocation: string;
+}

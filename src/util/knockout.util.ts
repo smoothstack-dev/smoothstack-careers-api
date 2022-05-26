@@ -1,7 +1,7 @@
 import { Knockout, KnockoutFields, KnockoutRequirements } from 'src/model/Knockout';
 import { calculateMonthsToGrad } from 'src/service/careers.service';
 
-export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: KnockoutFields, isStaffAugTeam:boolean = false) => {
+export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: KnockoutFields) => {
   const {
     requiredWorkAuthorization,
     relocationRequired,
@@ -20,15 +20,12 @@ export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: Kn
     codingAbility,
   } = fields;
   
-
-  if (!requiredWorkAuthorization.includes(workAuthorization)) {
-    return Knockout.WORK_AUTH;
-  }
-  if (relocationRequired && relocation === 'No') {
-    return Knockout.RELOCATION;
-  } 
-  if(!isStaffAugTeam){
-    
+    if (!requiredWorkAuthorization.includes(workAuthorization)) {
+      return Knockout.WORK_AUTH;
+    }
+    if (relocationRequired && relocation === 'No') {
+      return Knockout.RELOCATION;
+    } 
     const monthsToGraduation = graduationDate ? calculateMonthsToGrad(new Date(graduationDate)) : 0;
     if (maxMonthsToGraduation !== 'Not Specified' && monthsToGraduation > +maxMonthsToGraduation) {
       return Knockout.GRADUATION;
@@ -42,7 +39,7 @@ export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: Kn
     if(codingAbility <  minSelfRank){
       return Knockout.SELF_RANK
     }
-  }
+    
   return Knockout.PASS;
 };
 

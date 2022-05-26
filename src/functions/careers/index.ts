@@ -6,7 +6,7 @@ export default {
     {
       http: {
         method: 'post',
-        path: 'careers/{careerId}',
+        path: 'careers/{corpId}/{careerId}',
         cors: {
           origin: '*',
           headers: ['Content-Type'],
