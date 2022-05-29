@@ -2,8 +2,9 @@ import axios from 'axios';
 import FormData from 'form-data';
 import { Appointment } from 'src/model/Appointment';
 import { Candidate } from 'src/model/Candidate';
-import { CandidateExtraFields } from 'src/model/CandidateExtraFields';
+import { CandidateExtraFields, SACandidateExtraFields } from 'src/model/CandidateExtraFields';
 import { ChallengeSession } from 'src/model/ChallengeEvent';
+import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
 import { FormEntry, PrescreenForm, TechScreenForm, TechScreenResults } from 'src/model/Form';
 import { JobOrder } from 'src/model/JobOrder';
 import { JobSubmission } from 'src/model/JobSubmission';
@@ -19,10 +20,16 @@ import {
 import { sendTechscreenResult } from './email.service';
 import { publishLinksGenerationRequest } from './sns.service';
 
-export const createWebResponse = async (careerId: string, application: any, resume: any): Promise<any> => {
+export const createWebResponse = async (
+  careerId: string,
+  application: any,
+  resume: any,
+  corpType: CORP_TYPE
+): Promise<any> => {
   // these are public non-secret values
-  const corpId = '7xjpg0';
-  const swimlane = '32';
+  const swimlane = CORPORATION[corpType].swimlane;
+  const corpId = CORPORATION[corpType].corpId;
+
   const webResponseUrl = `https://public-rest${swimlane}.bullhornstaffing.com/rest-services/${corpId}/apply/${careerId}/raw`;
 
   const form = new FormData();
@@ -275,6 +282,26 @@ export const populateCandidateFields = async (
     customText2: fields.militaryStatus,
     ...(fields.militaryBranch && { customText10: fields.militaryBranch }),
     ...(fields.major && { customText38: fields.major }),
+  };
+  const { data } = await axios.post(candidateUrl, updateData, {
+    params: {
+      BhRestToken,
+    },
+  });
+  return data.data;
+};
+
+export const populateSACandidateFields = async (
+  url: string,
+  BhRestToken: string,
+  candidateId: number,
+  fields: SACandidateExtraFields
+): Promise<Candidate> => {
+  const candidateUrl = `${url}entity/Candidate/${candidateId}`;
+  const updateData = {
+    phone: fields.phone,
+    customText5: fields.workAuthorization,
+    willRelocate: fields.relocation,
   };
   const { data } = await axios.post(candidateUrl, updateData, {
     params: {
@@ -952,6 +979,7 @@ export const saveSubmissionChallengeResult = async (
 
 export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId: number): Promise<JobOrder> => {
   const jobOrdersUrl = `${url}entity/JobOrder/${jobOrderId}`;
+
   const { data } = await axios.get(jobOrdersUrl, {
     params: {
       BhRestToken,
@@ -969,6 +997,7 @@ export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId
     customText10,
     ...jobOrder
   } = data.data;
+
   return {
     ...jobOrder,
     challengeName: customText1,

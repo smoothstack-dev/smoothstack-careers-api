@@ -6,11 +6,12 @@ import {
   fetchSubmission,
   findCandidateByEmailOrPhone,
   populateCandidateFields,
+  populateSACandidateFields,
   saveApplicationNote,
   saveCandidateNote,
   saveSubmissionFields,
 } from './careers.service';
-import { getSessionData } from './auth/bullhorn.oauth.service';
+import { getSessionData, getStaffAugSessionData } from './auth/bullhorn.oauth.service';
 import { publishApplicationProcessingRequest, publishLinksGenerationRequest } from './sns.service';
 import { WebResponse } from 'src/model/Candidate';
 import { JobSubmission } from 'src/model/JobSubmission';
@@ -19,13 +20,55 @@ import { Knockout, KNOCKOUT_NOTE, KNOCKOUT_STATUS } from 'src/model/Knockout';
 import { getSchedulingLink } from 'src/util/links';
 import { SchedulingTypeId } from 'src/model/SchedulingType';
 import { calculateKnockout } from 'src/util/knockout.util';
+import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
 
 const DAY_DIFF = 90;
 
 export const apply = async (event: APIGatewayProxyEvent) => {
   console.log('Received Candidate Application Request: ', event.queryStringParameters);
-  const { firstName, lastName, email, format, phone, utmSource, utmMedium, utmCampaign, ...extraFields } = event.queryStringParameters;
+  const { corpId } = event.pathParameters;
+  switch (corpId) {
+    case CORPORATION.APPRENTICESHIP.corpId:
+      return await apprenticeshipApply(event);
+    case CORPORATION.STAFF_AUG.corpId:
+      return await staffAugApply(event);
+  }
+};
+
+const staffAugApply = async (event: APIGatewayProxyEvent) => {
   const { careerId } = event.pathParameters;
+  const { firstName, lastName, email, format, phone, utmSource, utmMedium, utmCampaign, ...extraFields } =
+    event.queryStringParameters;
+  const { resume } = parse(event, true);
+  const { restUrl, BhRestToken } = await getStaffAugSessionData();
+
+  const formattedEmail = email.toLowerCase();
+  const formattedPhone = phone.replace(/\D+/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+  const { workAuthorization, relocation } = extraFields;
+  const webResponseFields = {
+    firstName,
+    lastName,
+    email: formattedEmail,
+    phone: formattedPhone,
+    format,
+  };
+  const candidateFields = {
+    workAuthorization,
+    relocation,
+    phone: formattedPhone,
+  };
+  const { candidate: newCandidate } = await createWebResponse(careerId, webResponseFields, resume, CORP_TYPE.STAFF_AUG);
+  await populateSACandidateFields(restUrl, BhRestToken, newCandidate.id, candidateFields);
+  console.log('Successfully created new Candidate.');
+  return {
+    newCandidate,
+  };
+};
+
+const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
+  const { careerId } = event.pathParameters;
+  const { firstName, lastName, email, format, phone, utmSource, utmMedium, utmCampaign, ...extraFields } =
+    event.queryStringParameters;
   const { resume } = parse(event, true);
   const { restUrl, BhRestToken } = await getSessionData();
 
@@ -36,6 +79,7 @@ export const apply = async (event: APIGatewayProxyEvent) => {
 
   if (!hasRecentApplication(existingApplications)) {
     const jobOrder = await fetchJobOrder(restUrl, BhRestToken, +careerId);
+
     const {
       workAuthorization,
       relocation,
@@ -70,7 +114,12 @@ export const apply = async (event: APIGatewayProxyEvent) => {
       ...(utmMedium && { utmMedium }),
       ...(utmCampaign && { utmCampaign }),
     };
-    const { jobSubmission, candidate: newCandidate } = await createWebResponse(careerId, webResponseFields, resume);
+    const { jobSubmission, candidate: newCandidate } = await createWebResponse(
+      careerId,
+      webResponseFields,
+      resume,
+      CORP_TYPE.APPRENTICESHIP
+    );
     await sendApplicationForProcessing(
       webResponseFields,
       candidateFields,

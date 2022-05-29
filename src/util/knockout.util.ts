@@ -36,8 +36,8 @@ export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: Kn
   if (!hasMinDegree(minRequiredDegree, educationDegree ?? degreeExpected)) {
     return Knockout.DEGREE;
   }
-  if(codingAbility <  minSelfRank){
-    return Knockout.SELF_RANK
+  if (codingAbility < minSelfRank) {
+    return Knockout.SELF_RANK;
   }
   return Knockout.PASS;
 };
