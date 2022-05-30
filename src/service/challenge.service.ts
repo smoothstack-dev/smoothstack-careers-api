@@ -26,6 +26,7 @@ export const generateChallengeLink = async (submission: JobSubmission): Promise<
     full_name: `${candidate.firstName} ${candidate.lastName}`,
     email: candidate.email,
     force_reattempt: true,
+    force: true,
     test_result_url: `${CALLBACK_URL}?submissionId=${submissionId}`,
   };
   const { data } = await axios.post(url, invitation, {
