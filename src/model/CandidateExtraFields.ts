@@ -1,3 +1,5 @@
+import { Knockout } from './Knockout';
+
 export interface CandidateExtraFields {
   phone: string;
   city: string;
@@ -18,7 +20,13 @@ export interface CandidateExtraFields {
 }
 
 export interface SACandidateExtraFields {
+  city: string;
+  state: string;
+  zip: string;
   phone: string;
+  nickName?: string;
   workAuthorization: string;
-  relocation: string;
+  willRelocate: string;
+  yearsOfProfessionalExperience: string;
+  knockout: Knockout;
 }

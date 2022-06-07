@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent } from 'aws-lambda';
 import { parse } from 'aws-multipart-parser';
 import {
   createWebResponse,
+  fetchASJobOrder,
   fetchJobOrder,
   fetchSubmission,
   findCandidateByEmailOrPhone,
@@ -19,7 +20,7 @@ import { ApplicationProcessingRequest } from 'src/model/ApplicationProcessingReq
 import { Knockout, KNOCKOUT_NOTE, KNOCKOUT_STATUS } from 'src/model/Knockout';
 import { getSchedulingLink } from 'src/util/links';
 import { SchedulingTypeId } from 'src/model/SchedulingType';
-import { calculateKnockout } from 'src/util/knockout.util';
+import { calculateASKnockout, calculateKnockout } from 'src/util/knockout.util';
 import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
 
 const DAY_DIFF = 90;
@@ -44,7 +45,13 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
 
   const formattedEmail = email.toLowerCase();
   const formattedPhone = phone.replace(/\D+/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-  const { workAuthorization, relocation } = extraFields;
+  const { workAuthorization, willRelocate, yearsOfProfessionalExperience, city, state, zip, nickName } = extraFields;
+
+  const knockoutRequirements = await fetchASJobOrder(restUrl, BhRestToken, +careerId);
+  const knockout = calculateASKnockout(knockoutRequirements, {
+    workAuthorization,
+    yearsOfExperience: yearsOfProfessionalExperience,
+  });
   const webResponseFields = {
     firstName,
     lastName,
@@ -53,12 +60,19 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
     format,
   };
   const candidateFields = {
+    nickName,
+    city,
+    state,
+    zip,
     workAuthorization,
-    relocation,
+    willRelocate,
+    yearsOfProfessionalExperience,
     phone: formattedPhone,
+    knockout,
   };
   const { candidate: newCandidate } = await createWebResponse(careerId, webResponseFields, resume, CORP_TYPE.STAFF_AUG);
   await populateSACandidateFields(restUrl, BhRestToken, newCandidate.id, candidateFields);
+  await saveCandidateNote(restUrl, BhRestToken, newCandidate.id, 'Knockout', KNOCKOUT_NOTE[knockout]);
   console.log('Successfully created new Candidate.');
   return {
     newCandidate,
@@ -137,7 +151,7 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
           lastName,
           formattedEmail,
           formattedPhone,
-          SchedulingTypeId.CHALLENGE_V2,
+          SchedulingTypeId.CHALLENGE,
           jobSubmission.id
         ),
       }),

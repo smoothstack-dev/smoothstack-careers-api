@@ -8,6 +8,7 @@ import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
 import { FormEntry, PrescreenForm, TechScreenForm, TechScreenResults } from 'src/model/Form';
 import { JobOrder } from 'src/model/JobOrder';
 import { JobSubmission } from 'src/model/JobSubmission';
+import { KnockoutASRequirements, KNOCKOUT_STATUS } from 'src/model/Knockout';
 import { ChallengeLinksData, TechScreenLinksData } from 'src/model/Links';
 import { ResumeFile } from 'src/model/ResumeFile';
 import { SchedulingType } from 'src/model/SchedulingType';
@@ -300,9 +301,15 @@ export const populateSACandidateFields = async (
 ): Promise<Candidate> => {
   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
   const updateData = {
+    ...(fields.nickName && { nickName: fields.nickName }),
+    customText7: fields.state,
+    customText8: fields.city,
+    customText9: fields.zip,
     phone: fields.phone,
     customText5: fields.workAuthorization,
-    willRelocate: fields.relocation,
+    customText25: fields.willRelocate,
+    experience: fields.yearsOfProfessionalExperience,
+    status: KNOCKOUT_STATUS[fields.knockout].submissionStatus,
   };
   const { data } = await axios.post(candidateUrl, updateData, {
     params: {
@@ -1032,6 +1039,31 @@ export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId
       minRequiredDegree: educationDegree,
       minSelfRank: customText10,
     },
+  };
+};
+
+export const fetchASJobOrder = async (
+  url: string,
+  BhRestToken: string,
+  jobOrderId: number
+): Promise<KnockoutASRequirements> => {
+  const jobOrdersUrl = `${url}entity/JobOrder/${jobOrderId}`;
+
+  const { data } = await axios.get(jobOrdersUrl, {
+    params: {
+      BhRestToken,
+      fields: 'id,customText1, yearsRequired',
+    },
+  });
+
+  const {
+    customText1, // Work Authorization
+    yearsRequired,
+  } = data.data;
+
+  return {
+    requiredWorkAuthorization: customText1,
+    minYearsOfExperience: yearsRequired,
   };
 };
 
