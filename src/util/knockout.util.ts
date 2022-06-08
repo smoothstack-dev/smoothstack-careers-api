@@ -1,7 +1,7 @@
 import {
   Knockout,
-  KnockoutASFields,
-  KnockoutASRequirements,
+  KnockoutSAFields,
+  KnockoutSARequirements,
   KnockoutFields,
   KnockoutRequirements,
 } from 'src/model/Knockout';
@@ -48,7 +48,7 @@ export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: Kn
   return Knockout.PASS;
 };
 
-export const calculateASKnockout = (knockoutReqs: KnockoutASRequirements, fields: KnockoutASFields) => {
+export const calculateASKnockout = (knockoutReqs: KnockoutSARequirements, fields: KnockoutSAFields) => {
   const { requiredWorkAuthorization, minYearsOfExperience } = knockoutReqs;
   const { workAuthorization, yearsOfExperience } = fields;
   if (!requiredWorkAuthorization.includes(workAuthorization)) {

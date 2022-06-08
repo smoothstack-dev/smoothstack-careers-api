@@ -8,7 +8,7 @@ import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
 import { FormEntry, PrescreenForm, TechScreenForm, TechScreenResults } from 'src/model/Form';
 import { JobOrder } from 'src/model/JobOrder';
 import { JobSubmission } from 'src/model/JobSubmission';
-import { KnockoutASRequirements, KNOCKOUT_STATUS } from 'src/model/Knockout';
+import { KnockoutSARequirements, KNOCKOUT_STATUS } from 'src/model/Knockout';
 import { ChallengeLinksData, TechScreenLinksData } from 'src/model/Links';
 import { ResumeFile } from 'src/model/ResumeFile';
 import { SchedulingType } from 'src/model/SchedulingType';
@@ -1046,7 +1046,7 @@ export const fetchASJobOrder = async (
   url: string,
   BhRestToken: string,
   jobOrderId: number
-): Promise<KnockoutASRequirements> => {
+): Promise<KnockoutSARequirements> => {
   const jobOrdersUrl = `${url}entity/JobOrder/${jobOrderId}`;
 
   const { data } = await axios.get(jobOrdersUrl, {
