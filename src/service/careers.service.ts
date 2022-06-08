@@ -1042,7 +1042,7 @@ export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId
   };
 };
 
-export const fetchASJobOrder = async (
+export const fetchSAJobOrder = async (
   url: string,
   BhRestToken: string,
   jobOrderId: number

@@ -48,19 +48,19 @@ export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: Kn
   return Knockout.PASS;
 };
 
-export const calculateASKnockout = (knockoutReqs: KnockoutSARequirements, fields: KnockoutSAFields) => {
+export const calculateSAKnockout = (knockoutReqs: KnockoutSARequirements, fields: KnockoutSAFields) => {
   const { requiredWorkAuthorization, minYearsOfExperience } = knockoutReqs;
   const { workAuthorization, yearsOfExperience } = fields;
   if (!requiredWorkAuthorization.includes(workAuthorization)) {
     return Knockout.WORK_AUTH;
   }
-  if (!hasASMinYearsOfExperience(minYearsOfExperience, yearsOfExperience)) {
+  if (!hasSAMinYearsOfExperience(minYearsOfExperience, yearsOfExperience)) {
     return Knockout.YEARS_OF_EXP;
   }
   return Knockout.PASS;
 };
 
-const hasASMinYearsOfExperience = (minYears: string, years: string) => {
+const hasSAMinYearsOfExperience = (minYears: string, years: string) => {
   const EXP_MAP = {
     '0': 0,
     '1': 1,

@@ -2,7 +2,7 @@ import { APIGatewayProxyEvent } from 'aws-lambda';
 import { parse } from 'aws-multipart-parser';
 import {
   createWebResponse,
-  fetchASJobOrder,
+  fetchSAJobOrder,
   fetchJobOrder,
   fetchSubmission,
   findCandidateByEmailOrPhone,
@@ -20,7 +20,7 @@ import { ApplicationProcessingRequest } from 'src/model/ApplicationProcessingReq
 import { Knockout, KNOCKOUT_NOTE, KNOCKOUT_STATUS } from 'src/model/Knockout';
 import { getSchedulingLink } from 'src/util/links';
 import { SchedulingTypeId } from 'src/model/SchedulingType';
-import { calculateASKnockout, calculateKnockout } from 'src/util/knockout.util';
+import { calculateSAKnockout, calculateKnockout } from 'src/util/knockout.util';
 import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
 
 const DAY_DIFF = 90;
@@ -47,8 +47,8 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
   const formattedPhone = phone.replace(/\D+/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
   const { workAuthorization, willRelocate, yearsOfProfessionalExperience, city, state, zip, nickName } = extraFields;
 
-  const knockoutRequirements = await fetchASJobOrder(restUrl, BhRestToken, +careerId);
-  const knockout = calculateASKnockout(knockoutRequirements, {
+  const knockoutRequirements = await fetchSAJobOrder(restUrl, BhRestToken, +careerId);
+  const knockout = calculateSAKnockout(knockoutRequirements, {
     workAuthorization,
     yearsOfExperience: yearsOfProfessionalExperience,
   });
