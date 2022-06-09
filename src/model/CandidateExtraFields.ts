@@ -28,5 +28,4 @@ export interface SACandidateExtraFields {
   workAuthorization: string;
   willRelocate: string;
   yearsOfProfessionalExperience: string;
-  knockout: Knockout;
 }

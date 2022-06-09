@@ -16,7 +16,7 @@ import { getSessionData, getStaffAugSessionData } from './auth/bullhorn.oauth.se
 import { publishApplicationProcessingRequest, publishLinksGenerationRequest } from './sns.service';
 import { WebResponse } from 'src/model/Candidate';
 import { JobSubmission } from 'src/model/JobSubmission';
-import { ApplicationProcessingRequest } from 'src/model/ApplicationProcessingRequest';
+import { ApplicationProcessingRequest, SAApplicationProcessingRequest } from 'src/model/ApplicationProcessingRequest';
 import { Knockout, KNOCKOUT_NOTE, KNOCKOUT_STATUS } from 'src/model/Knockout';
 import { getSchedulingLink } from 'src/util/links';
 import { SchedulingTypeId } from 'src/model/SchedulingType';
@@ -71,8 +71,13 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
     knockout,
   };
   const { candidate: newCandidate } = await createWebResponse(careerId, webResponseFields, resume, CORP_TYPE.STAFF_AUG);
-  await populateSACandidateFields(restUrl, BhRestToken, newCandidate.id, candidateFields);
-  await saveCandidateNote(restUrl, BhRestToken, newCandidate.id, 'Knockout', KNOCKOUT_NOTE[knockout]);
+  await sendApplicationForProcessing(
+    webResponseFields,
+    candidateFields,
+    newCandidate.id,
+    knockout,
+    CORP_TYPE.STAFF_AUG
+  );
   console.log('Successfully created new Candidate.');
   return {
     newCandidate,
@@ -137,10 +142,11 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
     await sendApplicationForProcessing(
       webResponseFields,
       candidateFields,
-      submissionFields,
       newCandidate.id,
+      knockout,
+      CORP_TYPE.APPRENTICESHIP,
       jobSubmission.id,
-      knockout
+      submissionFields
     );
     console.log('Successfully created new Candidate.');
     return {
@@ -172,16 +178,18 @@ const hasRecentApplication = (applications: (WebResponse | JobSubmission)[]): bo
 const sendApplicationForProcessing = async (
   webResponseFields: any,
   candidateFields: any,
-  submissionFields: any,
   candidateId: number,
-  submissionId: any,
-  knockout: Knockout
+  knockout: Knockout,
+  corpType: CORP_TYPE,
+  submissionId?: any,
+  submissionFields?: any
 ) => {
   const application: ApplicationProcessingRequest = {
     webResponse: { fields: webResponseFields },
-    submission: { id: submissionId, fields: submissionFields },
+    ...(submissionId && submissionFields && { submission: { id: submissionId, fields: submissionFields } }),
     candidate: { id: candidateId, fields: candidateFields },
     knockout,
+    corpType,
   };
   await publishApplicationProcessingRequest(application);
 };
@@ -224,5 +232,16 @@ const saveApplicationData = async (
     ...(submissionFields.utmMedium && { customText24: submissionFields.utmMedium }),
     ...(submissionFields.utmCampaign && { customText6: submissionFields.utmCampaign }),
   });
+  await saveCandidateNote(url, BhRestToken, candidateId, 'Knockout', KNOCKOUT_NOTE[knockout]);
+};
+
+export const saveSAApplicationData = async (
+  url: string,
+  BhRestToken: string,
+  application: SAApplicationProcessingRequest
+) => {
+  const { id: candidateId, fields: candidateFields } = application.candidate;
+  const { knockout } = application;
+  await populateSACandidateFields(url, BhRestToken, candidateId, candidateFields, knockout);
   await saveCandidateNote(url, BhRestToken, candidateId, 'Knockout', KNOCKOUT_NOTE[knockout]);
 };

@@ -8,7 +8,7 @@ import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
 import { FormEntry, PrescreenForm, TechScreenForm, TechScreenResults } from 'src/model/Form';
 import { JobOrder } from 'src/model/JobOrder';
 import { JobSubmission } from 'src/model/JobSubmission';
-import { KnockoutSARequirements, KNOCKOUT_STATUS } from 'src/model/Knockout';
+import { Knockout, KnockoutSARequirements, KNOCKOUT_STATUS } from 'src/model/Knockout';
 import { ChallengeLinksData, TechScreenLinksData } from 'src/model/Links';
 import { ResumeFile } from 'src/model/ResumeFile';
 import { SchedulingType } from 'src/model/SchedulingType';
@@ -297,7 +297,8 @@ export const populateSACandidateFields = async (
   url: string,
   BhRestToken: string,
   candidateId: number,
-  fields: SACandidateExtraFields
+  fields: SACandidateExtraFields,
+  knockout: Knockout
 ): Promise<Candidate> => {
   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
   const updateData = {
@@ -309,7 +310,7 @@ export const populateSACandidateFields = async (
     customText5: fields.workAuthorization,
     customText25: fields.willRelocate,
     experience: fields.yearsOfProfessionalExperience,
-    status: KNOCKOUT_STATUS[fields.knockout].submissionStatus,
+    status: KNOCKOUT_STATUS[knockout].submissionStatus,
   };
   const { data } = await axios.post(candidateUrl, updateData, {
     params: {
@@ -1052,7 +1053,7 @@ export const fetchSAJobOrder = async (
   const { data } = await axios.get(jobOrdersUrl, {
     params: {
       BhRestToken,
-      fields: 'id,customText1, yearsRequired',
+      fields: 'id,customText1,yearsRequired',
     },
   });
 
