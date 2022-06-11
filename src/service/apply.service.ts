@@ -12,7 +12,7 @@ import {
   saveCandidateNote,
   saveSubmissionFields,
 } from './careers.service';
-import { getSessionData, getStaffAugSessionData } from './auth/bullhorn.oauth.service';
+import { getSessionData } from './auth/bullhorn.oauth.service';
 import { publishApplicationProcessingRequest, publishLinksGenerationRequest } from './sns.service';
 import { WebResponse } from 'src/model/Candidate';
 import { JobSubmission } from 'src/model/JobSubmission';
@@ -41,17 +41,11 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
   const { firstName, lastName, email, format, phone, utmSource, utmMedium, utmCampaign, ...extraFields } =
     event.queryStringParameters;
   const { resume } = parse(event, true);
-  const { restUrl, BhRestToken } = await getStaffAugSessionData();
 
   const formattedEmail = email.toLowerCase();
   const formattedPhone = phone.replace(/\D+/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
   const { workAuthorization, willRelocate, yearsOfProfessionalExperience, city, state, zip, nickName } = extraFields;
 
-  const knockoutRequirements = await fetchSAJobOrder(restUrl, BhRestToken, +careerId);
-  const knockout = calculateSAKnockout(knockoutRequirements, {
-    workAuthorization,
-    yearsOfExperience: yearsOfProfessionalExperience,
-  });
   const webResponseFields = {
     firstName,
     lastName,
@@ -59,6 +53,9 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
     phone: formattedPhone,
     format,
   };
+
+  const { candidate: newCandidate } = await createWebResponse(careerId, webResponseFields, resume, CORP_TYPE.STAFF_AUG);
+
   const candidateFields = {
     nickName,
     city,
@@ -68,15 +65,13 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
     willRelocate,
     yearsOfProfessionalExperience,
     phone: formattedPhone,
-    knockout,
   };
-  const { candidate: newCandidate } = await createWebResponse(careerId, webResponseFields, resume, CORP_TYPE.STAFF_AUG);
   await sendApplicationForProcessing(
     webResponseFields,
     candidateFields,
     newCandidate.id,
-    knockout,
-    CORP_TYPE.STAFF_AUG
+    CORP_TYPE.STAFF_AUG,
+    careerId
   );
   console.log('Successfully created new Candidate.');
   return {
@@ -143,8 +138,8 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       webResponseFields,
       candidateFields,
       newCandidate.id,
-      knockout,
       CORP_TYPE.APPRENTICESHIP,
+      knockout,
       jobSubmission.id,
       submissionFields
     );
@@ -179,19 +174,33 @@ const sendApplicationForProcessing = async (
   webResponseFields: any,
   candidateFields: any,
   candidateId: number,
-  knockout: Knockout,
   corpType: CORP_TYPE,
+  careerId?: string,
+  knockout?: Knockout,
   submissionId?: any,
   submissionFields?: any
 ) => {
-  const application: ApplicationProcessingRequest = {
-    webResponse: { fields: webResponseFields },
-    ...(submissionId && submissionFields && { submission: { id: submissionId, fields: submissionFields } }),
-    candidate: { id: candidateId, fields: candidateFields },
-    knockout,
-    corpType,
-  };
-  await publishApplicationProcessingRequest(application);
+  switch (corpType) {
+    case CORP_TYPE.APPRENTICESHIP: {
+      const application: ApplicationProcessingRequest = {
+        webResponse: { fields: webResponseFields },
+        submission: { id: submissionId, fields: submissionFields },
+        candidate: { id: candidateId, fields: candidateFields },
+        knockout,
+        corpType,
+      };
+      await publishApplicationProcessingRequest(application);
+    }
+    case CORP_TYPE.STAFF_AUG: {
+      const application: SAApplicationProcessingRequest = {
+        webResponse: { fields: webResponseFields },
+        candidate: { id: candidateId, fields: candidateFields },
+        corpType,
+        careerId,
+      };
+      await publishApplicationProcessingRequest(application);
+    }
+  }
 };
 
 export const processApplication = async (
@@ -241,7 +250,13 @@ export const saveSAApplicationData = async (
   application: SAApplicationProcessingRequest
 ) => {
   const { id: candidateId, fields: candidateFields } = application.candidate;
-  const { knockout } = application;
+  const { workAuthorization, yearsOfProfessionalExperience } = candidateFields;
+  const { careerId } = application;
+  const knockoutRequirements = await fetchSAJobOrder(url, BhRestToken, +careerId);
+  const knockout = calculateSAKnockout(knockoutRequirements, {
+    workAuthorization,
+    yearsOfExperience: yearsOfProfessionalExperience,
+  });
   await populateSACandidateFields(url, BhRestToken, candidateId, candidateFields, knockout);
   await saveCandidateNote(url, BhRestToken, candidateId, 'Knockout', KNOCKOUT_NOTE[knockout]);
 };

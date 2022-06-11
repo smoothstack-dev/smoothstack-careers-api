@@ -65,6 +65,6 @@ export interface SAApplicationProcessingRequest {
       nickName?: string;
     };
   };
-  knockout: Knockout;
+  careerId: string;
   corpType: CORP_TYPE;
 }
