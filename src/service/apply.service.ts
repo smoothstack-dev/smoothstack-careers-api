@@ -139,6 +139,7 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       candidateFields,
       newCandidate.id,
       CORP_TYPE.APPRENTICESHIP,
+      undefined, // skip careerId
       knockout,
       jobSubmission.id,
       submissionFields
