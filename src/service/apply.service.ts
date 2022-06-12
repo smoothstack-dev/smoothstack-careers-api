@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent } from 'aws-lambda';
 import { parse } from 'aws-multipart-parser';
 import {
   createWebResponse,
+  fetchSAJobOrder,
   fetchJobOrder,
   fetchSubmission,
   findCandidateByEmailOrPhone,
@@ -11,15 +12,15 @@ import {
   saveCandidateNote,
   saveSubmissionFields,
 } from './careers.service';
-import { getSessionData, getStaffAugSessionData } from './auth/bullhorn.oauth.service';
+import { getSessionData } from './auth/bullhorn.oauth.service';
 import { publishApplicationProcessingRequest, publishLinksGenerationRequest } from './sns.service';
 import { WebResponse } from 'src/model/Candidate';
 import { JobSubmission } from 'src/model/JobSubmission';
-import { ApplicationProcessingRequest } from 'src/model/ApplicationProcessingRequest';
+import { ApplicationProcessingRequest, SAApplicationProcessingRequest } from 'src/model/ApplicationProcessingRequest';
 import { Knockout, KNOCKOUT_NOTE, KNOCKOUT_STATUS } from 'src/model/Knockout';
 import { getSchedulingLink } from 'src/util/links';
 import { SchedulingTypeId } from 'src/model/SchedulingType';
-import { calculateKnockout } from 'src/util/knockout.util';
+import { calculateSAKnockout, calculateKnockout } from 'src/util/knockout.util';
 import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
 
 const DAY_DIFF = 90;
@@ -40,11 +41,11 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
   const { firstName, lastName, email, format, phone, utmSource, utmMedium, utmCampaign, ...extraFields } =
     event.queryStringParameters;
   const { resume } = parse(event, true);
-  const { restUrl, BhRestToken } = await getStaffAugSessionData();
 
   const formattedEmail = email.toLowerCase();
   const formattedPhone = phone.replace(/\D+/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-  const { workAuthorization, relocation } = extraFields;
+  const { workAuthorization, willRelocate, yearsOfProfessionalExperience, city, state, zip, nickName } = extraFields;
+
   const webResponseFields = {
     firstName,
     lastName,
@@ -52,13 +53,27 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
     phone: formattedPhone,
     format,
   };
+
+  const { candidate: newCandidate } = await createWebResponse(careerId, webResponseFields, resume, CORP_TYPE.STAFF_AUG);
+
   const candidateFields = {
+    nickName,
+    city,
+    state,
+    zip,
     workAuthorization,
-    relocation,
+    willRelocate,
+    yearsOfProfessionalExperience,
     phone: formattedPhone,
   };
-  const { candidate: newCandidate } = await createWebResponse(careerId, webResponseFields, resume, CORP_TYPE.STAFF_AUG);
-  await populateSACandidateFields(restUrl, BhRestToken, newCandidate.id, candidateFields);
+  const applicationRequest: SAApplicationProcessingRequest = {
+    webResponse: { fields: webResponseFields },
+    candidate: { id: newCandidate.id, fields: candidateFields },
+    corpType: CORP_TYPE.STAFF_AUG,
+    careerId,
+  };
+  await publishApplicationProcessingRequest(applicationRequest);
+
   console.log('Successfully created new Candidate.');
   return {
     newCandidate,
@@ -105,29 +120,34 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       phone: formattedPhone,
       format,
     };
-    const candidateFields = {
-      ...extraFields,
-      phone: formattedPhone,
-    };
-    const submissionFields = {
-      ...(utmSource && { utmSource }),
-      ...(utmMedium && { utmMedium }),
-      ...(utmCampaign && { utmCampaign }),
-    };
+
     const { jobSubmission, candidate: newCandidate } = await createWebResponse(
       careerId,
       webResponseFields,
       resume,
       CORP_TYPE.APPRENTICESHIP
     );
-    await sendApplicationForProcessing(
-      webResponseFields,
-      candidateFields,
-      submissionFields,
-      newCandidate.id,
-      jobSubmission.id,
-      knockout
-    );
+
+    const candidateFields = {
+      ...extraFields,
+      phone: formattedPhone,
+    } as any;
+    const submissionFields = {
+      ...(utmSource && { utmSource }),
+      ...(utmMedium && { utmMedium }),
+      ...(utmCampaign && { utmCampaign }),
+    };
+
+    const applicationRequest: ApplicationProcessingRequest = {
+      webResponse: { fields: webResponseFields },
+      submission: { id: jobSubmission.id, fields: submissionFields },
+      candidate: { id: newCandidate.id, fields: candidateFields },
+      knockout: knockout,
+      corpType: CORP_TYPE.APPRENTICESHIP,
+    };
+
+    await publishApplicationProcessingRequest(applicationRequest);
+
     console.log('Successfully created new Candidate.');
     return {
       newCandidate,
@@ -153,23 +173,6 @@ const hasRecentApplication = (applications: (WebResponse | JobSubmission)[]): bo
     const dayDiff = timeDiff / (1000 * 3600 * 24);
     return dayDiff < DAY_DIFF;
   });
-};
-
-const sendApplicationForProcessing = async (
-  webResponseFields: any,
-  candidateFields: any,
-  submissionFields: any,
-  candidateId: number,
-  submissionId: any,
-  knockout: Knockout
-) => {
-  const application: ApplicationProcessingRequest = {
-    webResponse: { fields: webResponseFields },
-    submission: { id: submissionId, fields: submissionFields },
-    candidate: { id: candidateId, fields: candidateFields },
-    knockout,
-  };
-  await publishApplicationProcessingRequest(application);
 };
 
 export const processApplication = async (
@@ -210,5 +213,22 @@ const saveApplicationData = async (
     ...(submissionFields.utmMedium && { customText24: submissionFields.utmMedium }),
     ...(submissionFields.utmCampaign && { customText6: submissionFields.utmCampaign }),
   });
+  await saveCandidateNote(url, BhRestToken, candidateId, 'Knockout', KNOCKOUT_NOTE[knockout]);
+};
+
+export const saveSAApplicationData = async (
+  url: string,
+  BhRestToken: string,
+  application: SAApplicationProcessingRequest
+) => {
+  const { id: candidateId, fields: candidateFields } = application.candidate;
+  const { workAuthorization, yearsOfProfessionalExperience } = candidateFields;
+  const { careerId } = application;
+  const knockoutRequirements = await fetchSAJobOrder(url, BhRestToken, +careerId);
+  const knockout = calculateSAKnockout(knockoutRequirements, {
+    workAuthorization,
+    yearsOfExperience: yearsOfProfessionalExperience,
+  });
+  await populateSACandidateFields(url, BhRestToken, candidateId, candidateFields, knockout);
   await saveCandidateNote(url, BhRestToken, candidateId, 'Knockout', KNOCKOUT_NOTE[knockout]);
 };

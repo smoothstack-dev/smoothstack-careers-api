@@ -17,6 +17,16 @@ export interface KnockoutFields {
   codingAbility: number;
 }
 
+export interface KnockoutSARequirements {
+  requiredWorkAuthorization: string[];
+  minYearsOfExperience: string;
+}
+
+export interface KnockoutSAFields {
+  workAuthorization: string;
+  yearsOfExperience: string;
+}
+
 export enum Knockout {
   PASS = 'PASS',
   WORK_AUTH = 'WORK_AUTH',

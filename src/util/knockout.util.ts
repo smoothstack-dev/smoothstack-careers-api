@@ -1,4 +1,10 @@
-import { Knockout, KnockoutFields, KnockoutRequirements } from 'src/model/Knockout';
+import {
+  Knockout,
+  KnockoutSAFields,
+  KnockoutSARequirements,
+  KnockoutFields,
+  KnockoutRequirements,
+} from 'src/model/Knockout';
 import { calculateMonthsToGrad } from 'src/service/careers.service';
 
 export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: KnockoutFields) => {
@@ -40,6 +46,35 @@ export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: Kn
     return Knockout.SELF_RANK;
   }
   return Knockout.PASS;
+};
+
+export const calculateSAKnockout = (knockoutReqs: KnockoutSARequirements, fields: KnockoutSAFields) => {
+  const { requiredWorkAuthorization, minYearsOfExperience } = knockoutReqs;
+  const { workAuthorization, yearsOfExperience } = fields;
+  if (!requiredWorkAuthorization.includes(workAuthorization)) {
+    return Knockout.WORK_AUTH;
+  }
+  if (!hasSAMinYearsOfExperience(minYearsOfExperience, yearsOfExperience)) {
+    return Knockout.YEARS_OF_EXP;
+  }
+  return Knockout.PASS;
+};
+
+const hasSAMinYearsOfExperience = (minYears: string, years: string) => {
+  const EXP_MAP = {
+    '0': 0,
+    '1': 1,
+    '2': 2,
+    '3': 3,
+    '4': 4,
+    '5': 5,
+    '6': 6,
+    '7': 7,
+    '8': 8,
+    '9': 9,
+    '10+': 10,
+  };
+  return EXP_MAP[years] >= EXP_MAP[minYears];
 };
 
 const hasMinYearsOfExperience = (minYears: string, years: string) => {
