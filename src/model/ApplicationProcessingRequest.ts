@@ -32,7 +32,7 @@ export interface ApplicationProcessingRequest {
       yearsOfExperience: string;
       militaryStatus: string;
       nickName?: string;
-      graduationDate?: Date;
+      graduationDate?: string;
       degreeExpected?: string;
       highestDegree?: string;
       militaryBranch?: string;

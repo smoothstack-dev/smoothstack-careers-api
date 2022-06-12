@@ -66,13 +66,14 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
     yearsOfProfessionalExperience,
     phone: formattedPhone,
   };
-  await sendApplicationForProcessing(
-    webResponseFields,
-    candidateFields,
-    newCandidate.id,
-    CORP_TYPE.STAFF_AUG,
-    careerId
-  );
+  const applicationRequest: SAApplicationProcessingRequest = {
+    webResponse: { fields: webResponseFields },
+    candidate: { id: newCandidate.id, fields: candidateFields },
+    corpType: CORP_TYPE.STAFF_AUG,
+    careerId,
+  };
+  await publishApplicationProcessingRequest(applicationRequest);
+
   console.log('Successfully created new Candidate.');
   return {
     newCandidate,
@@ -102,6 +103,12 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       highestDegree: educationDegree,
       degreeExpected,
       codingAbility,
+      city,
+      state,
+      zip,
+      militaryStatus,
+      nickName,
+      militaryBranch,
     } = extraFields;
     const knockout = calculateKnockout(jobOrder.knockout, {
       workAuthorization,
@@ -119,31 +126,46 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       phone: formattedPhone,
       format,
     };
-    const candidateFields = {
-      ...extraFields,
-      phone: formattedPhone,
-    };
-    const submissionFields = {
-      ...(utmSource && { utmSource }),
-      ...(utmMedium && { utmMedium }),
-      ...(utmCampaign && { utmCampaign }),
-    };
+
     const { jobSubmission, candidate: newCandidate } = await createWebResponse(
       careerId,
       webResponseFields,
       resume,
       CORP_TYPE.APPRENTICESHIP
     );
-    await sendApplicationForProcessing(
-      webResponseFields,
-      candidateFields,
-      newCandidate.id,
-      CORP_TYPE.APPRENTICESHIP,
-      undefined, // skip careerId
-      knockout,
-      jobSubmission.id,
-      submissionFields
-    );
+
+    const candidateFields = {
+      workAuthorization,
+      relocation,
+      graduationDate: graduationDate,
+      yearsOfExperience,
+      highestDegree: educationDegree,
+      degreeExpected,
+      codingAbility,
+      phone: formattedPhone,
+      city,
+      state,
+      zip,
+      militaryStatus,
+      nickName,
+      militaryBranch,
+    };
+    const submissionFields = {
+      ...(utmSource && { utmSource }),
+      ...(utmMedium && { utmMedium }),
+      ...(utmCampaign && { utmCampaign }),
+    };
+
+    const applicationRequest: ApplicationProcessingRequest = {
+      webResponse: { fields: webResponseFields },
+      submission: { id: jobSubmission.id, fields: submissionFields },
+      candidate: { id: newCandidate.id, fields: candidateFields },
+      knockout: knockout,
+      corpType: CORP_TYPE.APPRENTICESHIP,
+    };
+
+    await publishApplicationProcessingRequest(applicationRequest);
+
     console.log('Successfully created new Candidate.');
     return {
       newCandidate,
@@ -169,39 +191,6 @@ const hasRecentApplication = (applications: (WebResponse | JobSubmission)[]): bo
     const dayDiff = timeDiff / (1000 * 3600 * 24);
     return dayDiff < DAY_DIFF;
   });
-};
-
-const sendApplicationForProcessing = async (
-  webResponseFields: any,
-  candidateFields: any,
-  candidateId: number,
-  corpType: CORP_TYPE,
-  careerId?: string,
-  knockout?: Knockout,
-  submissionId?: any,
-  submissionFields?: any
-) => {
-  switch (corpType) {
-    case CORP_TYPE.APPRENTICESHIP: {
-      const application: ApplicationProcessingRequest = {
-        webResponse: { fields: webResponseFields },
-        submission: { id: submissionId, fields: submissionFields },
-        candidate: { id: candidateId, fields: candidateFields },
-        knockout,
-        corpType,
-      };
-      await publishApplicationProcessingRequest(application);
-    }
-    case CORP_TYPE.STAFF_AUG: {
-      const application: SAApplicationProcessingRequest = {
-        webResponse: { fields: webResponseFields },
-        candidate: { id: candidateId, fields: candidateFields },
-        corpType,
-        careerId,
-      };
-      await publishApplicationProcessingRequest(application);
-    }
-  }
 };
 
 export const processApplication = async (
