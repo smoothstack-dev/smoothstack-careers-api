@@ -131,14 +131,14 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
     const candidateFields = {
       ...extraFields,
       phone: formattedPhone,
-    };
+    } as any;
     const submissionFields = {
       ...(utmSource && { utmSource }),
       ...(utmMedium && { utmMedium }),
       ...(utmCampaign && { utmCampaign }),
     };
 
-    const applicationRequest: any = {
+    const applicationRequest: ApplicationProcessingRequest = {
       webResponse: { fields: webResponseFields },
       submission: { id: jobSubmission.id, fields: submissionFields },
       candidate: { id: newCandidate.id, fields: candidateFields },
