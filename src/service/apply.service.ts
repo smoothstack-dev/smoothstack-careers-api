@@ -103,12 +103,6 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       highestDegree: educationDegree,
       degreeExpected,
       codingAbility,
-      city,
-      state,
-      zip,
-      militaryStatus,
-      nickName,
-      militaryBranch,
     } = extraFields;
     const knockout = calculateKnockout(jobOrder.knockout, {
       workAuthorization,
@@ -135,20 +129,8 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
     );
 
     const candidateFields = {
-      workAuthorization,
-      relocation,
-      graduationDate: graduationDate,
-      yearsOfExperience,
-      highestDegree: educationDegree,
-      degreeExpected,
-      codingAbility,
+      ...extraFields,
       phone: formattedPhone,
-      city,
-      state,
-      zip,
-      militaryStatus,
-      nickName,
-      militaryBranch,
     };
     const submissionFields = {
       ...(utmSource && { utmSource }),
@@ -156,7 +138,7 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       ...(utmCampaign && { utmCampaign }),
     };
 
-    const applicationRequest: ApplicationProcessingRequest = {
+    const applicationRequest: any = {
       webResponse: { fields: webResponseFields },
       submission: { id: jobSubmission.id, fields: submissionFields },
       candidate: { id: newCandidate.id, fields: candidateFields },
