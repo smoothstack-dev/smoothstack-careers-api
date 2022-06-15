@@ -90,3 +90,37 @@ export const sendNewAccountEmail = async (
   //   },
   // });
 };
+
+export const sendNewSAJobApplicationEmail = async (
+  candidateName: string,
+  jobId: number,
+  jobName: string
+): Promise<void> => {
+  const authToken = await getMSToken();
+  const message = {
+    message: {
+      subject: `${candidateName} applied for ${jobName}; Job ID:${jobId}`,
+      body: {
+        contentType: 'HTML',
+        content: `This email is to inform you that <strong>${candidateName}</strong> applied for ${jobName}; Job ID:${jobId}.`,
+      },
+      toRecipients: [
+        {
+          emailAddress: {
+            address: 'staffaug@smoothstack.com',
+          },
+        },
+      ],
+    },
+  };
+  try {
+    await axios.post(`${BASE_URL}`, message, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+    console.log('Successfully send the email to staffaug for the new application');
+  } catch (err) {
+    console.error('Fail to send the email to staffaug for the new application', err);
+  }
+};

@@ -38,8 +38,7 @@ export const apply = async (event: APIGatewayProxyEvent) => {
 
 const staffAugApply = async (event: APIGatewayProxyEvent) => {
   const { careerId } = event.pathParameters;
-  const { firstName, lastName, email, format, phone, utmSource, utmMedium, utmCampaign, ...extraFields } =
-    event.queryStringParameters;
+  const { firstName, lastName, email, format, phone, jobName, ...extraFields } = event.queryStringParameters;
   const { resume } = parse(event, true);
 
   const formattedEmail = email.toLowerCase();
@@ -69,6 +68,7 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
   const applicationRequest: SAApplicationProcessingRequest = {
     webResponse: { fields: webResponseFields },
     candidate: { id: newCandidate.id, fields: candidateFields },
+    job: { id: +careerId, jobName: jobName },
     corpType: CORP_TYPE.STAFF_AUG,
     careerId,
   };
