@@ -3,6 +3,7 @@ import { ApplicationProcessingRequest, SAApplicationProcessingRequest } from 'sr
 import { CORP_TYPE } from 'src/model/Corporation';
 import { processApplication, saveSAApplicationData } from 'src/service/apply.service';
 import { getStaffAugSessionData, getSessionData } from 'src/service/auth/bullhorn.oauth.service';
+import { fetchSAJobOrder } from 'src/service/careers.service';
 import { sendNewSAJobApplicationEmail } from 'src/service/email.service';
 
 const applicationProcessor = async (event: SNSEvent) => {
@@ -19,13 +20,19 @@ const applicationProcessor = async (event: SNSEvent) => {
       case CORP_TYPE.STAFF_AUG: {
         const { restUrl, BhRestToken } = await getStaffAugSessionData();
         const {
-          job: { jobName, id: jobId },
           webResponse: {
             fields: { firstName, lastName },
           },
+          careerId,
         } = request as SAApplicationProcessingRequest;
-        await sendNewSAJobApplicationEmail(`${firstName} ${lastName}`, jobId, jobName);
-        await saveSAApplicationData(restUrl, BhRestToken, request as SAApplicationProcessingRequest);
+        const knockoutRequirements = await fetchSAJobOrder(restUrl, BhRestToken, +careerId);
+        await sendNewSAJobApplicationEmail(`${firstName} ${lastName}`, +careerId, knockoutRequirements.jobName);
+        await saveSAApplicationData(
+          restUrl,
+          BhRestToken,
+          request as SAApplicationProcessingRequest,
+          knockoutRequirements
+        );
         break;
       }
     }

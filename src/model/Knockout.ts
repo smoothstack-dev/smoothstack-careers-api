@@ -18,6 +18,7 @@ export interface KnockoutFields {
 }
 
 export interface KnockoutSARequirements {
+  jobName: string;
   requiredWorkAuthorization: string[];
   minYearsOfExperience: string;
 }

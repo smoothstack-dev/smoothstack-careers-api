@@ -214,8 +214,7 @@ const findSubmissionByAppointment = async (
   });
 
   if (data.data.length) {
-    const { customTextBlock5, customTextBlock4, customText20, customTextBlock2, ...submission } =
-      data.data[0];
+    const { customTextBlock5, customTextBlock4, customText20, customTextBlock2, ...submission } = data.data[0];
     return {
       ...submission,
       eventId: customTextBlock5,
@@ -1030,16 +1029,18 @@ export const fetchSAJobOrder = async (
   const { data } = await axios.get(jobOrdersUrl, {
     params: {
       BhRestToken,
-      fields: 'id,customText1,yearsRequired',
+      fields: 'id,title,customText1,yearsRequired',
     },
   });
 
   const {
+    title,
     customText1, // Work Authorization
     yearsRequired,
   } = data.data;
 
   return {
+    jobName: title,
     requiredWorkAuthorization: customText1,
     minYearsOfExperience: yearsRequired,
   };

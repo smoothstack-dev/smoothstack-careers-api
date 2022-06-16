@@ -65,10 +65,6 @@ export interface SAApplicationProcessingRequest {
       nickName?: string;
     };
   };
-  job: {
-    id: number;
-    jobName: string;
-  };
   careerId: string;
   corpType: CORP_TYPE;
 }
