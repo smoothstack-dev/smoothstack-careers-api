@@ -2,7 +2,6 @@ import { APIGatewayProxyEvent } from 'aws-lambda';
 import { parse } from 'aws-multipart-parser';
 import {
   createWebResponse,
-  fetchSAJobOrder,
   fetchJobOrder,
   fetchSubmission,
   findCandidateByEmailOrPhone,
@@ -17,7 +16,7 @@ import { publishApplicationProcessingRequest, publishLinksGenerationRequest } fr
 import { WebResponse } from 'src/model/Candidate';
 import { JobSubmission } from 'src/model/JobSubmission';
 import { ApplicationProcessingRequest, SAApplicationProcessingRequest } from 'src/model/ApplicationProcessingRequest';
-import { Knockout, KNOCKOUT_NOTE, KNOCKOUT_STATUS } from 'src/model/Knockout';
+import { Knockout, KnockoutSARequirements, KNOCKOUT_NOTE, KNOCKOUT_STATUS } from 'src/model/Knockout';
 import { getSchedulingLink } from 'src/util/links';
 import { SchedulingTypeId } from 'src/model/SchedulingType';
 import { calculateSAKnockout, calculateKnockout } from 'src/util/knockout.util';
@@ -38,8 +37,7 @@ export const apply = async (event: APIGatewayProxyEvent) => {
 
 const staffAugApply = async (event: APIGatewayProxyEvent) => {
   const { careerId } = event.pathParameters;
-  const { firstName, lastName, email, format, phone, utmSource, utmMedium, utmCampaign, ...extraFields } =
-    event.queryStringParameters;
+  const { firstName, lastName, email, format, phone, jobName, ...extraFields } = event.queryStringParameters;
   const { resume } = parse(event, true);
 
   const formattedEmail = email.toLowerCase();
@@ -219,12 +217,11 @@ const saveApplicationData = async (
 export const saveSAApplicationData = async (
   url: string,
   BhRestToken: string,
-  application: SAApplicationProcessingRequest
+  application: SAApplicationProcessingRequest,
+  knockoutRequirements: KnockoutSARequirements
 ) => {
   const { id: candidateId, fields: candidateFields } = application.candidate;
   const { workAuthorization, yearsOfProfessionalExperience } = candidateFields;
-  const { careerId } = application;
-  const knockoutRequirements = await fetchSAJobOrder(url, BhRestToken, +careerId);
   const knockout = calculateSAKnockout(knockoutRequirements, {
     workAuthorization,
     yearsOfExperience: yearsOfProfessionalExperience,
