@@ -44,6 +44,44 @@ export const createWebResponse = async (
   return res.data;
 };
 
+export const fetchCandidateForPrescreen = async (url: string, BhRestToken: string, candidateId: number) => {
+  const candidatesUrl = `${url}entity/Candidate/${candidateId}`;
+  const fields =
+    'id,firstName,lastName,email,customText25,degreeList,customDate3,customText9,educationDegree,customDate10,customText26,customText24,source,customText23,customText14,customText8,customText6,customText5,customText1,customText31,customText27,address(address1,address2,city,state,zip)';
+  const { data } = await axios.get(candidatesUrl, {
+    params: {
+      BhRestToken,
+      fields: fields,
+    },
+  });
+  const candidateData = data.data;
+  return {
+    candidateName: `${candidateData.firstName} ${candidateData.lastName}`,
+    candidateEmail: candidateData.email,
+    relocation: candidateData.customText25,
+    degreeList: candidateData.expectedDegree,
+    expectedGraduationDate: new Date(candidateData.customDate3),
+    highestDegree: candidateData.educationDegree,
+    graduationDate: new Date(candidateData.customDate10),
+    monthsOfExperience: candidateData.customText26,
+    canCommit: candidateData.customText24,
+    referral: candidateData.source,
+    opportunityRank: candidateData.customText23,
+    communicationSkills: candidateData.customText14,
+    isVaccinated: candidateData.customText8,
+    githubLink: candidateData.customText6,
+    linkedinLink: candidateData.customText5,
+    programmingLanguages: candidateData.customText1,
+    county: candidateData.customText31,
+    result: candidateData.customText27,
+    address1: candidateData.address.address1,
+    address2: candidateData.address.address2,
+    city: candidateData.address.city,
+    state: candidateData.address.state,
+    zip: candidateData.address.zip,
+  };
+};
+
 export const fetchCandidate = async (url: string, BhRestToken: string, candidateId: number): Promise<Candidate> => {
   const candidatesUrl = `${url}entity/Candidate/${candidateId}`;
   const { data } = await axios.get(candidatesUrl, {

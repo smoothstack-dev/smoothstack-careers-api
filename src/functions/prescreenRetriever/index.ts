@@ -6,7 +6,7 @@ export default {
     {
       http: {
         method: 'get',
-        path: 'webinar-redirect',
+        path: 'prescreenRetriever',
         cors: {
           origin: '*',
           headers: ['Content-Type'],
