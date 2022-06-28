@@ -47,7 +47,7 @@ export const createWebResponse = async (
 export const fetchCandidateForPrescreen = async (url: string, BhRestToken: string, candidateId: number) => {
   const candidatesUrl = `${url}entity/Candidate/${candidateId}`;
   const fields =
-    'id,firstName,lastName,email,customText25,degreeList,customDate3,customText9,educationDegree,customDate10,customText26,customText24,source,customText23,customText14,customText8,customText6,customText5,customText1,customText31,customText27,address(address1,address2,city,state,zip)';
+    'id,firstName,lastName,email,customText25,degreeList,customDate3,customText9,educationDegree,customDate10,customText26,customText24,source,customText23,customText14,customText8,customText6,customText5,customText1,customText31,customText27,address(address1,address2,city,state,zip),customTextBlock5,customText11,customTextBlock2,customText4,customText33';
   const { data } = await axios.get(candidatesUrl, {
     params: {
       BhRestToken,
@@ -59,7 +59,7 @@ export const fetchCandidateForPrescreen = async (url: string, BhRestToken: strin
     candidateName: `${candidateData.firstName} ${candidateData.lastName}`,
     candidateEmail: candidateData.email,
     relocation: candidateData.customText25,
-    degreeList: candidateData.expectedDegree,
+    expectedDegree: candidateData.degreeList,
     expectedGraduationDate: new Date(candidateData.customDate3),
     highestDegree: candidateData.educationDegree,
     graduationDate: new Date(candidateData.customDate10),
@@ -79,6 +79,11 @@ export const fetchCandidateForPrescreen = async (url: string, BhRestToken: strin
     city: candidateData.address.city,
     state: candidateData.address.state,
     zip: candidateData.address.zip,
+    aboutYourself: candidateData.customTextBlock5,
+    otherApplications: candidateData.customText11,
+    projects: candidateData.customTextBlock2,
+    goodFit: candidateData.customText33,
+    workAuthorization: candidateData.customText4,
   };
 };
 
@@ -410,8 +415,12 @@ export const savePrescreenData = async (
     }),
     customText27: prescreenForm.result.answer,
     status: candidateStatus,
+    ...(prescreenForm.aboutYourself?.answer && { customTextBlock5: prescreenForm.aboutYourself.answer }),
+    ...(prescreenForm.otherApplications?.answer && { customText11: prescreenForm.otherApplications.answer }),
+    ...(prescreenForm.projects?.answer && { customTextBlock2: prescreenForm.projects.answer }),
+    ...(prescreenForm.goodFit?.answer && { customText33: prescreenForm.goodFit.answer }),
   };
-
+  console.log('saving prescreen data:', updateData);
   await axios.post(candidateUrl, updateData, {
     params: {
       BhRestToken,
