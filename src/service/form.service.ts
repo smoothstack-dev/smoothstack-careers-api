@@ -21,9 +21,8 @@ export const processFormEvent = async (formType: FormType, formData: any) => {
 
 export const processForm = async (event: SNSEvent) => {
   const message = event.Records[0].Sns.Message;
-  console.log('Received Form Processing Request: ', message);
   const { type, formData }: Form = JSON.parse(message);
-
+  console.log('Received Form Processing Request: ', { type, formData });
   switch (type) {
     case 'prescreen':
       await processPrescreenForm(formData as PrescreenForm);
