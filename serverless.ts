@@ -5,7 +5,7 @@ import newSubmissionChecker from '@functions/newSubmissionChecker';
 import schedulingEvents from '@functions/schedulingEvents';
 import challengeEvents from '@functions/challengeEvents';
 import webinarRedirect from '@functions/webinarRedirect';
-import prescreenRetriever from '@functions/prescreenRetriever';
+import prescreen from '@functions/prescreen';
 import webinarProcessing from '@functions/webinarProcessing';
 import webinarEvents from '@functions/webinarEvents';
 import formEvents from '@functions/formEvents';
@@ -91,7 +91,7 @@ const serverlessConfiguration: AWS = {
     webhookRenewer,
     applicationProcessor,
     internalSubmissionProcessor,
-    prescreenRetriever,
+    prescreen,
   },
   resources: {
     Conditions: {
