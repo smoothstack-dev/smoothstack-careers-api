@@ -1204,6 +1204,8 @@ export const fetchUpdatedSubmissions = async (
               healthBenefits: sub.candidate.customText3,
               retirement: sub.candidate.customText4,
               includeRate: sub.candidate.customText6,
+              willRelocate: sub.candidate.customText25,
+              willTravel: sub.candidate.customText10,
             },
             jobOrder: {
               ...sub.jobOrder,
