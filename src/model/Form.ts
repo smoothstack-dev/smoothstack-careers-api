@@ -43,6 +43,10 @@ export interface PrescreenForm {
   city: FormEntry;
   state: FormEntry;
   zip: FormEntry;
+  showOnTime: FormEntry;
+  updatedTime: FormEntry;
+  referFriend: FormEntry;
+  drugScreen: FormEntry;
 }
 
 export interface TechScreenForm {
