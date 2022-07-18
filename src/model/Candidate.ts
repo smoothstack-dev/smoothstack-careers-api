@@ -79,6 +79,7 @@ export interface SACandidate {
   lastName: string;
   email: string;
   willRelocate: string;
+  willTravel: string;
   employeeType: string;
   pto: string;
   federalHolidays: string;

@@ -20,6 +20,12 @@ const DOCTYPE_NAME = {
   Evaluation: 'Engagement Offer',
 };
 
+const DECISION_MAP = {
+  Yes: 'am',
+  No: 'am not',
+  Undecided: 'may be',
+};
+
 export const generateDocument = async (submission: JobSubmission) => {
   const { API_KEY } = await getHelloSignSecrets();
   const client = new HelloSign({ key: API_KEY });
@@ -203,8 +209,8 @@ const sendStaffAugSignatureRequest = async (client: HelloSign, templateId: strin
   const salaryFormatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   });
   const contractAnswer = submission.candidate.employeeType !== 'W2' && 'N/A';
   const includeRate = submission.candidate.includeRate === 'Yes';
@@ -242,7 +248,11 @@ const sendStaffAugSignatureRequest = async (client: HelloSign, templateId: strin
       },
       {
         name: 'willRelocate',
-        value: submission.candidate.willRelocate ? 'am' : 'am not',
+        value: DECISION_MAP[submission.candidate.willRelocate],
+      },
+      {
+        name: 'willTravel',
+        value: DECISION_MAP[submission.candidate.willTravel],
       },
       {
         name: 'pto',
