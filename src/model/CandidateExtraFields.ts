@@ -1,5 +1,3 @@
-import { Knockout } from './Knockout';
-
 export interface CandidateExtraFields {
   phone: string;
   city: string;
@@ -11,7 +9,7 @@ export interface CandidateExtraFields {
   codingAbility: string;
   yearsOfExperience: string;
   nickName?: string;
-  graduationDate?: Date;
+  graduationDate?: string;
   degreeExpected?: string;
   highestDegree?: string;
   militaryStatus: string;

@@ -1,7 +1,6 @@
-import { ScheduledEvent } from 'aws-lambda';
 import { processUpdatedSASubmissions, processUpdatedSubmissions } from 'src/service/processSubmissions.service';
 
-const updatedSubmissionChecker = async (event: ScheduledEvent) => {
+const updatedSubmissionChecker = async () => {
   try {
     await processUpdatedSubmissions();
     await processUpdatedSASubmissions();

@@ -4,9 +4,12 @@ export interface Candidate {
   id: number;
   firstName: string;
   lastName: string;
+  nickName: string;
   email: string;
   phone: string;
+  dateAdded: string;
   owner: Owner;
+  referrer: string;
   webinarLink: string;
   webinarRegistrantId: string;
   workAuthorization: string;
@@ -20,6 +23,37 @@ export interface Candidate {
   webResponses: WebResponse[];
   githubLink: string;
   fileAttachments: Attachment[];
+  address: Address;
+  county: string;
+  linkedInLink: string;
+  expectedGraduationDate: string;
+  communicationSkillsPS: string;
+  communicationSkillsTS: string;
+  vaccinationStatus: string;
+  militaryStatus: string;
+  militaryBranch: string;
+  opportunityRank: string;
+  technicalScore: string;
+  behavioralScore: string;
+  projectScore: string;
+  techScreenResult: string;
+  screenerDetermination: string;
+  screenerEmail: string;
+  potentialEmail: string;
+  potentialEmailQC: string;
+  source: string;
+}
+
+interface Address {
+  address1: string;
+  address2: string;
+  city: string;
+  countryCode: string;
+  countryID: number;
+  countryName: string;
+  state: string;
+  timezone: string;
+  zip: string;
 }
 
 interface Owner {

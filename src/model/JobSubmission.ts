@@ -18,6 +18,9 @@ export interface JobSubmission {
   techScreenResult: string;
   screenerDetermination: string;
   screenerEmail: string;
+  source: string;
+  medium: string;
+  campaign: string;
 }
 
 export interface SAJobSubmission {

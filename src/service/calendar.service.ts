@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { Appointment } from 'src/model/Appointment';
 import { Candidate } from 'src/model/Candidate';
+import { CandidateFile } from 'src/model/CandidateFile';
 import { JobSubmission } from 'src/model/JobSubmission';
-import { ResumeFile } from 'src/model/ResumeFile';
 import { getTechScreeningLink } from 'src/util/links';
-import { getMSToken } from './auth/microsoft.oauth.service';
+import { getMSAuthData } from './auth/microsoft.oauth.service';
 
 const BASE_URL = `https://graph.microsoft.com/v1.0/users/info@smoothstack.com/calendar`;
 
@@ -13,7 +13,7 @@ export const sendChallengeCalendarInvite = async (
   challengeLink: string,
   appointment: Appointment
 ): Promise<string> => {
-  const authToken = await getMSToken();
+  const { token } = await getMSAuthData();
   const event = {
     subject: `Smoothstack Coding Challenge - ${candidate.firstName} ${candidate.lastName}`,
     body: {
@@ -44,7 +44,7 @@ export const sendChallengeCalendarInvite = async (
 
   const { data } = await axios.post(`${BASE_URL}/events`, event, {
     headers: {
-      Authorization: `Bearer ${authToken}`,
+      Authorization: `Bearer ${token}`,
     },
   });
   return data.id;
@@ -54,12 +54,12 @@ export const sendTechScreenCalendarInvite = async (
   submission: JobSubmission,
   screenerEmail: string,
   appointment: Appointment,
-  resumeFile: ResumeFile
+  resumeFile: CandidateFile
 ): Promise<string> => {
-  const authToken = await getMSToken();
-  const eventId = await createTechScreenEvent(authToken, submission, appointment);
-  await attachResumeToEvent(authToken, eventId, submission.candidate, resumeFile);
-  await addAttendeesToEvent(authToken, eventId, submission.candidate, screenerEmail);
+  const { token } = await getMSAuthData();
+  const eventId = await createTechScreenEvent(token, submission, appointment);
+  await attachResumeToEvent(token, eventId, submission.candidate, resumeFile);
+  await addAttendeesToEvent(token, eventId, submission.candidate, screenerEmail);
   return eventId;
 };
 
@@ -134,7 +134,7 @@ const attachResumeToEvent = async (
   authToken: string,
   eventId: string,
   candidate: Candidate,
-  resumeFile: ResumeFile
+  resumeFile: CandidateFile
 ) => {
   const fileExt = resumeFile.name.substring(resumeFile.name.lastIndexOf('.') + 1);
   const attachment = {
@@ -150,7 +150,7 @@ const attachResumeToEvent = async (
 };
 
 export const cancelCalendarInvite = async (eventId: string) => {
-  const authToken = await getMSToken();
+  const { token } = await getMSAuthData();
   const url = `${BASE_URL}/events/${eventId}/cancel`;
   eventId &&
     (await axios.post(
@@ -158,7 +158,7 @@ export const cancelCalendarInvite = async (eventId: string) => {
       {},
       {
         headers: {
-          Authorization: `Bearer ${authToken}`,
+          Authorization: `Bearer ${token}`,
         },
       }
     ));

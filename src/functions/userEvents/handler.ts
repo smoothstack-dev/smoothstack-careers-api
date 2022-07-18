@@ -1,24 +1,25 @@
 import { middyfy } from '@libs/lambda';
 import { APIGatewayEvent } from 'aws-lambda';
-import { randomUUID } from 'crypto';
-import { UserEvent } from 'src/model/UserEvent';
 import { processUserEvent } from 'src/service/user.service';
 
 const userEvents = async (event: APIGatewayEvent) => {
+  console.log('Received User Event: ', event);
   try {
     switch (event.httpMethod) {
-      case 'POST':
-        const eventType = event.headers['X-Goog-Resource-State'];
-        if (eventType !== 'sync') {
-          const userEvent: UserEvent = {
-            eventId: randomUUID(),
-            eventType,
-            primaryEmail: event.body['primaryEmail'],
+      case 'POST': {
+        if (event.queryStringParameters?.validationToken) {
+          return {
+            statusCode: 200,
+            body: event.queryStringParameters.validationToken,
+            headers: {
+              'Content-Type': 'text/plain',
+            },
           };
-          await processUserEvent(userEvent);
         }
-        break;
+        await processUserEvent(event.body as any);
+      }
     }
+    console.log('Successfully processed User Event');
   } catch (e) {
     console.error(e);
     throw e;
