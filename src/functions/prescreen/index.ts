@@ -6,7 +6,17 @@ export default {
     {
       http: {
         method: 'get',
-        path: 'webinar-redirect',
+        path: 'prescreen',
+        cors: {
+          origin: '*',
+          headers: ['Content-Type'],
+        },
+      },
+    },
+    {
+      http: {
+        method: 'post',
+        path: 'prescreen',
         cors: {
           origin: '*',
           headers: ['Content-Type'],

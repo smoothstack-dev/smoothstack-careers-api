@@ -44,6 +44,68 @@ export const createWebResponse = async (
   return res.data;
 };
 
+export const fetchCandidateForPrescreen = async (url: string, BhRestToken: string, candidateId: number) => {
+  const candidatesUrl = `${url}entity/Candidate/${candidateId}`;
+  const fields =
+    'id,firstName,lastName,email,customText25,degreeList,customDate3,customText9,educationDegree,customDate10,customText26,customText24,source,customText23,customText14,customText8,customText6,customText5,customText1,customText31,customText27,address(address1,address2,city,state,zip),customTextBlock5,customTextBlock9,customText11,customTextBlock2,customText4,customText33,customObject2s(text1,dateLastModified,text2,text3,text4,text5,text6,text7,text8,textBlock1,textBlock2)';
+  const { data } = await axios.get(candidatesUrl, {
+    params: {
+      BhRestToken,
+      fields: fields,
+    },
+  });
+  const candidateData = data.data;
+  const candidatePrescreenData = candidateData.customObject2s.data[0];
+
+  const prescreenData = {
+    candidateName: `${candidateData.firstName} ${candidateData.lastName}`,
+    candidateEmail: candidateData.email,
+    relocation: candidateData.customText25,
+    expectedDegree: candidateData.degreeList,
+    expectedGraduationDate: new Date(candidateData.customDate3),
+    highestDegree: candidateData.educationDegree,
+    graduationDate: new Date(candidateData.customDate10),
+    monthsOfExperience: candidateData.customText26,
+    canCommit: candidateData.customText24,
+    referral: candidateData.source,
+    opportunityRank: candidateData.customText23,
+    communicationSkills: candidateData.customText14,
+    isVaccinated: candidateData.customText8,
+    githubLink: candidateData.customText6,
+    linkedinLink: candidateData.customText5,
+    programmingLanguages: candidateData.customText1,
+    county: candidateData.customText31,
+    result: candidateData.customText27,
+    address1: candidateData.address?.address1,
+    address2: candidateData.address?.address2,
+    city: candidateData.address?.city,
+    state: candidateData.address?.state,
+    zip: candidateData.address?.zip,
+    aboutYourself: candidateData.customTextBlock5,
+    otherApplications: candidateData.customText11,
+    projects: candidateData.customTextBlock2,
+    goodFit: candidateData.customText33,
+    workAuthorization: candidateData.customText4,
+    questions: candidateData.customTextBlock9,
+    showOnTime: candidatePrescreenData.text1,
+    updatedTime: new Date(candidatePrescreenData.dateLastModified),
+    backgroundCheck: candidatePrescreenData.text2,
+    referFriend: candidatePrescreenData.text3,
+    vaccinationNotes: candidatePrescreenData.text4,
+    commitment: candidatePrescreenData.text5,
+    additionalNotes: candidatePrescreenData.text6,
+    drugScreen: candidatePrescreenData.text7,
+    willVaccinate: candidatePrescreenData.text8,
+    abilityToLearn: candidatePrescreenData.textBlock1,
+    challengingSituation: candidatePrescreenData.textBlock2,
+  };
+
+  if (prescreenData.expectedDegree || prescreenData.expectedGraduationDate) prescreenData['isStudent'] = 'Yes';
+  if (prescreenData.highestDegree || prescreenData.graduationDate) prescreenData['isStudent'] = 'No';
+
+  return prescreenData;
+};
+
 export const fetchCandidate = async (url: string, BhRestToken: string, candidateId: number): Promise<Candidate> => {
   const candidatesUrl = `${url}entity/Candidate/${candidateId}`;
   const { data } = await axios.get(candidatesUrl, {
@@ -360,6 +422,7 @@ export const savePrescreenData = async (
       customText1: prescreenForm.programmingLanguages.answer,
     }),
     ...(prescreenForm.county?.answer && { customText31: prescreenForm.county.answer }),
+    ...(prescreenForm.questions?.answer && { customTextBlock9: prescreenForm.questions.answer }),
     ...(shouldPopulateAddress(prescreenForm) && {
       address: {
         address1: prescreenForm.address1?.answer,
@@ -372,8 +435,27 @@ export const savePrescreenData = async (
     }),
     customText27: prescreenForm.result.answer,
     status: candidateStatus,
+    ...(prescreenForm.aboutYourself?.answer && { customTextBlock5: prescreenForm.aboutYourself.answer }),
+    ...(prescreenForm.otherApplications?.answer && { customText11: prescreenForm.otherApplications.answer }),
+    ...(prescreenForm.projects?.answer && { customTextBlock2: prescreenForm.projects.answer }),
+    ...(prescreenForm.goodFit?.answer && { customText33: prescreenForm.goodFit.answer }),
+    customObject2s: [
+      {
+        ...(prescreenForm.showOnTime?.answer && { text1: prescreenForm.showOnTime.answer }),
+        ...(prescreenForm.updatedTime?.answer && { dateLastModified: prescreenForm.updatedTime.answer }),
+        ...(prescreenForm.backgroundCheck?.answer && { text2: prescreenForm.backgroundCheck.answer }),
+        ...(prescreenForm.referFriend?.answer && { text3: prescreenForm.referFriend.answer }),
+        ...(prescreenForm.vaccinationNotes?.answer && { text4: prescreenForm.vaccinationNotes.answer }),
+        ...(prescreenForm.commitment?.answer && { text5: prescreenForm.commitment.answer }),
+        ...(prescreenForm.additionalNotes?.answer && { text6: prescreenForm.additionalNotes.answer }),
+        ...(prescreenForm.drugScreen?.answer && { text7: prescreenForm.drugScreen.answer }),
+        ...(prescreenForm.willVaccinate?.answer && { text8: prescreenForm.willVaccinate.answer }),
+        ...(prescreenForm.abilityToLearn?.answer && { textBlock1: prescreenForm.abilityToLearn.answer }),
+        ...(prescreenForm.challengingSituation?.answer && { textBlock2: prescreenForm.challengingSituation.answer }),
+      },
+    ],
   };
-
+  console.log('saving prescreen data:', updateData);
   await axios.post(candidateUrl, updateData, {
     params: {
       BhRestToken,

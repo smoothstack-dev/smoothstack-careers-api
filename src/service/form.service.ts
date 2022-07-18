@@ -21,9 +21,8 @@ export const processFormEvent = async (formType: FormType, formData: any) => {
 
 export const processForm = async (event: SNSEvent) => {
   const message = event.Records[0].Sns.Message;
-  console.log('Received Form Processing Request: ', message);
   const { type, formData }: Form = JSON.parse(message);
-
+  console.log('Received Form Processing Request: ', { type, formData });
   switch (type) {
     case 'prescreen':
       await processPrescreenForm(formData as PrescreenForm);
@@ -35,7 +34,7 @@ export const processForm = async (event: SNSEvent) => {
   console.log('Successfully processed form.');
 };
 
-const processPrescreenForm = async (prescreenForm: PrescreenForm) => {
+export const processPrescreenForm = async (prescreenForm: PrescreenForm) => {
   const { restUrl, BhRestToken } = await getSessionData();
 
   const candidate = await findCandidateByEmail(restUrl, BhRestToken, prescreenForm.candidateEmail.answer);
@@ -48,10 +47,13 @@ const processPrescreenForm = async (prescreenForm: PrescreenForm) => {
       'Prescreen Scheduled',
       'Webinar Passed',
     ]);
+
+    return prescreenReq;
   }
+  throw 'Candidate does not exist in the system';
 };
 
-const processTechScreenForm = async (techScreenForm: TechScreenForm) => {
+export const processTechScreenForm = async (techScreenForm: TechScreenForm) => {
   const { restUrl, BhRestToken } = await getSessionData();
 
   const submission = await fetchSubmission(restUrl, BhRestToken, +techScreenForm.submissionId.answer);
