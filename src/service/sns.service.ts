@@ -15,6 +15,8 @@ import { WEBINAR_TOPIC, WEBINAR_TYPE } from './webinar.service';
 import { Form } from 'src/model/Form';
 import { ApplicationProcessingRequest, SAApplicationProcessingRequest } from 'src/model/ApplicationProcessingRequest';
 import { IntSubmissionProcessingRequest } from 'src/model/IntSubmissionProcessingRequest';
+import { UserGenerationRequest, UserGenerationType } from 'src/model/UserGenerationRequest';
+import { MSUser } from 'src/model/MSUser';
 
 export const publishLinksGenerationRequest = async (submissionId: number, type: LinksGenerationType) => {
   const sns = new AWS.SNS(getSNSConfig(process.env.ENV));
@@ -118,6 +120,23 @@ export const publishIntSubmissionProcessingRequest = async (request: IntSubmissi
   const message: PublishInput = {
     Message: JSON.stringify(request),
     TopicArn: snsTopic,
+  };
+
+  await sns.publish(message).promise();
+};
+
+export const publishUserGenerationRequest = async (type: UserGenerationType, submissionId: number, msUser?: MSUser) => {
+  const sns = new AWS.SNS(getSNSConfig(process.env.ENV));
+  const topic = `arn:aws:sns:us-east-1:${process.env.AWS_ACCOUNT}:smoothstack-user-generation-sns-topic`;
+
+  const request: UserGenerationRequest = {
+    submissionId,
+    type,
+    ...(type === 'sfdc' && { msUser }),
+  };
+  const message: PublishInput = {
+    Message: JSON.stringify(request),
+    TopicArn: topic,
   };
 
   await sns.publish(message).promise();

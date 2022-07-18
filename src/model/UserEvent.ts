@@ -1,5 +1,10 @@
 export interface UserEvent {
-  eventId: string;
-  eventType: string;
-  primaryEmail: string;
+  value: UserEventEntry[];
+}
+
+interface UserEventEntry {
+  changeType: string;
+  resourceData: {
+    id: string;
+  };
 }

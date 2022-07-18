@@ -1,5 +1,15 @@
-import { Candidate } from './Candidate';
+import { MSUser } from './MSUser';
 
-export interface UserGenerationRequest {
-  candidate: Candidate;
+interface MSUserGenerationRequest {
+  type: 'ms';
+  submissionId: number;
 }
+
+interface SFDCUserGenerationRequest {
+  type: 'sfdc';
+  submissionId: number;
+  msUser: MSUser;
+}
+
+export type UserGenerationRequest = MSUserGenerationRequest | SFDCUserGenerationRequest;
+export type UserGenerationType = 'sfdc' | 'ms';

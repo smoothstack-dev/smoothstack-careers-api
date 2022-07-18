@@ -3,6 +3,7 @@ import FormData from 'form-data';
 import { Appointment } from 'src/model/Appointment';
 import { Candidate } from 'src/model/Candidate';
 import { CandidateExtraFields, SACandidateExtraFields } from 'src/model/CandidateExtraFields';
+import { CandidateFile } from 'src/model/CandidateFile';
 import { ChallengeSession } from 'src/model/ChallengeEvent';
 import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
 import { FormEntry, PrescreenForm, TechScreenForm, TechScreenResults } from 'src/model/Form';
@@ -10,10 +11,10 @@ import { JobOrder } from 'src/model/JobOrder';
 import { JobSubmission } from 'src/model/JobSubmission';
 import { Knockout, KnockoutSARequirements, KNOCKOUT_STATUS } from 'src/model/Knockout';
 import { ChallengeLinksData, TechScreenLinksData } from 'src/model/Links';
-import { ResumeFile } from 'src/model/ResumeFile';
 import { SchedulingType } from 'src/model/SchedulingType';
 import { WebinarRegistration } from 'src/model/WebinarRegistration';
 import { deriveSubmissionStatus, shouldDowngradeJob } from 'src/util/challenge.util';
+import { derivePotentialEmail } from 'src/util/email.util';
 import {
   deriveSubmissionStatus as deriveSubmissionStatusTS,
   shouldDowngradeJob as shouldDowngradeJobTS,
@@ -407,7 +408,7 @@ export const saveTechScreenData = async (
 ): Promise<void> => {
   const results = getTechScreenResults(techScreenForm);
 
-  const candidateEvent = saveCandidateTechScreenData(url, BhRestToken, submission.candidate.id, results);
+  const candidateEvent = saveCandidateTechScreenData(url, BhRestToken, submission.candidate, results);
   const submissionEvent = saveSubmissionTechScreenData(url, BhRestToken, submission, results);
   const noteEvents = getTechScreenNoteEvents(url, BhRestToken, submission.candidate.id, results);
   const notificationEvent = sendTechscreenResult(
@@ -468,10 +469,10 @@ const saveSubmissionTechScreenData = async (
 const saveCandidateTechScreenData = async (
   url: string,
   BhRestToken: string,
-  candidateId: number,
+  candidate: Candidate,
   techScreenResults: TechScreenResults
 ): Promise<void> => {
-  const candidateUrl = `${url}entity/Candidate/${candidateId}`;
+  const candidateUrl = `${url}entity/Candidate/${candidate.id}`;
 
   const {
     respondentEmail,
@@ -505,6 +506,9 @@ const saveCandidateTechScreenData = async (
     customText22: screenerRecommendation,
     customText40: respondentEmail,
     status: candidateStatus,
+    ...(screenerDetermination !== 'Fail' && {
+      customText39: derivePotentialEmail(candidate.firstName, candidate.lastName),
+    }),
   };
 
   await axios.post(candidateUrl, updateData, {
@@ -1088,9 +1092,9 @@ export const fetchNewSubmissions = async (url: string, BhRestToken: string): Pro
 export const fetchUpdatedSubmissions = async (
   url: string,
   BhRestToken: string,
-  updateStatus: string,
+  updateStatuses: string[],
   fields: string
-): Promise<any[]> => {
+): Promise<any> => {
   const ids = await fetchUpdatedJobSubmissionsIds(url, BhRestToken);
   if (!ids.length) {
     return [];
@@ -1107,7 +1111,7 @@ export const fetchUpdatedSubmissions = async (
   const submissionArr = ids.length > 1 ? data.data : [data.data];
 
   const filteredSubs = submissionArr.flatMap((sub) =>
-    !sub.isDeleted && [updateStatus].includes(sub.status)
+    !sub.isDeleted && updateStatuses.includes(sub.status)
       ? [
           {
             ...sub,
@@ -1180,25 +1184,29 @@ export const saveSubmissionStatus = async (
   });
 };
 
-export const fetchCandidateResume = async (
+export const fetchCandidateFiles = async (
   url: string,
   BhRestToken: string,
-  candidateId: number
-): Promise<ResumeFile> => {
+  candidateId: number,
+  fileTypes: string[]
+): Promise<CandidateFile[]> => {
   const candidate = await fetchCandidate(url, BhRestToken, candidateId);
-  const resumeId = candidate.fileAttachments.find((file) => file.type === 'Resume')?.id;
-  const filesUrl = `${url}file/Candidate/${candidate.id}/${resumeId}`;
+  const fileMap = candidate.fileAttachments.flatMap((file) =>
+    fileTypes.includes(file.type) ? [{ id: file.id, type: file.type }] : []
+  );
+  let files: CandidateFile[] = [];
+  for (const file of fileMap) {
+    const filesUrl = `${url}file/Candidate/${candidate.id}/${file.id}`;
 
-  if (resumeId) {
     const { data } = await axios.get(filesUrl, {
       params: {
         BhRestToken,
       },
     });
 
-    return data.File;
+    files.push({ ...data.File, type: file.type });
   }
-  return undefined;
+  return files;
 };
 
 export const uploadCandidateFile = async (
@@ -1234,17 +1242,21 @@ export const fetchSubmission = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,email,phone,customText6,customText25,owner(email),customText4,customText3,customDate3,degreeList,educationDegree,customText7),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7,customText4,willRelocate,customText8,customText9,educationDegree,customText10),dateAdded,customTextBlock5,customTextBlock4,customTextBlock2,customDate2,customText20',
+        'id,status,candidate(id,firstName,lastName,nickName,dateAdded,email,phone,referredByPerson,referredBy,customText6,customText25,owner(firstName,lastName,email),customText4,customText3,customDate3,customDate10,degreeList,educationDegree,customText7,customText31,customText5,customText14,customText15,customText8,customText2,customText10,customText23,address,customText16,customText17,customText18,customText19,customText22,customText40,customText28,customText39,source),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7,customText4,willRelocate,customText8,customText9,educationDegree,customText10),dateAdded,customTextBlock5,customTextBlock4,customTextBlock2,customDate2,customText20,customText12,customText18,customText21,customText19,source,customText6,customText24',
     },
   });
-
   const {
     customTextBlock5,
     customTextBlock4,
     customTextBlock2,
     customDate2,
     customText20,
-    customText17,
+    customText12,
+    customText18,
+    customText19,
+    customText21,
+    customText6,
+    customText24,
     ...submission
   } = data.data;
   return {
@@ -1254,17 +1266,42 @@ export const fetchSubmission = async (
     techScreenSchedulingLink: customTextBlock2,
     techScreenDate: customDate2,
     techScreenType: customText20,
+    challengeScore: customText12,
+    techScreenResult: customText18,
+    screenerDetermination: customText19,
+    screenerEmail: customText21,
+    medium: customText24,
+    campaign: customText6,
     candidate: {
       ...submission.candidate,
       githubLink: submission.candidate.customText6,
       workAuthorization: submission.candidate.customText4,
       relocation: submission.candidate.customText25,
       yearsOfExperience: submission.candidate.customText3,
-      graduationDate: submission.candidate.customDate3,
+      graduationDate: submission.candidate.customDate10,
       degreeExpected: submission.candidate.degreeList,
-      educationDegree: submission.candidate.educationDegree,
       owner: submission.candidate.owner,
+      referrer: submission.candidate.referredByPerson
+        ? `${submission.candidate.referredByPerson.firstName} ${submission.candidate.referredByPerson.lastName}`
+        : submission.candidate.referredBy,
       codingAbility: submission.candidate.customText7,
+      county: submission.candidate.customText31,
+      linkedInLink: submission.candidate.customText5,
+      expectedGraduationDate: submission.candidate.customDate3,
+      communicationSkillsPS: submission.candidate.customText14,
+      communicationSkillsTS: submission.candidate.customText15,
+      technicalScore: submission.candidate.customText16,
+      behavioralScore: submission.candidate.customText17,
+      projectScore: submission.candidate.customText18,
+      vaccinationStatus: submission.candidate.customText8,
+      militaryStatus: submission.candidate.customText2,
+      militaryBranch: submission.candidate.customText10,
+      opportunityRank: submission.candidate.customText23,
+      techScreenResult: submission.candidate.customText19,
+      screenerDetermination: submission.candidate.customText22,
+      screenerEmail: submission.candidate.customText40,
+      potentialEmail: submission.candidate.customText39,
+      potentialEmailQC: submission.candidate.customText28,
     },
     jobOrder: {
       id: submission.jobOrder.id,

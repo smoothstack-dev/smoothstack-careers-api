@@ -15,18 +15,24 @@ import documentEvents from '@functions/documentEvents';
 import linksGenerator from '@functions/linksGenerator';
 import formProcessing from '@functions/formProcessing';
 import { snsResources } from './resources/sns/snsResources';
-import { dbResources } from './resources/db/dbResources';
-import userEvents from '@functions/userEvents';
-import webhookRenewer from '@functions/webhookRenewer';
 import applicationProcessor from '@functions/applicationProcessor';
 import internalSubmissionProcessor from '@functions/internalSubmissionProcessor';
+import userEvents from '@functions/userEvents';
+import userGenerator from '@functions/userGenerator';
 
 const serverlessConfiguration: AWS = {
   service: 'smoothstack-careers-api',
   frameworkVersion: '2',
-  plugins: ['serverless-esbuild', 'serverless-offline', 'serverless-offline-sns', 'serverless-dynamodb-local'],
+  plugins: ['serverless-esbuild', 'serverless-offline', 'serverless-offline-sns', 'serverless-ngrok-tunnel'],
   package: { individually: true },
   custom: {
+    ngrokTunnel: {
+      tunnels: [
+        {
+          port: 3000,
+        },
+      ],
+    },
     esbuild: {
       bundle: true,
       minify: false,
@@ -40,12 +46,6 @@ const serverlessConfiguration: AWS = {
       port: 4002,
       debug: false,
       accountId: '${opt:aws_account, env: AWS_ACCOUNT}',
-    },
-    dynamodb: {
-      stages: ['local'],
-      start: {
-        migrate: true,
-      },
     },
   },
   provider: {
@@ -86,10 +86,10 @@ const serverlessConfiguration: AWS = {
     formEvents,
     appointmentGenerator,
     formProcessing,
-    userEvents,
-    webhookRenewer,
     applicationProcessor,
     internalSubmissionProcessor,
+    userGenerator,
+    userEvents,
   },
   resources: {
     Conditions: {
@@ -99,12 +99,6 @@ const serverlessConfiguration: AWS = {
     },
     Resources: {
       ...snsResources,
-      ...({
-        UserEventsTable: {
-          ...dbResources.UserEventsTable,
-          Condition: 'isLocal',
-        },
-      } as any),
     },
   },
 };

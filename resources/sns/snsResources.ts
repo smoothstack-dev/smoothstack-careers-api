@@ -43,4 +43,10 @@ export const snsResources: AWS['resources']['Resources'] = {
       TopicName: 'smoothstack-int-submission-processing-sns-topic',
     },
   },
+  UserGenerationTopic: {
+    Type: 'AWS::SNS::Topic',
+    Properties: {
+      TopicName: 'smoothstack-user-generation-sns-topic',
+    },
+  },
 };
