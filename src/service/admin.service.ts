@@ -10,12 +10,13 @@ const BASE_URL = `https://graph.microsoft.com/v1.0/users`;
 
 export const addUser = async (authToken: string, candidate: Candidate): Promise<MSUser> => {
   const { firstName, lastName, potentialEmail } = candidate;
-  const primaryEmail = await getOrDeriveEmailAddress(authToken, candidate.id, potentialEmail);
+  const primaryEmail = await getOrDeriveEmailAddress(authToken, candidate.id, potentialEmail?.trim());
   const activeUser = await findMsUserByEmail(authToken, primaryEmail);
   if (!activeUser) {
     const tempPassword = generatePassword({
-      length: 10,
+      length: 15,
       numbers: true,
+      symbols: '!@$#$()&_',
     });
     const user = {
       accountEnabled: true,

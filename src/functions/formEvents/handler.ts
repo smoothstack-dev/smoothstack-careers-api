@@ -9,6 +9,7 @@ const formEvents = async (event: APIGatewayEvent) => {
     switch (event.httpMethod) {
       case 'POST':
         await processFormEvent(event.queryStringParameters.formType as FormType, event.body);
+        break;
     }
   } catch (e) {
     console.error(e);
