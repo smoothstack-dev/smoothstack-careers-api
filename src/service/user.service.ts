@@ -27,7 +27,7 @@ import { createUserSubscription, deleteUserSubscription } from './subscriptions.
 const BASE_URL = 'https://graph.microsoft.com/v1.0/users';
 
 export const generateUser = async (event: SNSEvent) => {
-  console.log('Received User Generation Request.');
+  console.log('Received User Generation Request. ', event);
   const request: UserGenerationRequest = JSON.parse(event.Records[0].Sns.Message);
   const { restUrl, BhRestToken } = await getSessionData();
   const submission = await fetchSubmission(restUrl, BhRestToken, request.submissionId);
@@ -70,7 +70,7 @@ export const generateUser = async (event: SNSEvent) => {
       break;
     }
   }
-  console.log(`Successfully processed ${request.type} user generation request.`);
+  console.log(`Successfully processed ${request.type.toUpperCase()} user generation request.`);
 };
 
 export const processUserEvent = async (event: UserEvent) => {
