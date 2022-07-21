@@ -1,7 +1,12 @@
-export const deriveSubmissionStatus = (score: any, passingScore: number) => {
+export const CHALLENGE_SUB_STATUS = {
+  Pass: 'Challenge Passed',
+  Fail: 'R-Challenge Failed',
+};
+
+export const deriveSubmissionResult = (score: any, passingScore: number) => {
   const numberScore = parseInt(score);
   if (!isNaN(numberScore)) {
-    return numberScore >= passingScore ? 'Challenge Passed' : 'R-Challenge Failed';
+    return numberScore >= passingScore ? 'Pass' : 'Fail';
   }
   return undefined;
 };

@@ -13,7 +13,7 @@ import { Knockout, KnockoutSARequirements, KNOCKOUT_STATUS } from 'src/model/Kno
 import { ChallengeLinksData, TechScreenLinksData } from 'src/model/Links';
 import { SchedulingType } from 'src/model/SchedulingType';
 import { WebinarRegistration } from 'src/model/WebinarRegistration';
-import { deriveSubmissionStatus, shouldDowngradeJob } from 'src/util/challenge.util';
+import { CHALLENGE_SUB_STATUS, deriveSubmissionResult, shouldDowngradeJob } from 'src/util/challenge.util';
 import { derivePotentialEmail } from 'src/util/email.util';
 import {
   deriveSubmissionStatus as deriveSubmissionStatusTS,
@@ -1047,18 +1047,19 @@ export const saveSubmissionChallengeResult = async (
   const score = Math.round((evaluation.result / evaluation.max_result) * 100);
   const { jobOrder, candidate, challengeLink } = await fetchSubmission(url, BhRestToken, submissionId);
   const candidateStatus = score >= jobOrder.foundationsPassingScore ? 'Active' : 'Rejected';
-  const subStatus = deriveSubmissionStatus(score, jobOrder.foundationsPassingScore);
+  const result = deriveSubmissionResult(score, jobOrder.foundationsPassingScore);
   const shouldDowngrade = shouldDowngradeJob(score, jobOrder.foundationsPassingScore, jobOrder.passingScore);
   const submissionUrl = `${url}entity/JobSubmission/${submissionId}`;
   const updateData = {
     customText12: score,
-    status: subStatus,
+    customText10: result,
+    status: CHALLENGE_SUB_STATUS[result],
     ...(evaluation.plagiarism && { customText13: 'Potential Plagiarism' }),
     ...(shouldDowngrade && { jobOrder: { id: jobOrder.foundationsJobId } }),
   };
   const resultNoteTitle = shouldDowngrade
     ? `Moved Submission from Job Id: ${jobOrder.id} to JobId: ${jobOrder.foundationsJobId} (Smoothstack Foundations)`
-    : `${subStatus} (${jobOrder.challengeName})`;
+    : `${CHALLENGE_SUB_STATUS[result]} (${jobOrder.challengeName})`;
   const resultNote = `${resultNoteTitle}\n\nChallenge Score: ${score}\n\nChallenge Link: ${challengeLink}`;
   await saveCandidateFields(url, BhRestToken, candidate.id, { status: candidateStatus });
   await saveCandidateNote(url, BhRestToken, candidate.id, 'Challenge Result', resultNote);
@@ -1067,7 +1068,7 @@ export const saveSubmissionChallengeResult = async (
       BhRestToken,
     },
   });
-  subStatus === 'Challenge Passed' && (await publishLinksGenerationRequest(submissionId, 'techscreen'));
+  result === 'Pass' && (await publishLinksGenerationRequest(submissionId, 'techscreen'));
 };
 
 export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId: number): Promise<JobOrder> => {
