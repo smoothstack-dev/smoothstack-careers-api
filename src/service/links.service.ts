@@ -13,7 +13,7 @@ import { generateChallengeLink } from './challenge.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { SchedulingTypeId } from 'src/model/SchedulingType';
 import { JobSubmission } from 'src/model/JobSubmission';
-import { deriveSubmissionStatus, shouldDowngradeJob } from 'src/util/challenge.util';
+import { CHALLENGE_SUB_STATUS, deriveSubmissionResult, shouldDowngradeJob } from 'src/util/challenge.util';
 import {
   deriveSubmissionStatus as deriveSubmissionStatusTS,
   shouldDowngradeJob as shouldDowngradeJobTS,
@@ -155,10 +155,11 @@ const getChallengeLinksData = async (
       s.jobOrder.challengeName === newSubmission.jobOrder.challengeName &&
       !s.previousChallengeId
   );
-  const submissionStatus = deriveSubmissionStatus(
+  const challengeResult = deriveSubmissionResult(
     matchedSubmission?.challengeScore,
     newSubmission.jobOrder.foundationsPassingScore
   );
+  const submissionStatus = CHALLENGE_SUB_STATUS[challengeResult];
   const newJobOrderId =
     shouldDowngradeJob(
       matchedSubmission?.challengeScore,
