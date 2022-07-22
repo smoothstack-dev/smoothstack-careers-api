@@ -47,6 +47,7 @@ export interface PrescreenForm {
   updatedTime: FormEntry;
   referFriend: FormEntry;
   drugScreen: FormEntry;
+  candidateRank: FormEntry;
 }
 
 export interface TechScreenForm {

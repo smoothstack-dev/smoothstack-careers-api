@@ -2,7 +2,7 @@ import { middyfy } from '@libs/lambda';
 import { APIGatewayEvent } from 'aws-lambda';
 import { fetchCandidateForPrescreen } from 'src/service/careers.service';
 import { getSessionData } from 'src/service/auth/bullhorn.oauth.service';
-import { FormType, PrescreenForm } from 'src/model/Form';
+import { PrescreenForm } from 'src/model/Form';
 import { processPrescreenForm } from 'src/service/form.service';
 
 const prescreen = async (event: APIGatewayEvent) => {
@@ -45,13 +45,10 @@ const getPrescreen = async (event: APIGatewayEvent) => {
 
 const postPrescreen = async (event: APIGatewayEvent) => {
   try {
-    const type = event.queryStringParameters.formType as FormType;
-    console.log('event.body', event.body);
     const formData = JSON.parse(JSON.stringify(event.body)) as PrescreenForm;
-    console.log('Received Form Processing Request: ', { type, formData });
     return await processPrescreenForm(formData as PrescreenForm);
   } catch (e) {
-    console.error('Error saving candidate prescreen data: ', e.message);
+    console.error('Error saving candidate prescreen data: ', e.message, e);
     return {
       statusCode: 500,
       body: 'Error saving candidate data',

@@ -47,7 +47,7 @@ export const createWebResponse = async (
 export const fetchCandidateForPrescreen = async (url: string, BhRestToken: string, candidateId: number) => {
   const candidatesUrl = `${url}entity/Candidate/${candidateId}`;
   const fields =
-    'id,firstName,lastName,email,customText25,degreeList,customDate3,customText9,educationDegree,customDate10,customText26,customText24,source,customText23,customText14,customText8,customText6,customText5,customText1,customText31,customText27,address(address1,address2,city,state,zip),customTextBlock5,customTextBlock9,customText11,customTextBlock2,customText4,customText33,customObject2s(text1,dateLastModified,text2,text3,text4,text5,text6,text7,text8,textBlock1,textBlock2)';
+    'id,firstName,lastName,email,customText25,degreeList,customDate3,customText9,educationDegree,customDate10,customText26,customText24,source,customText23,customText14,customText8,customText6,customText5,customText1,customText31,customText27,customInt14,address(address1,address2,city,state,zip),customTextBlock5,customTextBlock9,customText11,customTextBlock2,customText4,customText33,customObject2s(text1,dateLastModified,text2,text3,text4,text5,text6,text7,text8,textBlock1,textBlock2)';
   const { data } = await axios.get(candidatesUrl, {
     params: {
       BhRestToken,
@@ -87,6 +87,7 @@ export const fetchCandidateForPrescreen = async (url: string, BhRestToken: strin
     goodFit: candidateData.customText33,
     workAuthorization: candidateData.customText4,
     questions: candidateData.customTextBlock9,
+    candidateRank: String(candidateData.customInt14),
     showOnTime: candidatePrescreenData.text1,
     updatedTime: new Date(candidatePrescreenData.dateLastModified),
     backgroundCheck: candidatePrescreenData.text2,
@@ -387,8 +388,8 @@ export const savePrescreenData = async (
   prescreenForm: PrescreenForm
 ): Promise<string> => {
   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
-  const result = prescreenForm.result.answer.split('-')[0];
-  const resultReason = prescreenForm.result.answer.split('-')[1];
+  const result = prescreenForm.result?.answer.split('-')[0];
+  const resultReason = prescreenForm.result?.answer.split('-')[1];
   const candidateStatus =
     result === 'Pass' ? 'Active' : result === 'Reject' ? 'Rejected' : result === 'Snooze' && result;
   const updateData = {
@@ -433,12 +434,13 @@ export const savePrescreenData = async (
         countryID: 1,
       },
     }),
-    customText27: prescreenForm.result.answer,
-    status: candidateStatus,
+    ...(prescreenForm.result?.answer && { customText27: prescreenForm.result.answer }),
+    ...(candidateStatus && { status: candidateStatus }),
     ...(prescreenForm.aboutYourself?.answer && { customTextBlock5: prescreenForm.aboutYourself.answer }),
     ...(prescreenForm.otherApplications?.answer && { customText11: prescreenForm.otherApplications.answer }),
     ...(prescreenForm.projects?.answer && { customTextBlock2: prescreenForm.projects.answer }),
     ...(prescreenForm.goodFit?.answer && { customText33: prescreenForm.goodFit.answer }),
+    ...(prescreenForm.candidateRank?.answer && { customInt14: parseInt(prescreenForm.candidateRank.answer) }),
     customObject2s: [
       {
         ...(prescreenForm.showOnTime?.answer && { text1: prescreenForm.showOnTime.answer }),
