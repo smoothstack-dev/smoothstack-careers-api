@@ -47,6 +47,12 @@ export interface PrescreenForm {
   updatedTime: FormEntry;
   referFriend: FormEntry;
   drugScreen: FormEntry;
+  candidateRank: FormEntry;
+  clearanceStatus: FormEntry;
+  firstName: FormEntry;
+  lastName: FormEntry;
+  nickName: FormEntry;
+  monthsOfProjectExperience: FormEntry;
 }
 
 export interface TechScreenForm {
