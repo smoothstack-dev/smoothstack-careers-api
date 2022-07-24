@@ -89,7 +89,7 @@ export const fetchCandidateForPrescreen = async (url: string, BhRestToken: strin
     goodFit: candidateData.customText33,
     workAuthorization: candidateData.customText4,
     questions: candidateData.customTextBlock9,
-    candidateRank: String(candidateData.customInt14),
+    candidateRank: candidateData.customInt14?.toString(),
     showOnTime: candidatePrescreenData?.text1,
     updatedTime: new Date(candidatePrescreenData?.dateLastModified),
     backgroundCheck: candidatePrescreenData?.text2,
