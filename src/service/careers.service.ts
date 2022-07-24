@@ -445,7 +445,7 @@ export const savePrescreenData = async (
     ...(prescreenForm.otherApplications?.answer && { customText11: prescreenForm.otherApplications.answer }),
     ...(prescreenForm.projects?.answer && { customTextBlock2: prescreenForm.projects.answer }),
     ...(prescreenForm.goodFit?.answer && { customText33: prescreenForm.goodFit.answer }),
-    ...(prescreenForm.candidateRank?.answer && { customInt14: parseInt(prescreenForm.candidateRank.answer) }),
+    ...(prescreenForm.candidateRank?.answer && { customInt14: +prescreenForm.candidateRank.answer }),
     ...(prescreenForm.clearanceStatus?.answer && {
       customEncryptedText1: prescreenForm.clearanceStatus.answer,
     }),
