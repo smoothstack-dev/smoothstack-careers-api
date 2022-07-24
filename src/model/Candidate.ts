@@ -42,6 +42,7 @@ export interface Candidate {
   potentialEmail: string;
   potentialEmailQC: string;
   source: string;
+  clearanceStatus: string;
 }
 
 interface Address {

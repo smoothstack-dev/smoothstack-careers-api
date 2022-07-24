@@ -5,6 +5,7 @@
   "main": "serverless.ts",
   "scripts": {
     "start": "sls offline start",
+    "start:tunnel": "sls offline start --tunnel true",
     "test": "echo \"Error: no test specified\" && exit 0"
   },
   "engines": {

@@ -5,7 +5,7 @@ const formProcessing = async (event: SNSEvent) => {
   try {
     await processForm(event);
   } catch (e) {
-    console.error('Error processing form: ', e.message);
+    console.error('Error processing form: ', e);
     throw e;
   }
 };

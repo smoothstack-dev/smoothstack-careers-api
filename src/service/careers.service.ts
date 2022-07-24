@@ -15,6 +15,7 @@ import { SchedulingType } from 'src/model/SchedulingType';
 import { WebinarRegistration } from 'src/model/WebinarRegistration';
 import { CHALLENGE_SUB_STATUS, deriveSubmissionResult, shouldDowngradeJob } from 'src/util/challenge.util';
 import { derivePotentialEmail } from 'src/util/email.util';
+import { createObjectChunks } from 'src/util/misc.util';
 import {
   deriveSubmissionStatus as deriveSubmissionStatusTS,
   shouldDowngradeJob as shouldDowngradeJobTS,
@@ -473,11 +474,15 @@ export const savePrescreenData = async (
     ],
   };
   console.log('saving prescreen data:', updateData);
-  await axios.post(candidateUrl, updateData, {
-    params: {
-      BhRestToken,
-    },
-  });
+
+  const chunkedData = createObjectChunks(updateData, 10);
+  for (const data of chunkedData) {
+    await axios.post(candidateUrl, data, {
+      params: {
+        BhRestToken,
+      },
+    });
+  }
 
   return result === 'Pass' ? 'Prescreen Passed' : ['Reject', 'Snooze'].includes(result) && `R-${resultReason}`;
 };
@@ -1156,8 +1161,7 @@ export const findActiveJobOrders = async (url: string, BhRestToken: string): Pro
     params: {
       BhRestToken,
       fields: 'id,customText5,isPublic',
-      query:
-        'isDeleted:0 AND isPublic:1 AND NOT title:"Smoothstack Foundations" AND NOT id:1',
+      query: 'isDeleted:0 AND isPublic:1 AND NOT title:"Smoothstack Foundations" AND NOT id:1',
     },
   });
 
@@ -1361,7 +1365,7 @@ export const fetchSubmission = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,nickName,dateAdded,email,phone,referredByPerson,referredBy,customText6,customText25,owner(firstName,lastName,email),customText4,customText3,customDate3,customDate10,degreeList,educationDegree,customText7,customText31,customText5,customText14,customText15,customText8,customText2,customText10,customText23,address,customText16,customText17,customText18,customText19,customText22,customText40,customText28,customText39,source),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7,customText4,willRelocate,customText8,customText9,educationDegree,customText10),dateAdded,customTextBlock5,customTextBlock4,customTextBlock2,customDate2,customText20,customText12,customText18,customText21,customText19,source,customText6,customText24',
+        'id,status,candidate(id,firstName,lastName,nickName,dateAdded,email,phone,referredByPerson,referredBy,customText6,customText25,owner(firstName,lastName,email),customText4,customText3,customDate3,customDate10,degreeList,educationDegree,customText7,customText31,customText5,customText14,customText15,customText8,customText2,customText10,customText23,address,customText16,customText17,customText18,customText19,customText22,customText40,customText28,customText39,source,customEncryptedText1),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7,customText4,willRelocate,customText8,customText9,educationDegree,customText10),dateAdded,customTextBlock5,customTextBlock4,customTextBlock2,customDate2,customText20,customText12,customText18,customText21,customText19,source,customText6,customText24',
     },
   });
   const {
@@ -1421,6 +1425,7 @@ export const fetchSubmission = async (
       screenerEmail: submission.candidate.customText40,
       potentialEmail: submission.candidate.customText39,
       potentialEmailQC: submission.candidate.customText28,
+      clearanceStatus: submission.candidate.customEncryptedText1,
     },
     jobOrder: {
       id: submission.jobOrder.id,
