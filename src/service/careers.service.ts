@@ -23,7 +23,7 @@ import { sendTechscreenResult } from './email.service';
 import { publishLinksGenerationRequest } from './sns.service';
 
 export const createWebResponse = async (
-  careerId: string,
+  careerId: number,
   application: any,
   resume: any,
   corpType: CORP_TYPE
@@ -1131,6 +1131,24 @@ export const fetchSAJobOrder = async (
     requiredWorkAuthorization: customText1,
     minYearsOfExperience: yearsRequired,
   };
+};
+
+export const findActiveJobOrders = async (url: string, BhRestToken: string): Promise<JobOrder[]> => {
+  const jobOrdersUrl = `${url}search/JobOrder`;
+
+  const { data } = await axios.get(jobOrdersUrl, {
+    params: {
+      BhRestToken,
+      fields: 'id,customText5,isPublic',
+      query:
+        'isDeleted:0 AND isPublic:1 AND NOT title:"Smoothstack Foundations" AND NOT id:1',
+    },
+  });
+
+  return data.data.map((job) => ({
+    ...job,
+    batchType: job.customText5,
+  }));
 };
 
 export const saveCandidateLinks = async (

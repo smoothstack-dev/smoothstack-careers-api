@@ -4,6 +4,7 @@ import {
   createWebResponse,
   fetchJobOrder,
   fetchSubmission,
+  findActiveJobOrders,
   findCandidateByEmailOrPhone,
   populateCandidateFields,
   populateSACandidateFields,
@@ -21,6 +22,7 @@ import { getSchedulingLink } from 'src/util/links';
 import { SchedulingTypeId } from 'src/model/SchedulingType';
 import { calculateSAKnockout, calculateKnockout } from 'src/util/knockout.util';
 import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
+import { JOB_BATCHTYPE_MAPPING } from 'src/util/jobOrder.util';
 
 const DAY_DIFF = 90;
 
@@ -52,7 +54,12 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
     format,
   };
 
-  const { candidate: newCandidate } = await createWebResponse(careerId, webResponseFields, resume, CORP_TYPE.STAFF_AUG);
+  const { candidate: newCandidate } = await createWebResponse(
+    +careerId,
+    webResponseFields,
+    resume,
+    CORP_TYPE.STAFF_AUG
+  );
 
   const candidateFields = {
     nickName,
@@ -80,8 +87,18 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
 
 const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
   const { careerId } = event.pathParameters;
-  const { firstName, lastName, email, format, phone, utmSource, utmMedium, utmCampaign, ...extraFields } =
-    event.queryStringParameters;
+  const {
+    firstName,
+    lastName,
+    email,
+    format,
+    phone,
+    utmSource,
+    utmMedium,
+    utmCampaign,
+    techSelection,
+    ...extraFields
+  } = event.queryStringParameters;
   const { resume } = parse(event, true);
   const { restUrl, BhRestToken } = await getSessionData();
 
@@ -91,7 +108,9 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
   const existingApplications = [...(candidate?.webResponses ?? []), ...(candidate?.submissions ?? [])];
 
   if (!hasRecentApplication(existingApplications)) {
-    const jobOrder = await fetchJobOrder(restUrl, BhRestToken, +careerId);
+    const jobNumber =
+      +careerId === 1 && techSelection ? await resolveJobNumber(restUrl, BhRestToken, techSelection) : +careerId;
+    const jobOrder = await fetchJobOrder(restUrl, BhRestToken, jobNumber);
 
     const {
       workAuthorization,
@@ -120,7 +139,7 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
     };
 
     const { jobSubmission, candidate: newCandidate } = await createWebResponse(
-      careerId,
+      jobNumber,
       webResponseFields,
       resume,
       CORP_TYPE.APPRENTICESHIP
@@ -163,6 +182,15 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
   }
   console.log(`Candidate already has a job submission in the last ${DAY_DIFF} days, skipping creation...`);
   return candidate;
+};
+
+const resolveJobNumber = async (restUrl: string, BhRestToken: string, techSelection: string): Promise<number> => {
+  const jobOrders = await findActiveJobOrders(restUrl, BhRestToken);
+  const order = JOB_BATCHTYPE_MAPPING[techSelection];
+  const sortedJobs = jobOrders.sort((job1, job2) => {
+    return order.indexOf(job1.batchType) - order.indexOf(job2.batchType);
+  });
+  return sortedJobs[0]?.id ?? 1;
 };
 
 const hasRecentApplication = (applications: (WebResponse | JobSubmission)[]): boolean => {
