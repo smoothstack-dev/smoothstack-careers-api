@@ -47,7 +47,7 @@ export const createWebResponse = async (
 export const fetchCandidateForPrescreen = async (url: string, BhRestToken: string, candidateId: number) => {
   const candidatesUrl = `${url}entity/Candidate/${candidateId}`;
   const fields =
-    'id,firstName,lastName,email,customText25,degreeList,customDate3,customText9,educationDegree,customDate10,customText26,customText24,source,customText23,customText14,customText8,customText6,customText5,customText1,customText31,customText27,customInt14,address(address1,address2,city,state,zip),customTextBlock5,customTextBlock9,customText11,customTextBlock2,customText4,customText33,customObject2s(text1,dateLastModified,text2,text3,text4,text5,text6,text7,text8,textBlock1,textBlock2)';
+    'id,firstName,lastName,nickName,email,customText25,degreeList,customDate3,customText9,educationDegree,customDate10,customInt15,customText24,source,customText23,customText14,customText8,customText6,customText5,customText1,customText31,customText27,customInt14,customEncryptedText1,address(address1,address2,city,state,zip),customTextBlock5,customTextBlock9,customText11,customTextBlock2,customText4,customText33,customObject2s(text1,dateLastModified,text2,text3,text4,text5,text6,text7,text8,textBlock1,textBlock2)';
   const { data } = await axios.get(candidatesUrl, {
     params: {
       BhRestToken,
@@ -55,17 +55,19 @@ export const fetchCandidateForPrescreen = async (url: string, BhRestToken: strin
     },
   });
   const candidateData = data.data;
-  const candidatePrescreenData = candidateData.customObject2s.data[0];
-
+  const candidatePrescreenData =
+    candidateData.customObject2s.data.length > 0 ? candidateData.customObject2s.data[0] : undefined;
   const prescreenData = {
-    candidateName: `${candidateData.firstName} ${candidateData.lastName}`,
+    firstName: candidateData.firstName,
+    lastName: candidateData.lastName,
+    nickName: candidateData.nickName,
     candidateEmail: candidateData.email,
     relocation: candidateData.customText25,
     expectedDegree: candidateData.degreeList,
     expectedGraduationDate: new Date(candidateData.customDate3),
     highestDegree: candidateData.educationDegree,
     graduationDate: new Date(candidateData.customDate10),
-    monthsOfExperience: candidateData.customText26,
+    monthsOfProjectExperience: candidateData.customInt15,
     canCommit: candidateData.customText24,
     referral: candidateData.source,
     opportunityRank: candidateData.customText23,
@@ -88,17 +90,18 @@ export const fetchCandidateForPrescreen = async (url: string, BhRestToken: strin
     workAuthorization: candidateData.customText4,
     questions: candidateData.customTextBlock9,
     candidateRank: String(candidateData.customInt14),
-    showOnTime: candidatePrescreenData.text1,
-    updatedTime: new Date(candidatePrescreenData.dateLastModified),
-    backgroundCheck: candidatePrescreenData.text2,
-    referFriend: candidatePrescreenData.text3,
-    vaccinationNotes: candidatePrescreenData.text4,
-    commitment: candidatePrescreenData.text5,
-    additionalNotes: candidatePrescreenData.text6,
-    drugScreen: candidatePrescreenData.text7,
-    willVaccinate: candidatePrescreenData.text8,
-    abilityToLearn: candidatePrescreenData.textBlock1,
-    challengingSituation: candidatePrescreenData.textBlock2,
+    showOnTime: candidatePrescreenData?.text1,
+    updatedTime: new Date(candidatePrescreenData?.dateLastModified),
+    backgroundCheck: candidatePrescreenData?.text2,
+    referFriend: candidatePrescreenData?.text3,
+    vaccinationNotes: candidatePrescreenData?.text4,
+    commitment: candidatePrescreenData?.text5,
+    additionalNotes: candidatePrescreenData?.text6,
+    drugScreen: candidatePrescreenData?.text7,
+    willVaccinate: candidatePrescreenData?.text8,
+    abilityToLearn: candidatePrescreenData?.textBlock1,
+    challengingSituation: candidatePrescreenData?.textBlock2,
+    clearanceStatus: candidateData.customEncryptedText1,
   };
 
   if (prescreenData.expectedDegree || prescreenData.expectedGraduationDate) prescreenData['isStudent'] = 'Yes';
@@ -441,6 +444,15 @@ export const savePrescreenData = async (
     ...(prescreenForm.projects?.answer && { customTextBlock2: prescreenForm.projects.answer }),
     ...(prescreenForm.goodFit?.answer && { customText33: prescreenForm.goodFit.answer }),
     ...(prescreenForm.candidateRank?.answer && { customInt14: parseInt(prescreenForm.candidateRank.answer) }),
+    ...(prescreenForm.clearanceStatus?.answer && {
+      customEncryptedText1: prescreenForm.clearanceStatus.answer,
+    }),
+    ...(prescreenForm.firstName?.answer && { firstName: prescreenForm.firstName.answer }),
+    ...(prescreenForm.lastName?.answer && { lastName: prescreenForm.lastName.answer }),
+    ...(prescreenForm.nickName?.answer && { nickName: prescreenForm.nickName.answer }),
+    ...(prescreenForm.monthsOfProjectExperience?.answer && {
+      customInt15: parseInt(prescreenForm.monthsOfProjectExperience.answer),
+    }),
     customObject2s: [
       {
         ...(prescreenForm.showOnTime?.answer && { text1: prescreenForm.showOnTime.answer }),

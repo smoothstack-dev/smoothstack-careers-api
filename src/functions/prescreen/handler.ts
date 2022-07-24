@@ -24,12 +24,9 @@ const prescreen = async (event: APIGatewayEvent) => {
 const getPrescreen = async (event: APIGatewayEvent) => {
   try {
     const { restUrl, BhRestToken } = await getSessionData();
-    console.log('retrieving prescreen data', event.queryStringParameters.candidateId);
-    const candidateData = await fetchCandidateForPrescreen(
-      restUrl,
-      BhRestToken,
-      Number(event.queryStringParameters.candidateId)
-    );
+    const candidateId = event.queryStringParameters.candidateId;
+    console.log('retrieving prescreen data', candidateId);
+    const candidateData = await fetchCandidateForPrescreen(restUrl, BhRestToken, Number(candidateId));
     return {
       statusCode: 200,
       body: candidateData,
@@ -46,6 +43,7 @@ const getPrescreen = async (event: APIGatewayEvent) => {
 const postPrescreen = async (event: APIGatewayEvent) => {
   try {
     const formData = JSON.parse(JSON.stringify(event.body)) as PrescreenForm;
+    console.log('postPrescreen', formData);
     return await processPrescreenForm(formData as PrescreenForm);
   } catch (e) {
     console.error('Error saving candidate prescreen data: ', e.message, e);
