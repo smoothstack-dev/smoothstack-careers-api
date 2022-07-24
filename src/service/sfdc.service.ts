@@ -117,6 +117,7 @@ export const saveSFDCUser = async (
     Source__c: submission.source || submission.candidate.source,
     Medium__c: submission.medium,
     Campaign__c: submission.campaign,
+    Clearance_Status__c: candidate.clearanceStatus,
   };
   const existingUser = await fetchSFDCUserByEmail(conn, newAccountEmail);
   if (existingUser) {

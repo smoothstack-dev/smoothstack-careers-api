@@ -39,16 +39,14 @@ export const processPrescreenForm = async (prescreenForm: PrescreenForm) => {
 
   const candidate = await findCandidateByEmail(restUrl, BhRestToken, prescreenForm.candidateEmail.answer);
   if (candidate) {
-    const prescreenReq = savePrescreenData(restUrl, BhRestToken, candidate.id, prescreenForm);
-    const noteReq = saveFormNote(restUrl, BhRestToken, candidate.id, prescreenForm, 'Prescreen');
-    const [prescreenResult] = await Promise.all([prescreenReq, noteReq]);
-
+    const prescreenResult = await savePrescreenData(restUrl, BhRestToken, candidate.id, prescreenForm);
+    await saveFormNote(restUrl, BhRestToken, candidate.id, prescreenForm, 'Prescreen');
     await updateSubmissionStatus(restUrl, BhRestToken, candidate, prescreenResult, [
       'Prescreen Scheduled',
       'Webinar Passed',
     ]);
 
-    return prescreenReq;
+    return prescreenResult;
   }
   throw 'Candidate does not exist in the system';
 };

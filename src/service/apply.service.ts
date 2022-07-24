@@ -23,6 +23,7 @@ import { SchedulingTypeId } from 'src/model/SchedulingType';
 import { calculateSAKnockout, calculateKnockout } from 'src/util/knockout.util';
 import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
 import { JOB_BATCHTYPE_MAPPING } from 'src/util/jobOrder.util';
+import { toTitleCase } from 'src/util/misc.util';
 
 const DAY_DIFF = 90;
 
@@ -102,6 +103,8 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
   const { resume } = parse(event, true);
   const { restUrl, BhRestToken } = await getSessionData();
 
+  const formattedFirstName = toTitleCase(firstName);
+  const formattedLastName = toTitleCase(lastName);
   const formattedEmail = email.toLowerCase();
   const formattedPhone = phone.replace(/\D+/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
   const candidate = await findCandidateByEmailOrPhone(restUrl, BhRestToken, formattedEmail, formattedPhone);
@@ -131,8 +134,8 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       codingAbility: +codingAbility,
     });
     const webResponseFields = {
-      firstName,
-      lastName,
+      firstName: formattedFirstName,
+      lastName: formattedLastName,
       email: formattedEmail,
       phone: formattedPhone,
       format,
@@ -170,8 +173,8 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       newCandidate,
       ...(knockout === Knockout.PASS && {
         schedulingLink: getSchedulingLink(
-          firstName,
-          lastName,
+          formattedFirstName,
+          formattedLastName,
           formattedEmail,
           formattedPhone,
           SchedulingTypeId.CHALLENGE,
