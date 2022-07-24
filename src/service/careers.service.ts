@@ -395,6 +395,8 @@ export const savePrescreenData = async (
   const resultReason = prescreenForm.result?.answer.split('-')[1];
   const candidateStatus =
     result === 'Pass' ? 'Active' : result === 'Reject' ? 'Rejected' : result === 'Snooze' && result;
+
+  // TODO: retire customText26 after retire google form prescreen
   const updateData = {
     ...(prescreenForm.newRelocation?.answer && { customText25: prescreenForm.newRelocation.answer }),
     ...(prescreenForm.expectedDegree?.answer && { degreeList: prescreenForm.expectedDegree.answer }),
