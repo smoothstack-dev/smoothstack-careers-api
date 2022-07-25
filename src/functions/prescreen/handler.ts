@@ -2,8 +2,6 @@ import { middyfy } from '@libs/lambda';
 import { APIGatewayEvent } from 'aws-lambda';
 import { fetchCandidateForPrescreen } from 'src/service/careers.service';
 import { getSessionData } from 'src/service/auth/bullhorn.oauth.service';
-import { PrescreenForm } from 'src/model/Form';
-import { processPrescreenForm } from 'src/service/form.service';
 
 const prescreen = async (event: APIGatewayEvent) => {
   const method = event.httpMethod.toUpperCase();
@@ -11,8 +9,6 @@ const prescreen = async (event: APIGatewayEvent) => {
   switch (method) {
     case 'GET':
       return await getPrescreen(event);
-    case 'POST':
-      return await postPrescreen(event);
     default:
       return {
         statusCode: 400,
@@ -36,20 +32,6 @@ const getPrescreen = async (event: APIGatewayEvent) => {
     return {
       statusCode: 500,
       body: 'Error retrieving candidate data',
-    };
-  }
-};
-
-const postPrescreen = async (event: APIGatewayEvent) => {
-  try {
-    const formData = JSON.parse(JSON.stringify(event.body)) as PrescreenForm;
-    console.log('postPrescreen', formData);
-    return await processPrescreenForm(formData as PrescreenForm);
-  } catch (e) {
-    console.error('Error saving candidate prescreen data: ', e);
-    return {
-      statusCode: 500,
-      body: 'Error saving candidate data',
     };
   }
 };
