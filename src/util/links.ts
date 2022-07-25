@@ -1,4 +1,3 @@
-import { Candidate } from 'src/model/Candidate';
 import { JobSubmission } from 'src/model/JobSubmission';
 import { SchedulingTypeId } from 'src/model/SchedulingType';
 
@@ -16,14 +15,6 @@ export const getSchedulingLink = (
     )}&lastName=${encodeURIComponent(lastName)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}` +
     (submissionId ? `&field:11569425=${encodeURIComponent(submissionId)}` : '')
   );
-};
-
-export const getPrescreeningLink = (candidate: Candidate) => {
-  const { firstName, lastName, email, relocation } = candidate;
-  const fullName = `${firstName} ${lastName}`;
-  return `https://docs.google.com/forms/d/e/1FAIpQLSeLhe0FE811KbI0YVS6a29I-skWr5wgWmGDqruUEZ7QotLqHQ/viewform?usp=pp_url&entry.2008644359=${encodeURIComponent(
-    fullName
-  )}&entry.139410096=${encodeURIComponent(email)}&entry.1002222934=${encodeURIComponent(relocation)}`;
 };
 
 export const getTechScreeningLink = (submission: JobSubmission, jobTitle: string) => {
