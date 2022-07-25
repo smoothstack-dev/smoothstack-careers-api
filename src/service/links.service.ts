@@ -1,6 +1,6 @@
 import { SNSEvent } from 'aws-lambda';
 import { ChallengeLinksData, LinksGenerationRequest, TechScreenLinksData } from 'src/model/Links';
-import { getPrescreeningLink, getSchedulingLink } from 'src/util/links';
+import { getSchedulingLink } from 'src/util/links';
 import {
   fetchCandidate,
   fetchSubmission,
@@ -47,7 +47,7 @@ const generateInitialLinks = async (restUrl: string, BhRestToken: string, submis
     candidate.phone,
     SchedulingTypeId.WEBINAR
   );
-  const preScreeningLink = getPrescreeningLink(candidate);
+
   const challengeSchedulingLink = getSchedulingLink(
     submission.candidate.firstName,
     submission.candidate.lastName,
@@ -59,7 +59,7 @@ const generateInitialLinks = async (restUrl: string, BhRestToken: string, submis
 
   const requests = [
     saveSubmissionFields(restUrl, BhRestToken, submissionId, { customTextBlock1: challengeSchedulingLink }),
-    saveCandidateLinks(restUrl, BhRestToken, candidate.id, webinarSchedulingLink, preScreeningLink),
+    saveCandidateLinks(restUrl, BhRestToken, candidate.id, webinarSchedulingLink),
   ];
   await Promise.all(requests);
 

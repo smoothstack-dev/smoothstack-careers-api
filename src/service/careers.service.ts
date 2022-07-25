@@ -1175,13 +1175,11 @@ export const saveCandidateLinks = async (
   url: string,
   BhRestToken: string,
   candidateId: number,
-  webinarSchedulingLink: string,
-  preScreeningLink: string
+  webinarSchedulingLink: string
 ) => {
   const candidateUrl = `${url}entity/Candidate/${candidateId}`;
   const updateData = {
     customTextBlock3: webinarSchedulingLink,
-    customTextBlock6: preScreeningLink,
   };
   return axios.post(candidateUrl, updateData, {
     params: {
