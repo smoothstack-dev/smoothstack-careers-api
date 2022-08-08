@@ -5,6 +5,8 @@ import { JobSubmission } from 'src/model/JobSubmission';
 import { CandidateFile } from 'src/model/CandidateFile';
 import { SFDCUser } from 'src/model/SFDCUser';
 import { getStateName } from 'src/util/states.util';
+import { JobOrder } from 'src/model/JobOrder';
+import { SFDCCohort } from 'src/model/SFDCCohort';
 
 const INSTANCE_URL = 'https://smoothstack.my.salesforce.com';
 
@@ -157,6 +159,47 @@ export const saveSFDCUserFiles = async (conn: any, sdfcUserID: string, files: Ca
       ShareType: 'V',
     });
   }
+};
+
+export const saveCohort = async (conn: any, jobOrder: JobOrder) => {
+  const date = new Date(jobOrder.evaluationStartDate);
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toLocaleString('en-US', {
+    minimumIntegerDigits: 2,
+    useGrouping: false,
+  });
+  const technology = jobOrder.batchType.replace(/ /g, '');
+  const dataFields = {
+    Name: `${year}_${month}_${technology}`,
+    Training_Start_Date__c: jobOrder.evaluationStartDate,
+    Technology__c: jobOrder.batchType,
+    BH_Job_Id__c: jobOrder.id,
+  };
+  const existingCohort = await fetchCohortByJobId(conn, jobOrder.id);
+  if (existingCohort) {
+    await updateCohort(conn, existingCohort.id, dataFields);
+  } else {
+    await insertCohort(conn, dataFields);
+  }
+};
+
+const fetchCohortByJobId = async (conn: any, jobOrderId: number): Promise<SFDCCohort> => {
+  const { records } = await conn.query(`SELECT Id FROM Cohort__c WHERE BH_Job_Id__c = '${jobOrderId}'`);
+
+  return records.length
+    ? {
+        id: records[0].Id,
+      }
+    : undefined;
+};
+
+const insertCohort = async (conn: any, insertFields: any) => {
+  const { id } = await conn.sobject('Cohort__c').create(insertFields);
+  return id;
+};
+
+const updateCohort = async (conn: any, cohortId: string, updateFields: any) => {
+  await conn.sobject('Cohort__c').update({ Id: cohortId, ...updateFields });
 };
 
 const deriveTSResult = (result: string) => {

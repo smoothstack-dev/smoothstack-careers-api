@@ -20,6 +20,9 @@ import applicationProcessor from '@functions/applicationProcessor';
 import internalSubmissionProcessor from '@functions/internalSubmissionProcessor';
 import userEvents from '@functions/userEvents';
 import userGenerator from '@functions/userGenerator';
+import newJobChecker from '@functions/newJobChecker';
+import updatedJobChecker from '@functions/updatedJobChecker';
+import jobProcessor from '@functions/jobProcessor';
 
 const serverlessConfiguration: AWS = {
   service: 'smoothstack-careers-api',
@@ -92,6 +95,9 @@ const serverlessConfiguration: AWS = {
     userGenerator,
     userEvents,
     prescreen,
+    newJobChecker,
+    updatedJobChecker,
+    jobProcessor,
   },
   resources: {
     Conditions: {
