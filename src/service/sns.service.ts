@@ -17,6 +17,7 @@ import { ApplicationProcessingRequest, SAApplicationProcessingRequest } from 'sr
 import { IntSubmissionProcessingRequest } from 'src/model/IntSubmissionProcessingRequest';
 import { UserGenerationRequest, UserGenerationType } from 'src/model/UserGenerationRequest';
 import { MSUser } from 'src/model/MSUser';
+import { JobProcessingRequest } from 'src/model/JobProcessingRequest';
 
 export const publishLinksGenerationRequest = async (submissionId: number, type: LinksGenerationType) => {
   const sns = new AWS.SNS(getSNSConfig(process.env.ENV));
@@ -137,6 +138,18 @@ export const publishUserGenerationRequest = async (type: UserGenerationType, sub
   const message: PublishInput = {
     Message: JSON.stringify(request),
     TopicArn: topic,
+  };
+
+  await sns.publish(message).promise();
+};
+
+
+export const publishJobProcessingRequest = async (request: JobProcessingRequest) => {
+  const sns = new AWS.SNS(getSNSConfig(process.env.ENV));
+  const snsTopic = `arn:aws:sns:us-east-1:${process.env.AWS_ACCOUNT}:smoothstack-job-processing-sns-topic`;
+  const message: PublishInput = {
+    Message: JSON.stringify(request),
+    TopicArn: snsTopic,
   };
 
   await sns.publish(message).promise();

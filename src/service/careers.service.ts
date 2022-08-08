@@ -1098,7 +1098,8 @@ export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId
   const { data } = await axios.get(jobOrdersUrl, {
     params: {
       BhRestToken,
-      fields: 'id,customText1,customText4,willRelocate,customText8,customText9,educationDegree,customText10',
+      fields:
+        'id,customText1,customText4,willRelocate,customText8,customText9,educationDegree,customText10,startDate,customText5',
     },
   });
 
@@ -1110,12 +1111,15 @@ export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId
     customText9,
     educationDegree,
     customText10,
+    customText5,
+    startDate,
     ...jobOrder
   } = data.data;
 
   return {
     ...jobOrder,
     challengeName: customText1,
+    evaluationStartDate: startDate,
     knockout: {
       requiredWorkAuthorization: customText4,
       relocationRequired: willRelocate,
@@ -1124,6 +1128,7 @@ export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId
       minRequiredDegree: educationDegree,
       minSelfRank: customText10,
     },
+    batchType: customText5,
   };
 };
 
@@ -1303,6 +1308,86 @@ export const saveSubmissionStatus = async (
       BhRestToken,
     },
   });
+};
+
+export const fetchNewJobOrders = async (url: string, BhRestToken: string): Promise<JobOrder[]> => {
+  const ids = await fetchNewJobOrderIds(url, BhRestToken);
+  if (!ids.length) {
+    return [];
+  }
+
+  const jobsUrl = `${url}entity/JobOrder/${ids.join(',')}`;
+  const { data } = await axios.get(jobsUrl, {
+    params: {
+      BhRestToken,
+      fields: 'id,isDeleted,customText5,startDate',
+    },
+  });
+
+  const jobsArr = ids.length > 1 ? data.data : [data.data];
+  const filteredJobs = jobsArr.filter((sub) => !sub.isDeleted);
+
+  return filteredJobs;
+};
+
+export const fetchNewJobOrderIds = async (url: string, BhRestToken: string): Promise<number[]> => {
+  const eventsUrl = `${url}event/subscription/3`;
+  const { data } = await axios.get(eventsUrl, {
+    params: {
+      BhRestToken,
+      maxEvents: 100,
+    },
+  });
+
+  const jobIds = data.events?.map((e: any) => e.entityId);
+  return jobIds ?? [];
+};
+
+export const fetchUpdatedJobOrders = async (
+  url: string,
+  BhRestToken: string,
+  updatedFields: string[]
+): Promise<JobOrder[]> => {
+  const ids = await fetchUpdatedJobOrderIds(url, BhRestToken, updatedFields);
+  if (!ids.length) {
+    return [];
+  }
+
+  const jobsUrl = `${url}entity/JobOrder/${ids.join(',')}`;
+  const { data } = await axios.get(jobsUrl, {
+    params: {
+      BhRestToken,
+      fields: 'id,isDeleted,customText5,startDate',
+    },
+  });
+
+  const jobsArr = ids.length > 1 ? data.data : [data.data];
+
+  const filteredJobs = jobsArr.flatMap((job) =>
+    !job.isDeleted ? [{ ...job, evaluationStartDate: job.startDate, batchType: job.customText5 }] : []
+  );
+
+  return filteredJobs;
+};
+
+export const fetchUpdatedJobOrderIds = async (
+  url: string,
+  BhRestToken: string,
+  updateFields: string[]
+): Promise<number[]> => {
+  const eventsUrl = `${url}event/subscription/4`;
+  const { data } = await axios.get(eventsUrl, {
+    params: {
+      BhRestToken,
+      maxEvents: 500,
+    },
+  });
+
+  const jobIds = data.events?.flatMap((e: any) =>
+    e.updatedProperties.some((prop: string) => updateFields.includes(prop)) ? [e.entityId] : []
+  );
+  const uniqueIds = [...new Set(jobIds)] as any;
+  return uniqueIds ?? [];
 };
 
 export const fetchCandidateFiles = async (
