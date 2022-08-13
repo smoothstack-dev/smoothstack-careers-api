@@ -1092,6 +1092,25 @@ export const saveSubmissionChallengeResult = async (
   result === 'Pass' && (await publishLinksGenerationRequest(submissionId, 'techscreen'));
 };
 
+export const fetchAllJobOrder = async (url: string, BhRestToken: string): Promise<JobOrder> => {
+  try {
+    const jobOrdersUrl = `${url}search/JobOrder`;
+    const { data } = await axios.get(jobOrdersUrl, {
+      params: {
+        BhRestToken,
+        fields: 'id,title,isPublic',
+        query: 'isDeleted:0',
+        sort: 'id',
+        count: 100,
+      },
+    });
+    return data.data;
+  } catch (e) {
+    console.error('Error', e);
+    throw e;
+  }
+};
+
 export const fetchJobOrder = async (url: string, BhRestToken: string, jobOrderId: number): Promise<JobOrder> => {
   const jobOrdersUrl = `${url}entity/JobOrder/${jobOrderId}`;
 
@@ -1630,4 +1649,18 @@ export const fetchSubmissionHistoryByAppointmentId = async (
     },
   });
   return data.data;
+};
+
+export const updateApplicationJobId = async (
+  jobId: number,
+  applicationIds: string,
+  url: string,
+  BhRestToken: string
+) => {
+  const applicationIdArray: number[] = applicationIds.split(',').map(Number);
+  const updateData = {
+    jobOrder: { id: jobId },
+  };
+  const requests = applicationIdArray.map((appId: number) => saveSubmissionFields(url, BhRestToken, appId, updateData));
+  return await Promise.all(requests);
 };

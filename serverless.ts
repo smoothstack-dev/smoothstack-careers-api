@@ -23,6 +23,7 @@ import userGenerator from '@functions/userGenerator';
 import newJobChecker from '@functions/newJobChecker';
 import updatedJobChecker from '@functions/updatedJobChecker';
 import jobProcessor from '@functions/jobProcessor';
+import customActionJobChange from '@functions/customActionJobChange';
 
 const serverlessConfiguration: AWS = {
   service: 'smoothstack-careers-api',
@@ -98,6 +99,7 @@ const serverlessConfiguration: AWS = {
     newJobChecker,
     updatedJobChecker,
     jobProcessor,
+    customActionJobChange,
   },
   resources: {
     Conditions: {
