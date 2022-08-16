@@ -53,6 +53,8 @@ export interface PrescreenForm {
   lastName: FormEntry;
   nickName: FormEntry;
   monthsOfProjectExperience: FormEntry;
+  teamWorkExperience: FormEntry;
+  agreeToBeResponsive: FormEntry;
 }
 
 export interface TechScreenForm {
