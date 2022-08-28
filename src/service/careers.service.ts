@@ -1448,7 +1448,7 @@ export const fetchSubmission = async (
     params: {
       BhRestToken,
       fields:
-        'id,status,candidate(id,firstName,lastName,nickName,dateAdded,email,phone,referredByPerson,referredBy,customText6,customText25,owner(firstName,lastName,email),customText4,customText3,customDate3,customDate10,degreeList,educationDegree,customText7,customText31,customText5,customText14,customText15,customText8,customText2,customText10,customText23,address,customText16,customText17,customText18,customText19,customText22,customText40,customText28,customText39,source,customEncryptedText1),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7,customText4,willRelocate,customText8,customText9,educationDegree,customText10),dateAdded,customTextBlock5,customTextBlock4,customTextBlock2,customDate2,customText20,customText12,customText18,customText21,customText19,source,customText6,customText24',
+        'id,status,candidate(id,firstName,lastName,nickName,dateAdded,email,phone,referredByPerson,referredBy,customText6,customText25,owner(firstName,lastName,email),customText4,customText3,customDate3,customDate10,degreeList,educationDegree,customText7,customText31,customText5,customText14,customText15,customText8,customText2,customText10,customText23,address,customText16,customText17,customText18,customText19,customText22,customText40,customText28,customText39,source,customEncryptedText1),jobOrder(id,title,customText1,customInt1,customInt2,customInt3,customText7,customText4,willRelocate,customText8,customText9,educationDegree,customText10,customText5),dateAdded,customTextBlock5,customTextBlock4,customTextBlock2,customDate2,customText20,customText12,customText18,customText21,customText19,source,customText6,customText24',
     },
   });
   const {
@@ -1518,6 +1518,7 @@ export const fetchSubmission = async (
       foundationsPassingScore: submission.jobOrder.customInt2,
       foundationsJobId: submission.jobOrder.customInt3,
       techScreenType: submission.jobOrder.customText7,
+      batchType: submission.jobOrder.customText5,
       knockout: {
         requiredWorkAuthorization: submission.jobOrder.customText4,
         relocationRequired: submission.jobOrder.willRelocate,

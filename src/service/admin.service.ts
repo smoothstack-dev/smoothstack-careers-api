@@ -1,12 +1,14 @@
 import axios from 'axios';
 import { generate as generatePassword } from 'generate-password';
+import { JobOrder } from 'src/model/JobOrder';
+import { MSTeam } from 'src/model/MSTeam';
 import { MSUser } from 'src/model/MSUser';
 import { Candidate } from '../model/Candidate';
 import { listDeletedUsers, restoreDeletedUser } from './directory.service';
 import { fetchSFDCUserByCandidateId, findSFDCNameAlikeUsers, getSFDCConnection } from './sfdc.service';
 import { findMsUserByEmail, findNameAlikeUsers } from './user.service';
 
-const BASE_URL = `https://graph.microsoft.com/v1.0/users`;
+const BASE_URL = `https://graph.microsoft.com/v1.0`;
 
 export const addUser = async (authToken: string, candidate: Candidate): Promise<MSUser> => {
   const { firstName, lastName, potentialEmail } = candidate;
@@ -29,7 +31,7 @@ export const addUser = async (authToken: string, candidate: Candidate): Promise<
       },
       usageLocation: 'US',
     };
-    const { data } = await axios.post(`${BASE_URL}`, user, {
+    const { data } = await axios.post(`${BASE_URL}/users`, user, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -72,4 +74,92 @@ const findDuplicateUsers = async (token: string, sfdcConnection: any, prefix: st
   const users = (await Promise.all(requests)).flat();
   const pattern = /^[a-z]+\.[a-z]+(\d*)@smoothstack\.com$/;
   return users.filter((u) => pattern.test(u.userPrincipalName.toLowerCase()));
+};
+
+export const addTeam = async (authToken: string, jobOrder: JobOrder): Promise<MSTeam> => {
+  const teamName = deriveTeamName(jobOrder);
+  const team = {
+    'template@odata.bind': `${BASE_URL}/teamsTemplates('standard')`,
+    displayName: teamName,
+    description: teamName,
+    visibility: 'Private',
+    members: [
+      {
+        '@odata.type': '#microsoft.graph.aadUserConversationMember',
+        roles: ['owner'],
+        'user@odata.bind': `${BASE_URL}/users('hr@smoothstack.com')`,
+      },
+    ],
+  };
+  const { headers } = await axios.post(`${BASE_URL}/teams`, team, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+  return { id: headers['content-location'].split("'")[1], name: teamName };
+};
+
+// Clones and Deletes old team due to MS Graph Limitation
+export const updateTeam = async (authToken: string, teamId: string, jobOrder: JobOrder): Promise<MSTeam> => {
+  const teamName = deriveTeamName(jobOrder);
+  const teamInfo = {
+    displayName: teamName,
+    description: teamName,
+    mailNickname: teamName,
+    partsToClone: 'apps,tabs,settings,channels,members',
+  };
+  const clonedTeamId = await cloneTeam(authToken, teamId, teamInfo);
+  await deleteTeam(authToken, teamId);
+  return { id: clonedTeamId, name: teamName };
+};
+
+const cloneTeam = async (authToken: string, teamId: string, teamInfo: any) => {
+  const { headers } = await axios.post(`${BASE_URL}/teams/${teamId}/clone`, teamInfo, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+  return headers['content-location'].split("'")[1];
+};
+
+const deleteTeam = async (authToken: string, teamId: string) => {
+  await axios.delete(`${BASE_URL}/groups/${teamId}`, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+};
+
+export const addTeamMember = async (authToken: string, teamId: string, userId: string): Promise<string> => {
+  const { data } = await axios.post(
+    `${BASE_URL}/teams/${teamId}/members`,
+    {
+      '@odata.type': '#microsoft.graph.aadUserConversationMember',
+      'user@odata.bind': `${BASE_URL}/users('${userId}')`,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    }
+  );
+  return data.id;
+};
+
+export const removeTeamMember = async (authToken: string, teamId: string, membershipId: string) => {
+  await axios.delete(`${BASE_URL}/teams/${teamId}/members/${membershipId}`, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+};
+
+const deriveTeamName = (jobOrder: JobOrder) => {
+  const date = new Date(jobOrder.evaluationStartDate);
+  const year = date.getFullYear();
+  const monthName = date.toLocaleString('en-US', {
+    month: 'long',
+  });
+  const technology = jobOrder.batchType.replace(/ /g, '');
+  return `${year}_${monthName}_${technology}`;
 };

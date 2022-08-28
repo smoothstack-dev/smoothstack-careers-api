@@ -1,15 +1,23 @@
 import { MSUser } from './MSUser';
 
-interface MSUserGenerationRequest {
+interface MSUserGenerationRequest extends UserGenerationRequestBase {
   type: 'ms';
-  submissionId: number;
 }
 
-interface SFDCUserGenerationRequest {
+interface SFDCUserGenerationRequest extends UserGenerationRequestBase  {
   type: 'sfdc';
-  submissionId: number;
   msUser: MSUser;
 }
 
-export type UserGenerationRequest = MSUserGenerationRequest | SFDCUserGenerationRequest;
-export type UserGenerationType = 'sfdc' | 'ms';
+interface CohortUserGenerationRequest extends UserGenerationRequestBase {
+  type: 'cohort';
+  msUser: MSUser;
+  sfdcUserId: string;
+}
+
+interface UserGenerationRequestBase {
+  submissionId?: number;
+}
+
+export type UserGenerationRequest = MSUserGenerationRequest | SFDCUserGenerationRequest | CohortUserGenerationRequest;
+export type UserGenerationType = 'sfdc' | 'ms' | 'cohort';

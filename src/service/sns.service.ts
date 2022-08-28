@@ -126,7 +126,12 @@ export const publishIntSubmissionProcessingRequest = async (request: IntSubmissi
   await sns.publish(message).promise();
 };
 
-export const publishUserGenerationRequest = async (type: UserGenerationType, submissionId: number, msUser?: MSUser) => {
+export const publishUserGenerationRequest = async (
+  type: UserGenerationType,
+  submissionId: number,
+  msUser?: MSUser,
+  sfdcUserId?: string
+) => {
   const sns = new AWS.SNS(getSNSConfig(process.env.ENV));
   const topic = `arn:aws:sns:us-east-1:${process.env.AWS_ACCOUNT}:smoothstack-user-generation-sns-topic`;
 
@@ -134,6 +139,7 @@ export const publishUserGenerationRequest = async (type: UserGenerationType, sub
     submissionId,
     type,
     ...(type === 'sfdc' && { msUser }),
+    ...(type === 'cohort' && { sfdcUserId, msUser }),
   };
   const message: PublishInput = {
     Message: JSON.stringify(request),
@@ -142,7 +148,6 @@ export const publishUserGenerationRequest = async (type: UserGenerationType, sub
 
   await sns.publish(message).promise();
 };
-
 
 export const publishJobProcessingRequest = async (request: JobProcessingRequest) => {
   const sns = new AWS.SNS(getSNSConfig(process.env.ENV));

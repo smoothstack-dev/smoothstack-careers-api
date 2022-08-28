@@ -6,7 +6,7 @@ import { CandidateFile } from 'src/model/CandidateFile';
 import { SFDCUser } from 'src/model/SFDCUser';
 import { getStateName } from 'src/util/states.util';
 import { JobOrder } from 'src/model/JobOrder';
-import { SFDCCohort } from 'src/model/SFDCCohort';
+import { SFDCCohort, SFDCCohortParticipant } from 'src/model/SFDCCohort';
 
 const INSTANCE_URL = 'https://smoothstack.my.salesforce.com';
 
@@ -35,6 +35,13 @@ export const findSFDCNameAlikeUsers = async (conn: any, prefix: string) => {
   return data.records.map((r: any) => ({ userPrincipalName: r.Email }));
 };
 
+export const fetchSFDCUser = async (conn: any, userId: string): Promise<SFDCUser> => {
+  const { Id, Email } = await conn.sobject('Contact').retrieve(userId);
+  return {
+    id: Id,
+    smoothstackEmail: Email,
+  };
+};
 export const fetchSFDCUserByEmail = async (conn: any, email: string): Promise<SFDCUser> => {
   const { records } = await conn.query(
     `SELECT Id, Temp_MS_Password__c,Home_email__c,MS_Subscription_ID__c FROM Contact WHERE AccountId='001f400000lD8yoAAC' AND email = '${email}'`
@@ -46,6 +53,21 @@ export const fetchSFDCUserByEmail = async (conn: any, email: string): Promise<SF
         homeEmail: records[0].Home_email__c,
         tempMSPassword: records[0].Temp_MS_Password__c,
         msSubscriptionId: records[0].MS_Subscription_ID__c,
+      }
+    : undefined;
+};
+
+export const fetchCohortParticipantByUserId = async (conn: any, userId: string): Promise<SFDCCohortParticipant> => {
+  const { records } = await conn.query(
+    `SELECT Id, Cohort__c, MSMembershipId__c FROM Cohort_Participant__c WHERE Participant__c = '${userId}'`
+  );
+
+  return records.length
+    ? {
+        id: records[0].Id,
+        userId,
+        msMembershipId: records[0].MSMembershipId__c,
+        cohortId: records[0].Cohort__c,
       }
     : undefined;
 };
@@ -161,16 +183,16 @@ export const saveSFDCUserFiles = async (conn: any, sdfcUserID: string, files: Ca
   }
 };
 
-export const saveCohort = async (conn: any, jobOrder: JobOrder) => {
+export const saveCohort = async (conn: any, jobOrder: JobOrder): Promise<SFDCCohort> => {
   const date = new Date(jobOrder.evaluationStartDate);
   const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toLocaleString('en-US', {
+  const numberMonth = (date.getMonth() + 1).toLocaleString('en-US', {
     minimumIntegerDigits: 2,
     useGrouping: false,
   });
   const technology = jobOrder.batchType.replace(/ /g, '');
   const dataFields = {
-    Name: `${year}_${month}_${technology}`,
+    Name: `${year}_${numberMonth}_${technology}`,
     Training_Start_Date__c: jobOrder.evaluationStartDate,
     Technology__c: jobOrder.batchType,
     BH_Job_Id__c: jobOrder.id,
@@ -178,28 +200,51 @@ export const saveCohort = async (conn: any, jobOrder: JobOrder) => {
   const existingCohort = await fetchCohortByJobId(conn, jobOrder.id);
   if (existingCohort) {
     await updateCohort(conn, existingCohort.id, dataFields);
+    return { id: existingCohort.id, msTeamId: existingCohort.msTeamId };
   } else {
-    await insertCohort(conn, dataFields);
+    return { id: await insertCohort(conn, dataFields), msTeamId: undefined };
   }
 };
 
-const fetchCohortByJobId = async (conn: any, jobOrderId: number): Promise<SFDCCohort> => {
-  const { records } = await conn.query(`SELECT Id FROM Cohort__c WHERE BH_Job_Id__c = '${jobOrderId}'`);
+export const fetchCohort = async (conn: any, cohortId: string): Promise<SFDCCohort> => {
+  const { Id, MSTeamID__c } = await conn.sobject('Cohort__c').retrieve(cohortId);
+  return {
+    id: Id,
+    msTeamId: MSTeamID__c,
+  };
+};
+
+export const fetchCohortByJobId = async (conn: any, jobOrderId: number): Promise<SFDCCohort> => {
+  const { records } = await conn.query(`SELECT Id, MSTeamID__c FROM Cohort__c WHERE BH_Job_Id__c = '${jobOrderId}'`);
 
   return records.length
     ? {
         id: records[0].Id,
+        msTeamId: records[0].MSTeamID__c,
       }
     : undefined;
 };
 
-const insertCohort = async (conn: any, insertFields: any) => {
+const insertCohort = async (conn: any, insertFields: any): Promise<string> => {
   const { id } = await conn.sobject('Cohort__c').create(insertFields);
   return id;
 };
 
-const updateCohort = async (conn: any, cohortId: string, updateFields: any) => {
+export const updateCohort = async (conn: any, cohortId: string, updateFields: any) => {
   await conn.sobject('Cohort__c').update({ Id: cohortId, ...updateFields });
+  return cohortId;
+};
+
+export const insertCohortParticipant = async (conn: any, cohortId: string, userId: string, membershipId: string) => {
+  await conn.sobject('Cohort_Participant__c').create({
+    MSMembershipId__c: membershipId,
+    Cohort__c: cohortId,
+    Participant__c: userId,
+  });
+};
+
+export const deleteCohortParticipant = async (conn: any, cohortParticipantId: string) => {
+  await conn.sobject('Cohort_Participant__c').destroy(cohortParticipantId);
 };
 
 const deriveTSResult = (result: string) => {
