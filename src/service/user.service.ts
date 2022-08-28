@@ -3,7 +3,7 @@ import axios from 'axios';
 import { MSUser } from 'src/model/MSUser';
 import { UserEvent } from 'src/model/UserEvent';
 import { UserGenerationRequest } from 'src/model/UserGenerationRequest';
-import { addUser } from './admin.service';
+import { addTeamMember, addUser, removeTeamMember } from './admin.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { getMSAuthData } from './auth/microsoft.oauth.service';
 import {
@@ -15,8 +15,14 @@ import {
 } from './careers.service';
 import { sendLicenseAssignmentNotification, sendNewAccountDetails } from './email.service';
 import {
+  deleteCohortParticipant,
+  fetchCohort,
+  fetchCohortByJobId,
+  fetchCohortParticipantByUserId,
+  fetchSFDCUser,
   fetchSFDCUserByEmail,
   getSFDCConnection,
+  insertCohortParticipant,
   saveSFDCUser,
   saveSFDCUserFiles,
   updateSFDCUser,
@@ -64,6 +70,23 @@ export const generateUser = async (event: SNSEvent) => {
       }
       if (!msUser.assignedLicenses.length) {
         await sendLicenseAssignmentNotification(submission.candidate, msUser.userPrincipalName);
+      }
+      await publishUserGenerationRequest('cohort', submission.id, msUser, sfdcUserId);
+      break;
+    }
+    case 'cohort': {
+      const conn = await getSFDCConnection();
+      const { id: cohortId, msTeamId } = await fetchCohortByJobId(conn, submission.jobOrder.id);
+      const cohortParticipant = await fetchCohortParticipantByUserId(conn, request.sfdcUserId);
+      if (cohortParticipant?.cohortId !== cohortId) {
+        if (cohortParticipant) {
+          const participantCohort = await fetchCohort(conn, cohortParticipant.cohortId);
+          await removeTeamMember(msToken, participantCohort.msTeamId, cohortParticipant.msMembershipId);
+          await deleteCohortParticipant(conn, cohortParticipant.id);
+        }
+        const msUserId = request.msUser.id ?? (await fetchSFDCUser(conn, request.sfdcUserId)).smoothstackEmail;
+        const membershipId = await addTeamMember(msToken, msTeamId, msUserId);
+        await insertCohortParticipant(conn, cohortId, request.sfdcUserId, membershipId);
       }
       await saveSubmissionFields(restUrl, BhRestToken, submission.id, { status: 'Added to Cut/Keep' });
       await saveCandidateFields(restUrl, BhRestToken, submission.candidate.id, { status: 'Engaged' });
