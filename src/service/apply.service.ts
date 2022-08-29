@@ -55,7 +55,7 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
     format,
   };
 
-  const { candidate: newCandidate } = await createWebResponse(
+  const { jobSubmission, candidate: newCandidate } = await createWebResponse(
     +careerId,
     webResponseFields,
     resume,
@@ -74,6 +74,7 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
   };
   const applicationRequest: SAApplicationProcessingRequest = {
     webResponse: { fields: webResponseFields },
+    submission: { id: jobSubmission.id },
     candidate: { id: newCandidate.id, fields: candidateFields },
     corpType: CORP_TYPE.STAFF_AUG,
     careerId,
@@ -248,6 +249,7 @@ const saveApplicationData = async (
 export const saveSAApplicationData = async (
   url: string,
   BhRestToken: string,
+  submissionId: number,
   application: SAApplicationProcessingRequest,
   knockoutRequirements: KnockoutSARequirements
 ) => {
@@ -258,5 +260,11 @@ export const saveSAApplicationData = async (
     yearsOfExperience: yearsOfProfessionalExperience,
   });
   await populateSACandidateFields(url, BhRestToken, candidateId, candidateFields, knockout);
+  const { status: subStatus } = await fetchSubmission(url, BhRestToken, submissionId);
+  await saveSubmissionFields(url, BhRestToken, submissionId, {
+    status: subStatus,
+    customText25: candidateFields.workAuthorization,
+    ...(subStatus === 'New Lead' && { status: KNOCKOUT_STATUS[knockout].submissionStatus }),
+  });
   await saveCandidateNote(url, BhRestToken, candidateId, 'Knockout', KNOCKOUT_NOTE[knockout]);
 };

@@ -24,11 +24,13 @@ const applicationProcessor = async (event: SNSEvent) => {
             fields: { firstName, lastName },
           },
           careerId,
+          submission: { id: submissionId },
         } = request as SAApplicationProcessingRequest;
         const knockoutRequirements = await fetchSAJobOrder(restUrl, BhRestToken, +careerId);
         await saveSAApplicationData(
           restUrl,
           BhRestToken,
+          submissionId,
           request as SAApplicationProcessingRequest,
           knockoutRequirements
         );

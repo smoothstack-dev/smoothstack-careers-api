@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Candidate } from 'src/model/Candidate';
+import { Candidate, SACandidate } from 'src/model/Candidate';
 import { JobSubmission } from 'src/model/JobSubmission';
 import { getMSAuthData } from './auth/microsoft.oauth.service';
 
@@ -472,4 +472,35 @@ export const sendNewSAJobApplicationEmail = async (
   } catch (err) {
     console.error('Fail to send the email to staffaug for the new application', err);
   }
+};
+
+export const sendRTRSignedNotification = async (
+  candidate: SACandidate,
+  jobId: number,
+  jobName: string
+): Promise<void> => {
+  const { token } = await getMSAuthData();
+  const candidateName = `${candidate.firstName} ${candidate.lastName}`;
+  const message = {
+    message: {
+      subject: `${candidateName} has signed RTR for job: ${jobName}; Job ID:${jobId}`,
+      body: {
+        contentType: 'HTML',
+        content: `This email is to inform you that <strong>${candidateName}</strong> has signed RTR for ${jobName} with Job ID:${jobId}.`,
+      },
+      toRecipients: [
+        {
+          emailAddress: {
+            address: candidate.owner.email,
+          },
+        },
+      ],
+    },
+  };
+
+  await axios.post(`${BASE_URL}`, message, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 };

@@ -10,7 +10,7 @@ import {
   saveSubmissionStatus,
   uploadCandidateFile,
 } from './careers.service';
-import { sendSignedDocument } from './email.service';
+import { sendRTRSignedNotification, sendSignedDocument } from './email.service';
 
 const SUB_STATUS_DOCTYPE = {
   'Evaluation Offered': 'Evaluation',
@@ -173,6 +173,7 @@ const processStaffAugDocEvent = async (eventReq: DocumentEventRequest) => {
       `Signed_RTR_Document.pdf`,
       'RTR'
     );
+    await sendRTRSignedNotification(submission.candidate as any, submission.jobOrder.id, submission.jobOrder.title);
   }
 };
 
