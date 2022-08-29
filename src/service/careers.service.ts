@@ -380,7 +380,7 @@ export const populateSACandidateFields = async (
     customText5: fields.workAuthorization,
     customText25: fields.willRelocate,
     experience: fields.yearsOfProfessionalExperience,
-    status: KNOCKOUT_STATUS[knockout].submissionStatus,
+    status: KNOCKOUT_STATUS[knockout].candidateStatus,
   };
   const { data } = await axios.post(candidateUrl, updateData, {
     params: {

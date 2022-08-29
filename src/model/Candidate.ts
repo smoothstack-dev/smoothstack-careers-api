@@ -87,4 +87,5 @@ export interface SACandidate {
   healthBenefits: string;
   retirement: string;
   includeRate: string;
+  owner: Owner;
 }

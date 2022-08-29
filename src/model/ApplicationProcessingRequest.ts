@@ -52,6 +52,9 @@ export interface SAApplicationProcessingRequest {
       format: string;
     };
   };
+  submission: {
+    id: number;
+  };
   candidate: {
     id: number;
     fields: {
