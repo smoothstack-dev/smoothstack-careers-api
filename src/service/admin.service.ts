@@ -6,7 +6,7 @@ import { MSUser } from 'src/model/MSUser';
 import { Candidate } from '../model/Candidate';
 import { listDeletedUsers, restoreDeletedUser } from './directory.service';
 import { fetchSFDCUserByCandidateId, findSFDCNameAlikeUsers, getSFDCConnection } from './sfdc.service';
-import { findMsUserByEmail, findNameAlikeUsers } from './user.service';
+import { fetchMSUser, findMsUserByEmail, findNameAlikeUsers } from './user.service';
 
 const BASE_URL = `https://graph.microsoft.com/v1.0`;
 
@@ -130,6 +130,47 @@ const deleteTeam = async (authToken: string, teamId: string) => {
   });
 };
 
+export const addDistribution = async (
+  authToken: string,
+  jobOrder: JobOrder,
+  members: string[] = []
+): Promise<MSTeam> => {
+  const distributionName = deriveTeamName(jobOrder, '_Trainees');
+  const distribution = {
+    'owners@odata.bind': [`${BASE_URL}/users('hr@smoothstack.com')`],
+    groupTypes: ['Unified'],
+    displayName: distributionName,
+    mailEnabled: true,
+    mailNickname: distributionName,
+    securityEnabled: false,
+    ...(members.length && { 'members@odata.bind': members.map((memberId) => `${BASE_URL}/users/${memberId}`) }),
+  };
+
+  const { data } = await axios.post(`${BASE_URL}/groups`, distribution, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+  return { id: data.id, name: distributionName };
+};
+
+// Manually Clones and Deletes old distribution due to MS Graph Limitation
+export const updateDistribution = async (authToken: string, distroId: string, jobOrder: JobOrder): Promise<MSTeam> => {
+  const existingMembers = await listDistributionMembers(authToken, distroId);
+  const newDistroInfo = await addDistribution(authToken, jobOrder, existingMembers);
+  await deleteTeam(authToken, distroId);
+  return newDistroInfo;
+};
+
+const listDistributionMembers = async (authToken: string, distroId: string): Promise<string[]> => {
+  const { data } = await axios.get(`${BASE_URL}/groups/${distroId}/members`, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+  return data.value.map((member: any) => member.id);
+};
+
 export const addTeamMember = async (authToken: string, teamId: string, userId: string): Promise<string> => {
   const { data } = await axios.post(
     `${BASE_URL}/teams/${teamId}/members`,
@@ -154,12 +195,37 @@ export const removeTeamMember = async (authToken: string, teamId: string, member
   });
 };
 
-const deriveTeamName = (jobOrder: JobOrder) => {
+export const addDistributionMember = async (authToken: string, distroId: string, userId: string): Promise<string> => {
+  const { data } = await axios.patch(
+    `${BASE_URL}/groups/${distroId}`,
+    {
+      'members@odata.bind': [`${BASE_URL}/users('${userId}')`],
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    }
+  );
+  return data.id;
+};
+
+export const removeDistributionMember = async (authToken: string, distroId: string, userPrincipalName: string) => {
+  const { id: userId } = await fetchMSUser(authToken, userPrincipalName);
+  await axios.delete(`${BASE_URL}/groups/${distroId}/members/${userId}/$ref`, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+};
+
+const deriveTeamName = (jobOrder: JobOrder, suffix: string = '') => {
   const date = new Date(jobOrder.evaluationStartDate);
   const year = date.getFullYear();
   const monthName = date.toLocaleString('en-US', {
     month: 'long',
   });
+  const dayOfMonth = date.getDate() + 1;
   const technology = jobOrder.batchType.replace(/ /g, '');
-  return `${year}_${monthName}_${technology}`;
+  return `${year}_${monthName}_${dayOfMonth}_${technology}${suffix}`;
 };

@@ -190,9 +190,10 @@ export const saveCohort = async (conn: any, jobOrder: JobOrder): Promise<SFDCCoh
     minimumIntegerDigits: 2,
     useGrouping: false,
   });
+  const dayOfMonth = date.getDate() + 1;
   const technology = jobOrder.batchType.replace(/ /g, '');
   const dataFields = {
-    Name: `${year}_${numberMonth}_${technology}`,
+    Name: `${year}_${numberMonth}_${dayOfMonth}_${technology}`,
     Training_Start_Date__c: jobOrder.evaluationStartDate,
     Technology__c: jobOrder.batchType,
     BH_Job_Id__c: jobOrder.id,
@@ -200,27 +201,31 @@ export const saveCohort = async (conn: any, jobOrder: JobOrder): Promise<SFDCCoh
   const existingCohort = await fetchCohortByJobId(conn, jobOrder.id);
   if (existingCohort) {
     await updateCohort(conn, existingCohort.id, dataFields);
-    return { id: existingCohort.id, msTeamId: existingCohort.msTeamId };
+    return { id: existingCohort.id, msTeamId: existingCohort.msTeamId, msDistroId: existingCohort.msDistroId };
   } else {
-    return { id: await insertCohort(conn, dataFields), msTeamId: undefined };
+    return { id: await insertCohort(conn, dataFields), msTeamId: undefined, msDistroId: undefined };
   }
 };
 
 export const fetchCohort = async (conn: any, cohortId: string): Promise<SFDCCohort> => {
-  const { Id, MSTeamID__c } = await conn.sobject('Cohort__c').retrieve(cohortId);
+  const { Id, MSTeamID__c, MSDistributionID__c } = await conn.sobject('Cohort__c').retrieve(cohortId);
   return {
     id: Id,
     msTeamId: MSTeamID__c,
+    msDistroId: MSDistributionID__c,
   };
 };
 
 export const fetchCohortByJobId = async (conn: any, jobOrderId: number): Promise<SFDCCohort> => {
-  const { records } = await conn.query(`SELECT Id, MSTeamID__c FROM Cohort__c WHERE BH_Job_Id__c = '${jobOrderId}'`);
+  const { records } = await conn.query(
+    `SELECT Id, MSTeamID__c, MSDistributionID__c FROM Cohort__c WHERE BH_Job_Id__c = '${jobOrderId}'`
+  );
 
   return records.length
     ? {
         id: records[0].Id,
         msTeamId: records[0].MSTeamID__c,
+        msDistroId: records[0].MSDistributionID__c,
       }
     : undefined;
 };

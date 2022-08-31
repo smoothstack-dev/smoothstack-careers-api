@@ -1,6 +1,7 @@
 export interface SFDCCohort {
   id: string;
   msTeamId: string;
+  msDistroId: string;
 }
 
 export interface SFDCCohortParticipant {
