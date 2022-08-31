@@ -1,6 +1,6 @@
 import { JobOrder } from 'src/model/JobOrder';
 import { JobProcessingType } from 'src/model/JobProcessingRequest';
-import { addTeam, updateTeam } from './admin.service';
+import { addDistribution, addTeam, updateDistribution, updateTeam } from './admin.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { getMSAuthData } from './auth/microsoft.oauth.service';
 import { fetchJobOrder, fetchNewJobOrders, fetchUpdatedJobOrders } from './careers.service';
@@ -32,15 +32,19 @@ export const processJob = async (jobOrderId: number) => {
   const { token } = await getMSAuthData();
   const conn = await getSFDCConnection();
   const jobOrder = await fetchJobOrder(restUrl, BhRestToken, jobOrderId);
-  const { id: cohortId, msTeamId: existingMsTeamId } = await saveCohort(conn, jobOrder);
+  const { id: cohortId, msTeamId: existingMsTeamId, msDistroId: existingMsDistroId } = await saveCohort(conn, jobOrder);
   const { id: msTeamId, name: msTeamName } = existingMsTeamId
     ? await updateTeam(token, existingMsTeamId, jobOrder)
     : await addTeam(token, jobOrder);
+    const { id: msDistroId, name: msDistroName } = existingMsDistroId
+    ? await updateDistribution(token, existingMsDistroId, jobOrder)
+    : await addDistribution(token, jobOrder);
   await updateCohort(conn, cohortId, {
     MSTeamID__c: msTeamId,
+    MSDistributionID__c: msDistroId,
     Slack_Channel_Name__c: msTeamName,
-    Email_Distribution_Name__c: `${msTeamName}@smoothstack.com`,
+    Email_Distribution_Name__c: `${msDistroName}@smoothstack.com`,
   });
 
-  console.log(`Successfully processed job processing request.`);
+  console.log('Successfully processed job processing request.');
 };

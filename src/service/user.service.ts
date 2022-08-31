@@ -3,7 +3,13 @@ import axios from 'axios';
 import { MSUser } from 'src/model/MSUser';
 import { UserEvent } from 'src/model/UserEvent';
 import { UserGenerationRequest } from 'src/model/UserGenerationRequest';
-import { addTeamMember, addUser, removeTeamMember } from './admin.service';
+import {
+  addDistributionMember,
+  addTeamMember,
+  addUser,
+  removeDistributionMember,
+  removeTeamMember,
+} from './admin.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { getMSAuthData } from './auth/microsoft.oauth.service';
 import {
@@ -19,7 +25,6 @@ import {
   fetchCohort,
   fetchCohortByJobId,
   fetchCohortParticipantByUserId,
-  fetchSFDCUser,
   fetchSFDCUserByEmail,
   getSFDCConnection,
   insertCohortParticipant,
@@ -76,16 +81,18 @@ export const generateUser = async (event: SNSEvent) => {
     }
     case 'cohort': {
       const conn = await getSFDCConnection();
-      const { id: cohortId, msTeamId } = await fetchCohortByJobId(conn, submission.jobOrder.id);
+      const { id: cohortId, msTeamId, msDistroId } = await fetchCohortByJobId(conn, submission.jobOrder.id);
       const cohortParticipant = await fetchCohortParticipantByUserId(conn, request.sfdcUserId);
       if (cohortParticipant?.cohortId !== cohortId) {
         if (cohortParticipant) {
           const participantCohort = await fetchCohort(conn, cohortParticipant.cohortId);
           await removeTeamMember(msToken, participantCohort.msTeamId, cohortParticipant.msMembershipId);
+          await removeDistributionMember(msToken, participantCohort.msDistroId, request.msUser.userPrincipalName);
           await deleteCohortParticipant(conn, cohortParticipant.id);
         }
-        const msUserId = request.msUser.id ?? (await fetchSFDCUser(conn, request.sfdcUserId)).smoothstackEmail;
+        const msUserId = request.msUser.id ?? (await fetchMSUser(msToken, request.msUser.userPrincipalName)).id;
         const membershipId = await addTeamMember(msToken, msTeamId, msUserId);
+        await addDistributionMember(msToken, msDistroId, msUserId);
         await insertCohortParticipant(conn, cohortId, request.sfdcUserId, membershipId);
       }
       await saveSubmissionFields(restUrl, BhRestToken, submission.id, { status: 'Added to Cut/Keep' });
@@ -114,7 +121,7 @@ export const processUserEvent = async (event: UserEvent) => {
   }
 };
 
-const fetchMSUser = async (authToken: string, userId: string): Promise<MSUser> => {
+export const fetchMSUser = async (authToken: string, userId: string): Promise<MSUser> => {
   const { data } = await axios.get(`${BASE_URL}/${userId}`, {
     params: {
       $select: 'id,userPrincipalName,assignedLicenses',
