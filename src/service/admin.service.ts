@@ -225,7 +225,7 @@ const deriveTeamName = (jobOrder: JobOrder, suffix: string = '') => {
   const monthName = date.toLocaleString('en-US', {
     month: 'long',
   });
-  const dayOfMonth = date.getDate() + 1;
+  const dayOfMonth = date.getDate();
   const technology = jobOrder.batchType.replace(/ /g, '');
   return `${year}_${monthName}_${dayOfMonth}_${technology}${suffix}`;
 };
