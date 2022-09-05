@@ -190,7 +190,7 @@ export const saveCohort = async (conn: any, jobOrder: JobOrder): Promise<SFDCCoh
     minimumIntegerDigits: 2,
     useGrouping: false,
   });
-  const dayOfMonth = date.getDate() + 1;
+  const dayOfMonth = date.getDate();
   const technology = jobOrder.batchType.replace(/ /g, '');
   const dataFields = {
     Name: `${year}_${numberMonth}_${dayOfMonth}_${technology}`,
