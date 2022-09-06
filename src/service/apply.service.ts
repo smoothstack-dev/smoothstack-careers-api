@@ -17,13 +17,13 @@ import { publishApplicationProcessingRequest, publishLinksGenerationRequest } fr
 import { WebResponse } from 'src/model/Candidate';
 import { JobSubmission } from 'src/model/JobSubmission';
 import { ApplicationProcessingRequest, SAApplicationProcessingRequest } from 'src/model/ApplicationProcessingRequest';
-import { Knockout, KnockoutSARequirements, KNOCKOUT_NOTE, KNOCKOUT_STATUS } from 'src/model/Knockout';
+import { Knockout, KnockoutResult, KnockoutSARequirements, KNOCKOUT_NOTE, KNOCKOUT_STATUS } from 'src/model/Knockout';
 import { getSchedulingLink } from 'src/util/links';
 import { SchedulingTypeId } from 'src/model/SchedulingType';
 import { calculateSAKnockout, calculateKnockout } from 'src/util/knockout.util';
 import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
-import { JOB_BATCHTYPE_MAPPING } from 'src/util/jobOrder.util';
 import { toTitleCase } from 'src/util/misc.util';
+import { resolveJobByTechnology } from 'src/util/jobOrder.util';
 
 const DAY_DIFF = 90;
 
@@ -112,8 +112,9 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
   const existingApplications = [...(candidate?.webResponses ?? []), ...(candidate?.submissions ?? [])];
 
   if (!hasRecentApplication(existingApplications)) {
+    const activeJobOrders = await findActiveJobOrders(restUrl, BhRestToken);
     const jobNumber =
-      +careerId === 1 && techSelection ? await resolveJobNumber(restUrl, BhRestToken, techSelection) : +careerId;
+      +careerId === 1 && techSelection ? await resolveJobByTechnology(techSelection, activeJobOrders) : +careerId;
     const jobOrder = await fetchJobOrder(restUrl, BhRestToken, jobNumber);
 
     const {
@@ -125,7 +126,7 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       degreeExpected,
       codingAbility,
     } = extraFields;
-    const knockout = calculateKnockout(jobOrder.knockout, {
+    const knockout = calculateKnockout(jobOrder.knockout, activeJobOrders, {
       workAuthorization,
       relocation,
       graduationDate,
@@ -172,7 +173,7 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
     console.log('Successfully created new Candidate.');
     return {
       newCandidate,
-      ...(knockout === Knockout.PASS && {
+      ...(knockout.result === Knockout.PASS && {
         schedulingLink: getSchedulingLink(
           formattedFirstName,
           formattedLastName,
@@ -186,15 +187,6 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
   }
   console.log(`Candidate already has a job submission in the last ${DAY_DIFF} days, skipping creation...`);
   return candidate;
-};
-
-const resolveJobNumber = async (restUrl: string, BhRestToken: string, techSelection: string): Promise<number> => {
-  const jobOrders = await findActiveJobOrders(restUrl, BhRestToken);
-  const order = JOB_BATCHTYPE_MAPPING[techSelection];
-  const sortedJobs = jobOrders.sort((job1, job2) => {
-    return order.indexOf(job1.batchType) - order.indexOf(job2.batchType);
-  });
-  return sortedJobs[0]?.id ?? 1;
 };
 
 const hasRecentApplication = (applications: (WebResponse | JobSubmission)[]): boolean => {
@@ -230,20 +222,22 @@ const saveApplicationData = async (
   submissionId: number,
   candidateFields: ApplicationProcessingRequest['candidate']['fields'],
   submissionFields: ApplicationProcessingRequest['submission']['fields'],
-  knockout: Knockout
+  { result, alternateJobId }: KnockoutResult
 ) => {
-  const candidateFieldsWStatus = { ...candidateFields, status: KNOCKOUT_STATUS[knockout].candidateStatus };
+  const candidateFieldsWStatus = { ...candidateFields, status: KNOCKOUT_STATUS[result].candidateStatus };
   await populateCandidateFields(url, BhRestToken, candidateId, candidateFieldsWStatus);
   const { status: subStatus } = await fetchSubmission(url, BhRestToken, submissionId);
   await saveSubmissionFields(url, BhRestToken, submissionId, {
     status: subStatus,
     customText25: candidateFields.workAuthorization,
-    ...(subStatus === 'New Lead' && { status: KNOCKOUT_STATUS[knockout].submissionStatus }),
+    ...(subStatus === 'New Lead' && { status: KNOCKOUT_STATUS[result].submissionStatus }),
     ...(submissionFields.utmSource && { source: submissionFields.utmSource }),
     ...(submissionFields.utmMedium && { customText24: submissionFields.utmMedium }),
     ...(submissionFields.utmCampaign && { customText6: submissionFields.utmCampaign }),
+    ...(alternateJobId && { jobOrder: { id: alternateJobId } }),
   });
-  await saveCandidateNote(url, BhRestToken, candidateId, 'Knockout', KNOCKOUT_NOTE[knockout]);
+
+  await saveCandidateNote(url, BhRestToken, candidateId, 'Knockout', KNOCKOUT_NOTE[result]);
 };
 
 export const saveSAApplicationData = async (

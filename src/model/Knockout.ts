@@ -38,6 +38,11 @@ export enum Knockout {
   SELF_RANK = 'SELF_RANK',
 }
 
+export interface KnockoutResult {
+  result: Knockout;
+  alternateJobId?: number;
+}
+
 export const KNOCKOUT_STATUS = {
   [Knockout.PASS]: { submissionStatus: 'Submitted', candidateStatus: 'Active' },
   [Knockout.WORK_AUTH]: { submissionStatus: 'R-Work Authorization', candidateStatus: 'Rejected' },

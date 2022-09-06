@@ -1190,7 +1190,8 @@ export const findActiveJobOrders = async (url: string, BhRestToken: string): Pro
   const { data } = await axios.get(jobOrdersUrl, {
     params: {
       BhRestToken,
-      fields: 'id,customText5,isPublic',
+      fields:
+        'id,customText5,isPublic,isDeleted,customText4,willRelocate,customText8,customText9,educationDegree,customText10',
       query: 'isDeleted:0 AND isPublic:1 AND NOT title:"Smoothstack Foundations" AND NOT id:1',
     },
   });
@@ -1198,6 +1199,14 @@ export const findActiveJobOrders = async (url: string, BhRestToken: string): Pro
   return data.data.map((job) => ({
     ...job,
     batchType: job.customText5,
+    knockout: {
+      requiredWorkAuthorization: job.customText4,
+      relocationRequired: job.willRelocate,
+      maxMonthsToGraduation: job.customText8,
+      minYearsOfExperience: job.customText9,
+      minRequiredDegree: job.educationDegree,
+      minSelfRank: job.customText10,
+    },
   }));
 };
 

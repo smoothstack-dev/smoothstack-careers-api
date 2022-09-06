@@ -1,13 +1,20 @@
+import { JobOrder } from 'src/model/JobOrder';
 import {
   Knockout,
   KnockoutSAFields,
   KnockoutSARequirements,
   KnockoutFields,
   KnockoutRequirements,
+  KnockoutResult,
 } from 'src/model/Knockout';
 import { calculateMonthsToGrad } from 'src/service/careers.service';
+import { resolveJobByWorkAuth } from './jobOrder.util';
 
-export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: KnockoutFields) => {
+export const calculateKnockout = (
+  knockoutReqs: KnockoutRequirements,
+  activeJobOrders: JobOrder[],
+  fields: KnockoutFields
+): KnockoutResult => {
   const {
     requiredWorkAuthorization,
     relocationRequired,
@@ -26,26 +33,29 @@ export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: Kn
     codingAbility,
   } = fields;
   const monthsToGraduation = graduationDate ? calculateMonthsToGrad(new Date(graduationDate)) : 0;
-
+  let alternateJobId: number;
   if (!requiredWorkAuthorization.includes(workAuthorization)) {
-    return Knockout.WORK_AUTH;
+    alternateJobId = resolveJobByWorkAuth(workAuthorization, activeJobOrders);
+    if (!alternateJobId) {
+      return { result: Knockout.WORK_AUTH };
+    }
   }
   if (relocationRequired && relocation === 'No') {
-    return Knockout.RELOCATION;
+    return { result: Knockout.RELOCATION };
   }
   if (maxMonthsToGraduation !== 'Not Specified' && monthsToGraduation > +maxMonthsToGraduation) {
-    return Knockout.GRADUATION;
+    return { result: Knockout.GRADUATION };
   }
   if (!hasMinYearsOfExperience(minYearsOfExperience, yearsOfExperience)) {
-    return Knockout.YEARS_OF_EXP;
+    return { result: Knockout.YEARS_OF_EXP };
   }
   if (!hasMinDegree(minRequiredDegree, educationDegree ?? degreeExpected)) {
-    return Knockout.DEGREE;
+    return { result: Knockout.DEGREE };
   }
   if (codingAbility < minSelfRank) {
-    return Knockout.SELF_RANK;
+    return { result: Knockout.SELF_RANK };
   }
-  return Knockout.PASS;
+  return { result: Knockout.PASS, ...(alternateJobId && { alternateJobId }) };
 };
 
 export const calculateSAKnockout = (knockoutReqs: KnockoutSARequirements, fields: KnockoutSAFields) => {
