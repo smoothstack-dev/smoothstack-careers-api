@@ -222,10 +222,11 @@ export const removeDistributionMember = async (authToken: string, distroId: stri
 const deriveTeamName = (jobOrder: JobOrder, suffix: string = '') => {
   const date = new Date(jobOrder.evaluationStartDate);
   const year = date.getFullYear();
-  const monthName = date.toLocaleString('en-US', {
-    month: 'long',
+  const numberMonth = (date.getMonth() + 1).toLocaleString('en-US', {
+    minimumIntegerDigits: 2,
+    useGrouping: false,
   });
   const dayOfMonth = date.getDate();
   const technology = jobOrder.batchType.replace(/ /g, '');
-  return `${year}_${monthName}_${dayOfMonth}_${technology}${suffix}`;
+  return `${year}_${numberMonth}_${dayOfMonth}_${technology}${suffix}`;
 };

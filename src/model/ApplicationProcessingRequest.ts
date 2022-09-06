@@ -1,5 +1,5 @@
 import { CORP_TYPE } from './Corporation';
-import { Knockout } from './Knockout';
+import { KnockoutResult } from './Knockout';
 
 export interface ApplicationProcessingRequest {
   webResponse: {
@@ -38,7 +38,7 @@ export interface ApplicationProcessingRequest {
       militaryBranch?: string;
     };
   };
-  knockout: Knockout;
+  knockout: KnockoutResult;
   corpType: CORP_TYPE;
 }
 
