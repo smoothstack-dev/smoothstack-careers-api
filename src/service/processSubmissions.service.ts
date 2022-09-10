@@ -51,7 +51,7 @@ export const processInternalSubmission = async (restUrl: string, BhRestToken: st
     });
     await saveSubmissionFields(restUrl, BhRestToken, submissionId, {
       status: KNOCKOUT_STATUS[result].submissionStatus,
-      jobOrder: { id: alternateJobId },
+      ...(alternateJobId && { jobOrder: { id: alternateJobId } }),
     });
     await saveCandidateNote(restUrl, BhRestToken, candidate.id, 'Knockout', KNOCKOUT_NOTE[result]);
   } else {
