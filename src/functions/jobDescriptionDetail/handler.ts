@@ -28,20 +28,25 @@ const getJobDescriptionDetail = async (event: APIGatewayEvent) => {
       case CORPORATION[CORP_TYPE.APPRENTICESHIP].corpId: {
         const { restUrl, BhRestToken } = await getSessionData();
         // const fields = 'id,title,isPublic,customTextBlock1,customTextBlock2';
-        await fetchAllJobOrder(restUrl, BhRestToken, fields, query);
+        const response = await fetchAllJobOrder(restUrl, BhRestToken, fields, query);
         return {
           statusCode: 200,
+          body: response,
         };
       }
       case CORPORATION[CORP_TYPE.STAFF_AUG].corpId: {
         const { restUrl, BhRestToken } = await getStaffAugSessionData();
-        // const fields = 'id,title,isPublic';
-        await fetchAllJobOrder(restUrl, BhRestToken, fields, query);
+        const response = await fetchAllJobOrder(restUrl, BhRestToken, fields, query);
         return {
           statusCode: 200,
+          body: response,
         };
       }
     }
+    return {
+      statusCode: 400,
+      body: 'Bed Request - Incorrect corpType',
+    };
   } catch (e) {
     console.error('Error retrieving job descriptoin data: ', e);
     return {
@@ -59,20 +64,21 @@ const updateJobDescriptionDetail = async (event: APIGatewayEvent) => {
     switch (corpId) {
       case CORPORATION[CORP_TYPE.APPRENTICESHIP].corpId: {
         const { restUrl, BhRestToken } = await getSessionData();
-        return await saveJob(restUrl, BhRestToken, updateData, +jobId);
+        const response = await saveJob(restUrl, BhRestToken, updateData, +jobId);
         return {
           statusCode: 200,
+          body: response,
         };
       }
       case CORPORATION[CORP_TYPE.STAFF_AUG].corpId: {
         const { restUrl, BhRestToken } = await getStaffAugSessionData();
-        return await saveJob(restUrl, BhRestToken, updateData, +jobId);
+        const response = await saveJob(restUrl, BhRestToken, updateData, +jobId);
         return {
           statusCode: 200,
+          body: response,
         };
       }
     }
-
     return {
       statusCode: 400,
       body: 'Bed Request - Incorrect corpType',
