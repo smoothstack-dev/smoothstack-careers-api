@@ -425,7 +425,7 @@ export const savePrescreenData = async (
     ...(prescreenForm.referral?.answer && { source: prescreenForm.referral.answer }),
     ...(prescreenForm.opportunityRank?.answer && { customText23: prescreenForm.opportunityRank.answer }),
     ...(prescreenForm.communicationSkills?.answer && {
-      customText14: prescreenForm.communicationSkills.answer.split('-')[0].trim(),
+      customText14: +prescreenForm.communicationSkills.answer.split('-')[0].trim(),
     }),
     ...(prescreenForm.isVaccinated?.answer && { customText8: prescreenForm.isVaccinated.answer }),
     ...(prescreenForm.githubLink?.answer && { customText6: prescreenForm.githubLink.answer }),
@@ -1098,14 +1098,19 @@ export const saveSubmissionChallengeResult = async (
   result === 'Pass' && (await publishLinksGenerationRequest(submissionId, 'techscreen'));
 };
 
-export const fetchAllJobOrder = async (url: string, BhRestToken: string): Promise<JobOrder> => {
+export const fetchAllJobOrder = async (
+  url: string,
+  BhRestToken: string,
+  fields: string,
+  query: string
+): Promise<JobOrder> => {
   try {
     const jobOrdersUrl = `${url}search/JobOrder`;
     const { data } = await axios.get(jobOrdersUrl, {
       params: {
         BhRestToken,
-        fields: 'id,title,isPublic',
-        query: 'isDeleted:0',
+        fields: fields,
+        query: query,
         sort: 'id',
         count: 100,
       },
@@ -1679,4 +1684,13 @@ export const updateApplicationJobId = async (
   };
   const requests = applicationIdArray.map((appId: number) => saveSubmissionFields(url, BhRestToken, appId, updateData));
   return await Promise.all(requests);
+};
+
+export const saveJob = async (url: string, BhRestToken: string, updateData: string, jobId: number) => {
+  const jobUrl = `${url}entity/JobOrder/${jobId}`;
+  return axios.post(jobUrl, updateData, {
+    params: {
+      BhRestToken,
+    },
+  });
 };
