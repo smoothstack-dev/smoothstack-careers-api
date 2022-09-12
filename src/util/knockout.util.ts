@@ -1,20 +1,13 @@
-import { JobOrder } from 'src/model/JobOrder';
 import {
   Knockout,
   KnockoutSAFields,
   KnockoutSARequirements,
   KnockoutFields,
   KnockoutRequirements,
-  KnockoutResult,
 } from 'src/model/Knockout';
 import { calculateMonthsToGrad } from 'src/service/careers.service';
-import { resolveJobByWorkAuth } from './jobOrder.util';
 
-export const calculateKnockout = (
-  knockoutReqs: KnockoutRequirements,
-  activeJobOrders: JobOrder[],
-  fields: KnockoutFields
-): KnockoutResult => {
+export const calculateKnockout = (knockoutReqs: KnockoutRequirements, fields: KnockoutFields): Knockout => {
   const {
     requiredWorkAuthorization,
     relocationRequired,
@@ -33,29 +26,25 @@ export const calculateKnockout = (
     codingAbility,
   } = fields;
   const monthsToGraduation = graduationDate ? calculateMonthsToGrad(new Date(graduationDate)) : 0;
-  let alternateJobId: number;
   if (!requiredWorkAuthorization.includes(workAuthorization)) {
-    alternateJobId = resolveJobByWorkAuth(workAuthorization, activeJobOrders);
-    if (!alternateJobId) {
-      return { result: Knockout.WORK_AUTH };
-    }
+    return Knockout.WORK_AUTH;
   }
   if (relocationRequired && relocation === 'No') {
-    return { result: Knockout.RELOCATION };
+    return Knockout.RELOCATION;
   }
   if (maxMonthsToGraduation !== 'Not Specified' && monthsToGraduation > +maxMonthsToGraduation) {
-    return { result: Knockout.GRADUATION };
+    return Knockout.GRADUATION;
   }
   if (!hasMinYearsOfExperience(minYearsOfExperience, yearsOfExperience)) {
-    return { result: Knockout.YEARS_OF_EXP };
+    return Knockout.YEARS_OF_EXP;
   }
   if (!hasMinDegree(minRequiredDegree, educationDegree ?? degreeExpected)) {
-    return { result: Knockout.DEGREE };
+    return Knockout.DEGREE;
   }
   if (codingAbility < minSelfRank) {
-    return { result: Knockout.SELF_RANK };
+    return Knockout.SELF_RANK;
   }
-  return { result: Knockout.PASS, ...(alternateJobId && { alternateJobId }) };
+  return Knockout.PASS;
 };
 
 export const calculateSAKnockout = (knockoutReqs: KnockoutSARequirements, fields: KnockoutSAFields) => {
@@ -87,7 +76,7 @@ const hasSAMinYearsOfExperience = (minYears: string, years: string) => {
   return EXP_MAP[years] >= EXP_MAP[minYears];
 };
 
-const hasMinYearsOfExperience = (minYears: string, years: string) => {
+export const hasMinYearsOfExperience = (minYears: string, years: string) => {
   const EXP_MAP = {
     'Not Specified': 0,
     '0-1': 0,
@@ -98,7 +87,7 @@ const hasMinYearsOfExperience = (minYears: string, years: string) => {
   return EXP_MAP[years] >= EXP_MAP[minYears];
 };
 
-const hasMinDegree = (minDegree: string, educationDegree: string) => {
+export const hasMinDegree = (minDegree: string, educationDegree: string) => {
   const noDegreeList = ['None', 'GED', 'High School'];
   const validDegreeList = ['Not Specifed', "Associate's", "Bachelor's", "Master's", 'PhD'];
   const degree = noDegreeList.includes(educationDegree) ? 'Not Specified' : educationDegree;

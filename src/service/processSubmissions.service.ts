@@ -2,7 +2,6 @@ import {
   fetchNewSubmissions,
   fetchSubmission,
   fetchUpdatedSubmissions,
-  findActiveJobOrders,
   saveCandidateFields,
   saveCandidateNote,
   saveSubmissionFields,
@@ -44,16 +43,14 @@ export const processInternalSubmission = async (restUrl: string, BhRestToken: st
   };
   const shouldProcessKnockout = isKnockoutPopulated(knockoutFields);
   if (shouldProcessKnockout) {
-    const activeJobOrders = await findActiveJobOrders(restUrl, BhRestToken);
-    const { result, alternateJobId } = calculateKnockout(jobOrder.knockout, activeJobOrders, knockoutFields);
+    const knockout = calculateKnockout(jobOrder.knockout, knockoutFields);
     await saveCandidateFields(restUrl, BhRestToken, candidate.id, {
-      status: KNOCKOUT_STATUS[result].candidateStatus,
+      status: KNOCKOUT_STATUS[knockout].candidateStatus,
     });
     await saveSubmissionFields(restUrl, BhRestToken, submissionId, {
-      status: KNOCKOUT_STATUS[result].submissionStatus,
-      ...(alternateJobId && { jobOrder: { id: alternateJobId } }),
+      status: KNOCKOUT_STATUS[knockout].submissionStatus,
     });
-    await saveCandidateNote(restUrl, BhRestToken, candidate.id, 'Knockout', KNOCKOUT_NOTE[result]);
+    await saveCandidateNote(restUrl, BhRestToken, candidate.id, 'Knockout', KNOCKOUT_NOTE[knockout]);
   } else {
     await saveSubmissionFields(restUrl, BhRestToken, submissionId, {
       status: 'Incomplete Application',

@@ -15,6 +15,7 @@ export interface KnockoutFields {
   educationDegree?: string;
   degreeExpected?: string;
   codingAbility: number;
+  techSelection?: string;
 }
 
 export interface KnockoutSARequirements {
@@ -36,11 +37,6 @@ export enum Knockout {
   YEARS_OF_EXP = 'YEARS_OF_EXP',
   DEGREE = 'DEGREE',
   SELF_RANK = 'SELF_RANK',
-}
-
-export interface KnockoutResult {
-  result: Knockout;
-  alternateJobId?: number;
 }
 
 export const KNOCKOUT_STATUS = {
