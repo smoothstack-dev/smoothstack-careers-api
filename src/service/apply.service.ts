@@ -2,7 +2,6 @@ import { APIGatewayProxyEvent } from 'aws-lambda';
 import { parse } from 'aws-multipart-parser';
 import {
   createWebResponse,
-  fetchJobOrder,
   fetchSubmission,
   findActiveJobOrders,
   findCandidateByEmailOrPhone,
@@ -17,13 +16,13 @@ import { publishApplicationProcessingRequest, publishLinksGenerationRequest } fr
 import { WebResponse } from 'src/model/Candidate';
 import { JobSubmission } from 'src/model/JobSubmission';
 import { ApplicationProcessingRequest, SAApplicationProcessingRequest } from 'src/model/ApplicationProcessingRequest';
-import { Knockout, KnockoutResult, KnockoutSARequirements, KNOCKOUT_NOTE, KNOCKOUT_STATUS } from 'src/model/Knockout';
+import { Knockout, KnockoutSARequirements, KNOCKOUT_NOTE, KNOCKOUT_STATUS } from 'src/model/Knockout';
 import { getSchedulingLink } from 'src/util/links';
 import { SchedulingTypeId } from 'src/model/SchedulingType';
-import { calculateSAKnockout, calculateKnockout } from 'src/util/knockout.util';
+import { calculateKnockout, calculateSAKnockout } from 'src/util/knockout.util';
 import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
 import { toTitleCase } from 'src/util/misc.util';
-import { resolveJobByTechnology } from 'src/util/jobOrder.util';
+import { resolveJobByKnockout } from 'src/util/jobOrder.util';
 
 const DAY_DIFF = 90;
 
@@ -88,19 +87,8 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
 };
 
 const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
-  const { careerId } = event.pathParameters;
-  const {
-    firstName,
-    lastName,
-    email,
-    format,
-    phone,
-    utmSource,
-    utmMedium,
-    utmCampaign,
-    techSelection,
-    ...extraFields
-  } = event.queryStringParameters;
+  const { firstName, lastName, email, format, phone, utmSource, utmMedium, utmCampaign, ...extraFields } =
+    event.queryStringParameters;
   const { resume } = parse(event, true);
   const { restUrl, BhRestToken } = await getSessionData();
 
@@ -112,11 +100,6 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
   const existingApplications = [...(candidate?.webResponses ?? []), ...(candidate?.submissions ?? [])];
 
   if (!hasRecentApplication(existingApplications)) {
-    const activeJobOrders = await findActiveJobOrders(restUrl, BhRestToken);
-    const jobNumber =
-      +careerId === 1 && techSelection ? await resolveJobByTechnology(techSelection, activeJobOrders) : +careerId;
-    const jobOrder = await fetchJobOrder(restUrl, BhRestToken, jobNumber);
-
     const {
       workAuthorization,
       relocation,
@@ -125,8 +108,11 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       highestDegree: educationDegree,
       degreeExpected,
       codingAbility,
+      techSelection,
     } = extraFields;
-    const knockout = calculateKnockout(jobOrder.knockout, activeJobOrders, {
+
+    const activeJobOrders = await findActiveJobOrders(restUrl, BhRestToken);
+    const knockoutFields = {
       workAuthorization,
       relocation,
       graduationDate,
@@ -134,7 +120,11 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       educationDegree,
       degreeExpected,
       codingAbility: +codingAbility,
-    });
+      techSelection,
+    };
+    const jobOrder = resolveJobByKnockout(knockoutFields, activeJobOrders);
+    const knockout = calculateKnockout(jobOrder.knockout, knockoutFields);
+
     const webResponseFields = {
       firstName: formattedFirstName,
       lastName: formattedLastName,
@@ -144,7 +134,7 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
     };
 
     const { jobSubmission, candidate: newCandidate } = await createWebResponse(
-      jobNumber,
+      jobOrder.id,
       webResponseFields,
       resume,
       CORP_TYPE.APPRENTICESHIP
@@ -164,7 +154,7 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       webResponse: { fields: webResponseFields },
       submission: { id: jobSubmission.id, fields: submissionFields },
       candidate: { id: newCandidate.id, fields: candidateFields },
-      knockout: knockout,
+      knockout,
       corpType: CORP_TYPE.APPRENTICESHIP,
     };
 
@@ -173,7 +163,7 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
     console.log('Successfully created new Candidate.');
     return {
       newCandidate,
-      ...(knockout.result === Knockout.PASS && {
+      ...(knockout === Knockout.PASS && {
         schedulingLink: getSchedulingLink(
           formattedFirstName,
           formattedLastName,
@@ -222,22 +212,21 @@ const saveApplicationData = async (
   submissionId: number,
   candidateFields: ApplicationProcessingRequest['candidate']['fields'],
   submissionFields: ApplicationProcessingRequest['submission']['fields'],
-  { result, alternateJobId }: KnockoutResult
+  knockout: Knockout
 ) => {
-  const candidateFieldsWStatus = { ...candidateFields, status: KNOCKOUT_STATUS[result].candidateStatus };
+  const candidateFieldsWStatus = { ...candidateFields, status: KNOCKOUT_STATUS[knockout].candidateStatus };
   await populateCandidateFields(url, BhRestToken, candidateId, candidateFieldsWStatus);
   const { status: subStatus } = await fetchSubmission(url, BhRestToken, submissionId);
   await saveSubmissionFields(url, BhRestToken, submissionId, {
     status: subStatus,
     customText25: candidateFields.workAuthorization,
-    ...(subStatus === 'New Lead' && { status: KNOCKOUT_STATUS[result].submissionStatus }),
+    ...(subStatus === 'New Lead' && { status: KNOCKOUT_STATUS[knockout].submissionStatus }),
     ...(submissionFields.utmSource && { source: submissionFields.utmSource }),
     ...(submissionFields.utmMedium && { customText24: submissionFields.utmMedium }),
     ...(submissionFields.utmCampaign && { customText6: submissionFields.utmCampaign }),
-    ...(alternateJobId && { jobOrder: { id: alternateJobId } }),
   });
 
-  await saveCandidateNote(url, BhRestToken, candidateId, 'Knockout', KNOCKOUT_NOTE[result]);
+  await saveCandidateNote(url, BhRestToken, candidateId, 'Knockout', KNOCKOUT_NOTE[knockout]);
 };
 
 export const saveSAApplicationData = async (
