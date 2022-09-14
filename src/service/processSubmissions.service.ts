@@ -70,14 +70,15 @@ export const processUpdatedSubmissions = async () => {
   console.log('Received request to process updated job submissions.');
 
   const { restUrl, BhRestToken } = await getSessionData();
-  const statuses = ['Evaluation Offered', 'QC Passed'];
+  const statuses = ['Evaluation Offered', 'QC Passed', 'Internally Submitted'];
   const submissionFields =
     'id,candidate(firstName,lastName,email,phone,owner(firstName,lastName,email)),jobOrder(startDate,salary,customFloat1,customText6),status,isDeleted';
   const submissions = await fetchUpdatedSubmissions(restUrl, BhRestToken, statuses, submissionFields);
 
   const evalSubmissions = processEvalSubmissions(submissions.filter((sub) => sub.status === 'Evaluation Offered'));
   const qcSubmissions = processQCSubmissions(submissions.filter((sub) => sub.status === 'QC Passed'));
-  await Promise.all([evalSubmissions, qcSubmissions]);
+  const internalSubmissions = processIntSubmissions(submissions.filter((sub) => sub.status === 'Internally Submitted'));
+  await Promise.all([evalSubmissions, qcSubmissions, internalSubmissions]);
 
   console.log('Successfully processed updated submissions:');
   console.log(submissions);
@@ -90,6 +91,11 @@ const processEvalSubmissions = async (submissions: JobSubmission[]) => {
 
 const processQCSubmissions = async (submissions: JobSubmission[]) => {
   const generationRequests = submissions.map((sub) => publishUserGenerationRequest('ms', sub.id));
+  await Promise.all(generationRequests);
+};
+
+const processIntSubmissions = async (submissions: JobSubmission[]) => {
+  const generationRequests = submissions.map((sub) => publishIntSubmissionProcessingRequest({ submissionId: sub.id }));
   await Promise.all(generationRequests);
 };
 

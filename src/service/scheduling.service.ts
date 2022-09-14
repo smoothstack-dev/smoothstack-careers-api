@@ -144,6 +144,7 @@ const processWebinarScheduling = async (event: SchedulingEvent) => {
         'Webinar Scheduled',
         'R-Webinar not Scheduled',
         'R-Webinar Canceled',
+        'R-Webinar no show',
       ]);
       if (existingAppointment) {
         await cancelAppointment(apiKey, userId, existingAppointment.id);
