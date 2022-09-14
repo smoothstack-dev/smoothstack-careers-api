@@ -7,6 +7,7 @@ import { SFDCUser } from 'src/model/SFDCUser';
 import { getStateName } from 'src/util/states.util';
 import { JobOrder } from 'src/model/JobOrder';
 import { SFDCCohort, SFDCCohortParticipant } from 'src/model/SFDCCohort';
+import { toTitleCase } from 'src/util/misc.util';
 
 const INSTANCE_URL = 'https://smoothstack.my.salesforce.com';
 
@@ -110,7 +111,7 @@ export const saveSFDCUser = async (
     MailingPostalCode: candidate.address.zip?.trim(),
     MailingState: deriveMailingState(candidate.address.state),
     MailingStreet: `${candidate.address.address1?.trim()} ${candidate.address.address2?.trim() ?? ''}`.trim(),
-    County__c: candidate.county,
+    County__c: toTitleCase(candidate.county),
     Referrer_BH__c: candidate.referrer,
     Application_Date__c: candidate.dateAdded,
     Willing_to_Relocate_BH__c: candidate.relocation,

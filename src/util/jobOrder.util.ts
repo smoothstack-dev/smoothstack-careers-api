@@ -77,11 +77,13 @@ export const resolveJobByKnockout = (knockout: KnockoutFields, jobOrders: JobOrd
   });
 
   const maxBasePoints = Math.max(...Object.keys(pointMap).map((k) => pointMap[k].basePoints));
-  return jobOrders
-    .filter((job) => pointMap[job.id].basePoints === maxBasePoints)
-    .sort((a, b) => {
-      return (
-        pointMap[b.id].basePoints + pointMap[a.id].extraPoints - pointMap[a.id].basePoints + pointMap[b.id].extraPoints
-      );
-    })[0];
+  const maxBaseJobOrders = jobOrders.filter((job) => pointMap[job.id].basePoints === maxBasePoints);
+  const maxTotalPoints = Math.max(
+    ...maxBaseJobOrders.map((j) => pointMap[j.id].basePoints + pointMap[j.id].extraPoints)
+  );
+  const highestRankedJobs = maxBaseJobOrders.filter(
+    (job) => pointMap[job.id].basePoints + pointMap[job.id].extraPoints === maxTotalPoints
+  );
+
+  return highestRankedJobs[(highestRankedJobs.length * Math.random()) | 0];
 };
