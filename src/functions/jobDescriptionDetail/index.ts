@@ -6,7 +6,7 @@ export default {
     {
       http: {
         method: 'get',
-        path: 'customActionJobChange',
+        path: 'jobDescriptionDetail',
         cors: {
           origin: '*',
           headers: ['Content-Type'],
@@ -16,7 +16,7 @@ export default {
     {
       http: {
         method: 'put',
-        path: 'customActionJobChange',
+        path: 'jobDescriptionDetail',
         cors: {
           origin: '*',
           headers: ['Content-Type'],
