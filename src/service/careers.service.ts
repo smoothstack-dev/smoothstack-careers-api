@@ -858,6 +858,7 @@ const generateApplicationComments = (application: any): any => ({
   'Are you legally Authorized to work in the U.S?': application.workAuthorization,
   'Willingness to relocate': application.relocation,
   'How would you rank your coding ability? (0 - lowest, 10 - highest)': application.codingAbility,
+  'Strongest Language': application.techSelection,
   'Years of Experience (Including Personal/Educational Projects)': application.yearsOfExperience,
   'Are you currently a student?': application.currentlyStudent,
   ...(application.graduationDate && { 'Expected Graduation Date': application.graduationDate }),
