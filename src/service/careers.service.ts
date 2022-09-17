@@ -1197,7 +1197,7 @@ export const findActiveJobOrders = async (url: string, BhRestToken: string): Pro
       BhRestToken,
       fields:
         'id,customText5,isPublic,isDeleted,customText4,willRelocate,customText8,customText9,educationDegree,customText10',
-      query: 'isDeleted:0 AND NOT title:"*Foundations*" AND NOT id:1 AND isOpen:1 AND NOT status:Archive',
+      query: 'isDeleted:0 AND isPublic:1 NOT title:"*Foundations*" AND NOT id:1',
     },
   });
 

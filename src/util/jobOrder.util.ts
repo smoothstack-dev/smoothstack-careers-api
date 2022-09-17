@@ -6,7 +6,7 @@ import { hasMinDegree, hasMinYearsOfExperience } from './knockout.util';
 export const JOB_BATCHTYPE_MAPPING = {
   java: ['Java'],
   python: ['Cloud', 'Pre-Silicon'],
-  c: ['C++', 'Pre-Silicon'],
+  c: ['C++', 'Pre-Silicon', 'Dynamics'],
   dotNet: ['.NET'],
   other: ['Cloud', 'Salesforce', 'Pre-Silicon'],
 };
@@ -72,7 +72,7 @@ export const resolveJobByKnockout = (knockout: KnockoutFields, jobOrders: JobOrd
       pointMap[j.id].basePoints++;
     }
     if (JOB_BATCHTYPE_MAPPING[techSelection].includes(j.batchType)) {
-      pointMap[j.id].extraPoints++;
+      pointMap[j.id].extraPoints += 2;
     }
   });
 
