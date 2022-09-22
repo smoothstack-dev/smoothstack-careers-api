@@ -1,19 +1,11 @@
 import { CORP_TYPE } from './Corporation';
-import { KnockoutResult } from './Knockout';
+import { Knockout } from './Knockout';
 
 export interface ApplicationProcessingRequest {
-  webResponse: {
-    fields: {
-      firstName: string;
-      lastName: string;
-      email: string;
-      phone: string;
-      format: string;
-    };
-  };
   submission: {
     id: number;
     fields: {
+      status: string;
       utmSource?: string;
       utmMedium?: string;
       utmCampaign?: string;
@@ -22,6 +14,11 @@ export interface ApplicationProcessingRequest {
   candidate: {
     id: number;
     fields: {
+      status: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      name: string;
       city: string;
       state: string;
       zip: string;
@@ -36,9 +33,10 @@ export interface ApplicationProcessingRequest {
       degreeExpected?: string;
       highestDegree?: string;
       militaryBranch?: string;
+      major?: string;
     };
   };
-  knockout: KnockoutResult;
+  knockout: Knockout;
   corpType: CORP_TYPE;
 }
 

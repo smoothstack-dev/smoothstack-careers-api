@@ -1,8 +1,9 @@
 import axios from 'axios';
 import FormData from 'form-data';
+import { ApplicationProcessingRequest } from 'src/model/ApplicationProcessingRequest';
 import { Appointment } from 'src/model/Appointment';
 import { Candidate } from 'src/model/Candidate';
-import { CandidateExtraFields, SACandidateExtraFields } from 'src/model/CandidateExtraFields';
+import {  SACandidateExtraFields } from 'src/model/CandidateExtraFields';
 import { CandidateFile } from 'src/model/CandidateFile';
 import { ChallengeSession } from 'src/model/ChallengeEvent';
 import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
@@ -44,6 +45,115 @@ export const createWebResponse = async (
   });
 
   return res.data;
+};
+
+export const createApplication = async (
+  url: string,
+  BhRestToken: string,
+  jobId: number,
+  application: {
+    candidateFields: ApplicationProcessingRequest['candidate']['fields'];
+    submissionFields: ApplicationProcessingRequest['submission']['fields'];
+  },
+  resume: any
+) => {
+  const { candidateFields, submissionFields } = application;
+  const { workAuthorization } = candidateFields;
+  const candidateId = await createCandidate(url, BhRestToken, candidateFields);
+  const submissionId = await createSubmission(
+    url,
+    BhRestToken,
+    candidateId,
+    jobId,
+    submissionFields,
+    workAuthorization
+  );
+
+  if (resume) {
+    await uploadCandidateFile(
+      url,
+      BhRestToken,
+      candidateId,
+      resume.content.toString('base64'),
+      resume.filename,
+      'Resume'
+    );
+  }
+  return { candidateId, submissionId };
+};
+
+const createCandidate = async (
+  url: string,
+  BhRestToken: string,
+  candidateFields: ApplicationProcessingRequest['candidate']['fields']
+): Promise<number> => {
+  const candidateUrl = `${url}entity/Candidate`;
+  const { data } = await axios.put(
+    candidateUrl,
+
+    {
+      firstName: candidateFields.firstName,
+      lastName: candidateFields.lastName,
+      name: `${candidateFields.firstName} ${candidateFields.lastName}`,
+      email: candidateFields.email,
+      ...(candidateFields.nickName && { nickName: candidateFields.nickName }),
+      status: candidateFields.status,
+      city: candidateFields.city,
+      state: candidateFields.state,
+      zip: candidateFields.zip,
+      phone: candidateFields.phone,
+      customText4: candidateFields.workAuthorization,
+      customText25: candidateFields.relocation,
+      customText7: candidateFields.codingAbility,
+      customText3: candidateFields.yearsOfExperience,
+      ...(candidateFields.graduationDate && {
+        customDate3: candidateFields.graduationDate,
+        customText9: calculateMonthsToGrad(new Date(candidateFields.graduationDate)),
+      }),
+      ...(candidateFields.degreeExpected && { degreeList: candidateFields.degreeExpected }),
+      ...(candidateFields.highestDegree && { educationDegree: candidateFields.highestDegree }),
+      customText2: candidateFields.militaryStatus,
+      ...(candidateFields.militaryBranch && { customText10: candidateFields.militaryBranch }),
+      ...(candidateFields.major && { customText38: candidateFields.major }),
+      owner: { id: 2 },
+      source: 'Corporate Web Site',
+    },
+    {
+      params: {
+        BhRestToken,
+      },
+    }
+  );
+  return data.changedEntityId;
+};
+
+const createSubmission = async (
+  url: string,
+  BhRestToken: string,
+  candidateId: number,
+  jobOrderId: number,
+  submissionFields: ApplicationProcessingRequest['submission']['fields'],
+  workAuthorization: String
+) => {
+  const submissionUrl = `${url}entity/JobSubmission`;
+  const { data } = await axios.put(
+    submissionUrl,
+    {
+      status: submissionFields.status,
+      customText25: workAuthorization,
+      ...(submissionFields.utmSource && { source: submissionFields.utmSource }),
+      ...(submissionFields.utmMedium && { customText24: submissionFields.utmMedium }),
+      ...(submissionFields.utmCampaign && { customText6: submissionFields.utmCampaign }),
+      candidate: { id: candidateId },
+      jobOrder: { id: jobOrderId },
+    },
+    {
+      params: {
+        BhRestToken,
+      },
+    }
+  );
+  return data.changedEntityId;
 };
 
 export const fetchCandidateForPrescreen = async (url: string, BhRestToken: string, candidateId: number) => {
@@ -325,42 +435,6 @@ export const saveSubmissionFields = async (url: string, BhRestToken: string, sub
       BhRestToken,
     },
   });
-};
-
-export const populateCandidateFields = async (
-  url: string,
-  BhRestToken: string,
-  candidateId: number,
-  fields: CandidateExtraFields
-): Promise<Candidate> => {
-  const candidateUrl = `${url}entity/Candidate/${candidateId}`;
-  const updateData = {
-    ...(fields.nickName && { nickName: fields.nickName }),
-    status: fields.status,
-    city: fields.city,
-    state: fields.state,
-    zip: fields.zip,
-    phone: fields.phone,
-    customText4: fields.workAuthorization,
-    customText25: fields.relocation,
-    customText7: fields.codingAbility,
-    customText3: fields.yearsOfExperience,
-    ...(fields.graduationDate && {
-      customDate3: fields.graduationDate,
-      customText9: calculateMonthsToGrad(new Date(fields.graduationDate)),
-    }),
-    ...(fields.degreeExpected && { degreeList: fields.degreeExpected }),
-    ...(fields.highestDegree && { educationDegree: fields.highestDegree }),
-    customText2: fields.militaryStatus,
-    ...(fields.militaryBranch && { customText10: fields.militaryBranch }),
-    ...(fields.major && { customText38: fields.major }),
-  };
-  const { data } = await axios.post(candidateUrl, updateData, {
-    params: {
-      BhRestToken,
-    },
-  });
-  return data.data;
 };
 
 export const populateSACandidateFields = async (
