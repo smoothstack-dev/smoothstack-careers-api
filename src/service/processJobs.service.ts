@@ -32,17 +32,25 @@ export const processJob = async (jobOrderId: number) => {
   const { token } = await getMSAuthData();
   const conn = await getSFDCConnection();
   const jobOrder = await fetchJobOrder(restUrl, BhRestToken, jobOrderId);
-  const { id: cohortId, msTeamId: existingMsTeamId, msDistroId: existingMsDistroId } = await saveCohort(conn, jobOrder);
+  const {
+    id: cohortId,
+    msTeamId: existingMsTeamId,
+    msDistroId: existingMsDistroId,
+    msTeamName: existingMsTeamName,
+    msDistroName: existingMsDistroName,
+  } = await saveCohort(conn, jobOrder);
   const { id: msTeamId, name: msTeamName } = existingMsTeamId
-    ? await updateTeam(token, existingMsTeamId, jobOrder)
+    ? await updateTeam(token, existingMsTeamId, jobOrder, existingMsTeamName)
     : await addTeam(token, jobOrder);
-    const { id: msDistroId, name: msDistroName } = existingMsDistroId
-    ? await updateDistribution(token, existingMsDistroId, jobOrder)
-    : await addDistribution(token, jobOrder);
   await updateCohort(conn, cohortId, {
     MSTeamID__c: msTeamId,
-    MSDistributionID__c: msDistroId,
     Slack_Channel_Name__c: msTeamName,
+  });
+  const { id: msDistroId, name: msDistroName } = existingMsDistroId
+    ? await updateDistribution(token, existingMsDistroId, jobOrder, existingMsDistroName)
+    : await addDistribution(token, jobOrder);
+  await updateCohort(conn, cohortId, {
+    MSDistributionID__c: msDistroId,
     Email_Distribution_Name__c: `${msDistroName}@smoothstack.com`,
   });
 

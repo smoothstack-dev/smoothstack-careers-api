@@ -100,17 +100,25 @@ export const addTeam = async (authToken: string, jobOrder: JobOrder): Promise<MS
 };
 
 // Clones and Deletes old team due to MS Graph Limitation
-export const updateTeam = async (authToken: string, teamId: string, jobOrder: JobOrder): Promise<MSTeam> => {
+export const updateTeam = async (
+  authToken: string,
+  teamId: string,
+  jobOrder: JobOrder,
+  existingTeamName: string
+): Promise<MSTeam> => {
   const teamName = deriveTeamName(jobOrder);
-  const teamInfo = {
-    displayName: teamName,
-    description: teamName,
-    mailNickname: teamName,
-    partsToClone: 'apps,tabs,settings,channels,members',
-  };
-  const clonedTeamId = await cloneTeam(authToken, teamId, teamInfo);
-  await deleteTeam(authToken, teamId);
-  return { id: clonedTeamId, name: teamName };
+  if (teamName.toLowerCase() !== existingTeamName.toLowerCase()) {
+    const teamInfo = {
+      displayName: teamName,
+      description: teamName,
+      mailNickname: teamName,
+      partsToClone: 'apps,tabs,settings,channels,members',
+    };
+    const clonedTeamId = await cloneTeam(authToken, teamId, teamInfo);
+    await deleteTeam(authToken, teamId);
+    return { id: clonedTeamId, name: teamName };
+  }
+  return { id: teamId, name: existingTeamName };
 };
 
 const cloneTeam = async (authToken: string, teamId: string, teamInfo: any) => {
@@ -155,11 +163,20 @@ export const addDistribution = async (
 };
 
 // Manually Clones and Deletes old distribution due to MS Graph Limitation
-export const updateDistribution = async (authToken: string, distroId: string, jobOrder: JobOrder): Promise<MSTeam> => {
-  const existingMembers = await listDistributionMembers(authToken, distroId);
-  const newDistroInfo = await addDistribution(authToken, jobOrder, existingMembers);
-  await deleteTeam(authToken, distroId);
-  return newDistroInfo;
+export const updateDistribution = async (
+  authToken: string,
+  distroId: string,
+  jobOrder: JobOrder,
+  existingDistroName: string
+): Promise<MSTeam> => {
+  const distributionName = deriveTeamName(jobOrder, '_Trainees');
+  if (`${distributionName.toLowerCase()}@smoothstack.com` !== existingDistroName.toLowerCase()) {
+    const existingMembers = await listDistributionMembers(authToken, distroId);
+    const newDistroInfo = await addDistribution(authToken, jobOrder, existingMembers);
+    await deleteTeam(authToken, distroId);
+    return newDistroInfo;
+  }
+  return { id: distroId, name: existingDistroName };
 };
 
 const listDistributionMembers = async (authToken: string, distroId: string): Promise<string[]> => {

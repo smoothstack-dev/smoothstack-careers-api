@@ -202,7 +202,7 @@ export const saveCohort = async (conn: any, jobOrder: JobOrder): Promise<SFDCCoh
   const existingCohort = await fetchCohortByJobId(conn, jobOrder.id);
   if (existingCohort) {
     await updateCohort(conn, existingCohort.id, dataFields);
-    return { id: existingCohort.id, msTeamId: existingCohort.msTeamId, msDistroId: existingCohort.msDistroId };
+    return existingCohort;
   } else {
     return { id: await insertCohort(conn, dataFields), msTeamId: undefined, msDistroId: undefined };
   }
@@ -219,7 +219,7 @@ export const fetchCohort = async (conn: any, cohortId: string): Promise<SFDCCoho
 
 export const fetchCohortByJobId = async (conn: any, jobOrderId: number): Promise<SFDCCohort> => {
   const { records } = await conn.query(
-    `SELECT Id, MSTeamID__c, MSDistributionID__c FROM Cohort__c WHERE BH_Job_Id__c = '${jobOrderId}'`
+    `SELECT Id, MSTeamID__c, MSDistributionID__c, Slack_Channel_Name__c, Email_Distribution_Name__c FROM Cohort__c WHERE BH_Job_Id__c = '${jobOrderId}'`
   );
 
   return records.length
@@ -227,6 +227,8 @@ export const fetchCohortByJobId = async (conn: any, jobOrderId: number): Promise
         id: records[0].Id,
         msTeamId: records[0].MSTeamID__c,
         msDistroId: records[0].MSDistributionID__c,
+        msTeamName: records[0].Slack_Channel_Name__c,
+        msDistroName: records[0].Email_Distribution_Name__c,
       }
     : undefined;
 };
