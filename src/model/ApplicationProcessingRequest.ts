@@ -34,6 +34,8 @@ export interface ApplicationProcessingRequest {
       highestDegree?: string;
       militaryBranch?: string;
       major?: string;
+      techSelection:string;
+      hardwareDesign: string;
     };
   };
   knockout: Knockout;

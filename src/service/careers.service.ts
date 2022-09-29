@@ -3,7 +3,7 @@ import FormData from 'form-data';
 import { ApplicationProcessingRequest } from 'src/model/ApplicationProcessingRequest';
 import { Appointment } from 'src/model/Appointment';
 import { Candidate } from 'src/model/Candidate';
-import {  SACandidateExtraFields } from 'src/model/CandidateExtraFields';
+import { SACandidateExtraFields } from 'src/model/CandidateExtraFields';
 import { CandidateFile } from 'src/model/CandidateFile';
 import { ChallengeSession } from 'src/model/ChallengeEvent';
 import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
@@ -933,6 +933,7 @@ const generateApplicationComments = (application: any): any => ({
   'Willingness to relocate': application.relocation,
   'How would you rank your coding ability? (0 - lowest, 10 - highest)': application.codingAbility,
   'Strongest Language': application.techSelection,
+  'Interest in Hardware Design/Architecture?': application.hardwareDesign,
   'Years of Experience (Including Personal/Educational Projects)': application.yearsOfExperience,
   'Are you currently a student?': application.currentlyStudent,
   ...(application.graduationDate && { 'Expected Graduation Date': application.graduationDate }),
