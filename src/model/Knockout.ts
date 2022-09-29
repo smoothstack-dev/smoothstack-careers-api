@@ -16,6 +16,7 @@ export interface KnockoutFields {
   degreeExpected?: string;
   codingAbility: number;
   techSelection?: string;
+  hardwareDesign?: string;
 }
 
 export interface KnockoutSARequirements {

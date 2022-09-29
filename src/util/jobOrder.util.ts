@@ -21,6 +21,7 @@ export const resolveJobByKnockout = (knockout: KnockoutFields, jobOrders: JobOrd
     degreeExpected,
     codingAbility,
     techSelection,
+    hardwareDesign,
   } = knockout;
   const monthsToGraduation = graduationDate ? calculateMonthsToGrad(new Date(graduationDate)) : 0;
 
@@ -73,6 +74,9 @@ export const resolveJobByKnockout = (knockout: KnockoutFields, jobOrders: JobOrd
     }
     if (JOB_BATCHTYPE_MAPPING[techSelection].includes(j.batchType)) {
       pointMap[j.id].extraPoints += 2;
+    }
+    if (hardwareDesign === 'Yes' && j.batchType === 'Pre-Silicon') {
+      pointMap[j.id].extraPoints += 1;
     }
   });
 
