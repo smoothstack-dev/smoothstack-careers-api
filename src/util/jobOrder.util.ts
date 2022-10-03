@@ -24,7 +24,9 @@ export const resolveJobByKnockout = (knockout: KnockoutFields, jobOrders: JobOrd
     hardwareDesign,
   } = knockout;
   const monthsToGraduation = graduationDate ? calculateMonthsToGrad(new Date(graduationDate)) : 0;
-
+  if (hardwareDesign === 'No') {
+    jobOrders = jobOrders.filter((job) => job.batchType !== 'Pre-Silicon');
+  }
   const pointMap = jobOrders.reduce(
     (acc, j) => ({
       ...acc,
@@ -76,7 +78,7 @@ export const resolveJobByKnockout = (knockout: KnockoutFields, jobOrders: JobOrd
       pointMap[j.id].extraPoints += 2;
     }
     if (hardwareDesign === 'Yes' && j.batchType === 'Pre-Silicon') {
-      pointMap[j.id].extraPoints += 1;
+      pointMap[j.id].extraPoints++;
     }
   });
 
