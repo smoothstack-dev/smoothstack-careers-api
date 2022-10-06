@@ -3,7 +3,7 @@ import FormData from 'form-data';
 import { ApplicationProcessingRequest } from 'src/model/ApplicationProcessingRequest';
 import { Appointment } from 'src/model/Appointment';
 import { Candidate } from 'src/model/Candidate';
-import { SACandidateExtraFields } from 'src/model/CandidateExtraFields';
+import { CandidateExtraFields, SACandidateExtraFields } from 'src/model/CandidateExtraFields';
 import { CandidateFile } from 'src/model/CandidateFile';
 import { ChallengeSession } from 'src/model/ChallengeEvent';
 import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
@@ -54,8 +54,7 @@ export const createApplication = async (
   application: {
     candidateFields: ApplicationProcessingRequest['candidate']['fields'];
     submissionFields: ApplicationProcessingRequest['submission']['fields'];
-  },
-  resume: any
+  }
 ) => {
   const { candidateFields, submissionFields } = application;
   const { workAuthorization } = candidateFields;
@@ -68,17 +67,6 @@ export const createApplication = async (
     submissionFields,
     workAuthorization
   );
-
-  if (resume) {
-    await uploadCandidateFile(
-      url,
-      BhRestToken,
-      candidateId,
-      resume.content.toString('base64'),
-      resume.filename,
-      'Resume'
-    );
-  }
   return { candidateId, submissionId };
 };
 
@@ -90,33 +78,14 @@ const createCandidate = async (
   const candidateUrl = `${url}entity/Candidate`;
   const { data } = await axios.put(
     candidateUrl,
-
     {
       firstName: candidateFields.firstName,
       lastName: candidateFields.lastName,
       name: `${candidateFields.firstName} ${candidateFields.lastName}`,
       email: candidateFields.email,
-      ...(candidateFields.nickName && { nickName: candidateFields.nickName }),
-      status: candidateFields.status,
-      city: candidateFields.city,
-      state: candidateFields.state,
-      zip: candidateFields.zip,
-      phone: candidateFields.phone,
-      customText4: candidateFields.workAuthorization,
-      customText25: candidateFields.relocation,
-      customText7: candidateFields.codingAbility,
-      customText3: candidateFields.yearsOfExperience,
-      ...(candidateFields.graduationDate && {
-        customDate3: candidateFields.graduationDate,
-        customText9: calculateMonthsToGrad(new Date(candidateFields.graduationDate)),
-      }),
-      ...(candidateFields.degreeExpected && { degreeList: candidateFields.degreeExpected }),
-      ...(candidateFields.highestDegree && { educationDegree: candidateFields.highestDegree }),
-      customText2: candidateFields.militaryStatus,
-      ...(candidateFields.militaryBranch && { customText10: candidateFields.militaryBranch }),
-      ...(candidateFields.major && { customText38: candidateFields.major }),
       owner: { id: 2 },
       source: 'Corporate Web Site',
+      ...getCommonCandidateFields(candidateFields),
     },
     {
       params: {
@@ -125,6 +94,47 @@ const createCandidate = async (
     }
   );
   return data.changedEntityId;
+};
+
+export const populateCandidateFields = async (
+  url: string,
+  BhRestToken: string,
+  candidateId: number,
+  fields: CandidateExtraFields
+): Promise<Candidate> => {
+  const candidateUrl = `${url}entity/Candidate/${candidateId}`;
+  const { data } = await axios.post(candidateUrl, getCommonCandidateFields(fields), {
+    params: {
+      BhRestToken,
+    },
+  });
+  return data.data;
+};
+
+const getCommonCandidateFields = (
+  fields: CandidateExtraFields | ApplicationProcessingRequest['candidate']['fields']
+) => {
+  return {
+    ...(fields.nickName && { nickName: fields.nickName }),
+    status: fields.status,
+    city: fields.city,
+    state: fields.state,
+    zip: fields.zip,
+    phone: fields.phone,
+    customText4: fields.workAuthorization,
+    customText25: fields.relocation,
+    customText7: fields.codingAbility,
+    customText3: fields.yearsOfExperience,
+    ...(fields.graduationDate && {
+      customDate3: fields.graduationDate,
+      customText9: calculateMonthsToGrad(new Date(fields.graduationDate)),
+    }),
+    ...(fields.degreeExpected && { degreeList: fields.degreeExpected }),
+    ...(fields.highestDegree && { educationDegree: fields.highestDegree }),
+    customText2: fields.militaryStatus,
+    ...(fields.militaryBranch && { customText10: fields.militaryBranch }),
+    ...(fields.major && { customText38: fields.major }),
+  };
 };
 
 const createSubmission = async (
