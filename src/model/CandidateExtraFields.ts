@@ -1,5 +1,5 @@
 export interface CandidateExtraFields {
-  phone: string;
+  phone?: string;
   city: string;
   state: string;
   zip: string;

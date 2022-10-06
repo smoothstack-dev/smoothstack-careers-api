@@ -6,6 +6,7 @@ import {
   fetchSubmission,
   findActiveJobOrders,
   findCandidateByEmailOrPhone,
+  populateCandidateFields,
   populateSACandidateFields,
   saveApplicationNote,
   saveCandidateNote,
@@ -87,7 +88,7 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
 };
 
 const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
-  const { firstName, lastName, email, phone, utmSource, utmMedium, utmCampaign, ...extraFields } =
+  const { firstName, lastName, email, format, phone, utmSource, utmMedium, utmCampaign, ...extraFields } =
     event.queryStringParameters;
   const { resume } = parse(event, true);
   const { restUrl, BhRestToken } = await getSessionData();
@@ -122,17 +123,19 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       degreeExpected,
       codingAbility: +codingAbility,
       techSelection,
-      hardwareDesign
+      hardwareDesign,
     };
     const jobOrder = resolveJobByKnockout(knockoutFields, activeJobOrders);
     const knockout = calculateKnockout(jobOrder.knockout, knockoutFields);
-
-    const candidateFields = {
+    const webResponseFields = {
       firstName: formattedFirstName,
       lastName: formattedLastName,
-      name: `${formattedFirstName} ${formattedLastName}`,
       email: formattedEmail,
       phone: formattedPhone,
+      format,
+    };
+    const candidateFields = {
+      ...(!resume && { name: `${formattedFirstName} ${formattedLastName}`, ...webResponseFields }),
       status: KNOCKOUT_STATUS[knockout].candidateStatus,
       ...extraFields,
     } as any;
@@ -143,18 +146,27 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       ...(utmCampaign && { utmCampaign }),
     };
 
-    const { candidateId, submissionId } = await createApplication(
-      restUrl,
-      BhRestToken,
-      jobOrder.id,
-      {
+    let candidateId: number, submissionId: number;
+    if (resume) {
+      const { jobSubmission, candidate: newCandidate } = await createWebResponse(
+        jobOrder.id,
+        webResponseFields,
+        resume,
+        CORP_TYPE.APPRENTICESHIP
+      );
+      candidateId = newCandidate.id;
+      submissionId = jobSubmission.id;
+    } else {
+      const applicationData = await createApplication(restUrl, BhRestToken, jobOrder.id, {
         candidateFields,
         submissionFields,
-      },
-      resume
-    );
+      });
+      candidateId = applicationData.candidateId;
+      submissionId = applicationData.submissionId;
+    }
 
     const applicationRequest: ApplicationProcessingRequest = {
+      ...(resume && { webResponse: { fields: webResponseFields } }),
       submission: { id: submissionId, fields: submissionFields },
       candidate: { id: candidateId, fields: candidateFields },
       knockout,
@@ -196,12 +208,38 @@ export const processApplication = async (
   const { id: candidateId, fields: candidateFields } = application.candidate;
   const { id: submissionId, fields: submissionFields } = application.submission;
   const { knockout } = application;
+
   await saveApplicationNote(url, BhRestToken, candidateId, {
+    ...(application.webResponse && application.webResponse.fields),
     ...candidateFields,
     ...submissionFields,
   });
+  if (application.webResponse) {
+    await saveApplicationData(url, BhRestToken, candidateId, submissionId, candidateFields, submissionFields, knockout);
+  }
   await saveCandidateNote(url, BhRestToken, candidateId, 'Knockout', KNOCKOUT_NOTE[knockout]);
   await publishLinksGenerationRequest(submissionId, 'initial');
+};
+
+const saveApplicationData = async (
+  url: string,
+  BhRestToken: string,
+  candidateId: number,
+  submissionId: number,
+  candidateFields: ApplicationProcessingRequest['candidate']['fields'],
+  submissionFields: ApplicationProcessingRequest['submission']['fields'],
+  knockout: Knockout
+) => {
+  await populateCandidateFields(url, BhRestToken, candidateId, candidateFields);
+  const { status: subStatus } = await fetchSubmission(url, BhRestToken, submissionId);
+  await saveSubmissionFields(url, BhRestToken, submissionId, {
+    status: subStatus,
+    customText25: candidateFields.workAuthorization,
+    ...(subStatus === 'New Lead' && { status: KNOCKOUT_STATUS[knockout].submissionStatus }),
+    ...(submissionFields.utmSource && { source: submissionFields.utmSource }),
+    ...(submissionFields.utmMedium && { customText24: submissionFields.utmMedium }),
+    ...(submissionFields.utmCampaign && { customText6: submissionFields.utmCampaign }),
+  });
 };
 
 export const saveSAApplicationData = async (
