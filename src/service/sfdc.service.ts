@@ -126,7 +126,7 @@ export const saveSFDCUser = async (
     Technical_Result__c: candidate.technicalScore,
     Behavioral_Result__c: candidate.behavioralScore,
     Project_Score_Result__c: candidate.projectScore,
-    Communication_Skills_Recruiter__c: deriveCommSkills(candidate.communicationSkillsPS),
+    Communication_Skills_Recruiter__c: candidate.communicationSkillsPS,
     Communication_Skills_Tech_Screener__c: deriveCommSkills(candidate.communicationSkillsTS),
     Tech_Screener__c: candidate.screenerEmail,
     Screener_Determination__c: candidate.screenerDetermination,
