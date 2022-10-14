@@ -169,7 +169,7 @@ const createSubmission = async (
 export const fetchCandidateForPrescreen = async (url: string, BhRestToken: string, candidateId: number) => {
   const candidatesUrl = `${url}entity/Candidate/${candidateId}`;
   const fields =
-    'id,firstName,lastName,nickName,email,customText25,degreeList,customDate3,customText9,educationDegree,customDate10,customInt15,customText24,source,customText23,customText14,customText8,customText6,customText5,customText1,customText31,customText27,customInt14,customEncryptedText1,address(address1,address2,city,state,zip),customTextBlock5,customTextBlock9,customText11,customTextBlock2,customText4,customText33,customObject2s(text1,dateLastModified,text2,text3,text4,text5,text6,text7,text8,textBlock1,textBlock2,textBlock3,textBlock4)';
+    'id,firstName,lastName,nickName,email,customText25,degreeList,customDate3,customText9,educationDegree,customDate10,customInt15,customText24,source,customText23,customText14,customText8,customText6,customText5,customText1,customText31,customText27,customInt14,customEncryptedText1,address(address1,address2,city,state,zip),customTextBlock5,customTextBlock9,customText11,customTextBlock2,customText4,customText33,customText26,customText20,customObject2s(text1,dateLastModified,text2,text3,text4,text5,text6,text7,text8,textBlock1,textBlock2,textBlock3,textBlock4)';
   const { data } = await axios.get(candidatesUrl, {
     params: {
       BhRestToken,
@@ -191,7 +191,7 @@ export const fetchCandidateForPrescreen = async (url: string, BhRestToken: strin
     expectedGraduationDate: candidateData.customDate3,
     highestDegree: candidateData.educationDegree,
     graduationDate: candidateData.customDate10,
-    monthsOfProjectExperience: candidateData.customInt15,
+    monthsOfProjectExperience: candidateData.customText26,,
     canCommit: candidateData.customText24,
     referral: candidateData.source,
     opportunityRank: candidateData.customText23,
@@ -214,7 +214,7 @@ export const fetchCandidateForPrescreen = async (url: string, BhRestToken: strin
     workAuthorization: candidateData.customText4,
     questions: candidateData.customTextBlock9,
     candidateRank: candidateData.customInt14?.toString(),
-    showOnTime: candidatePrescreenData?.text1,
+    showOnTime: candidateData.customText20,
     updatedTime: new Date(candidatePrescreenData?.dateLastModified),
     backgroundCheck: candidatePrescreenData?.text2,
     referFriend: candidatePrescreenData?.text3,
@@ -542,12 +542,12 @@ export const savePrescreenData = async (
     ...(prescreenForm.firstName?.answer && { firstName: prescreenForm.firstName.answer }),
     ...(prescreenForm.lastName?.answer && { lastName: prescreenForm.lastName.answer }),
     ...(prescreenForm.nickName?.answer && { nickName: prescreenForm.nickName.answer }),
+    ...(prescreenForm.showOnTime?.answer && { customText20: prescreenForm.showOnTime.answer }),
     ...(prescreenForm.monthsOfProjectExperience?.answer && {
-      customInt15: parseInt(prescreenForm.monthsOfProjectExperience.answer),
+      customText26: prescreenForm.monthsOfProjectExperience.answer,
     }),
     customObject2s: [
       {
-        ...(prescreenForm.showOnTime?.answer && { text1: prescreenForm.showOnTime.answer }),
         ...(prescreenForm.updatedTime?.answer && { dateLastModified: prescreenForm.updatedTime.answer }),
         ...(prescreenForm.backgroundCheck?.answer && { text2: prescreenForm.backgroundCheck.answer }),
         ...(prescreenForm.referFriend?.answer && { text3: prescreenForm.referFriend.answer }),
