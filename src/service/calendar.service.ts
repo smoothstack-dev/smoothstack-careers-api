@@ -58,7 +58,7 @@ export const sendTechScreenCalendarInvite = async (
 ): Promise<string> => {
   const { token } = await getMSAuthData();
   const eventId = await createTechScreenEvent(token, submission, appointment);
-  await attachResumeToEvent(token, eventId, submission.candidate, resumeFile);
+  resumeFile && await attachResumeToEvent(token, eventId, submission.candidate, resumeFile);
   await addAttendeesToEvent(token, eventId, submission.candidate, screenerEmail);
   return eventId;
 };
