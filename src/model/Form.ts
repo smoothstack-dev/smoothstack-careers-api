@@ -55,6 +55,7 @@ export interface PrescreenForm {
   monthsOfProjectExperience: FormEntry;
   teamWorkExperience: FormEntry;
   agreeToBeResponsive: FormEntry;
+  major: FormEntry;
 }
 
 export interface TechScreenForm {

@@ -169,7 +169,7 @@ const createSubmission = async (
 export const fetchCandidateForPrescreen = async (url: string, BhRestToken: string, candidateId: number) => {
   const candidatesUrl = `${url}entity/Candidate/${candidateId}`;
   const fields =
-    'id,firstName,lastName,nickName,email,customText25,degreeList,customDate3,customText9,educationDegree,customDate10,customInt15,customText24,source,customText23,customText14,customText8,customText6,customText5,customText1,customText31,customText27,customInt14,customEncryptedText1,address(address1,address2,city,state,zip),customTextBlock5,customTextBlock9,customText11,customTextBlock2,customText4,customText33,customText26,customText20,customObject2s(text1,dateLastModified,text2,text3,text4,text5,text6,text7,text8,textBlock1,textBlock2,textBlock3,textBlock4)';
+    'id,firstName,lastName,nickName,email,customText25,degreeList,customText38,customDate3,customText9,educationDegree,customDate10,customInt15,customText24,source,customText23,customText14,customText8,customText6,customText5,customText1,customText31,customText27,customInt14,customEncryptedText1,address(address1,address2,city,state,zip),customTextBlock5,customTextBlock9,customText11,customTextBlock2,customText4,customText33,customText26,customText20,customObject2s(text1,dateLastModified,text2,text3,text4,text5,text6,text7,text8,textBlock1,textBlock2,textBlock3,textBlock4),submissions(id,jobOrder(id,title,customText5,willRelocate),status)';
   const { data } = await axios.get(candidatesUrl, {
     params: {
       BhRestToken,
@@ -189,9 +189,10 @@ export const fetchCandidateForPrescreen = async (url: string, BhRestToken: strin
     relocation: candidateData.customText25,
     expectedDegree: candidateData.degreeList,
     expectedGraduationDate: candidateData.customDate3,
+    major: candidateData.customText38,
     highestDegree: candidateData.educationDegree,
     graduationDate: candidateData.customDate10,
-    monthsOfProjectExperience: candidateData.customText26,,
+    monthsOfProjectExperience: candidateData.customText26,
     canCommit: candidateData.customText24,
     referral: candidateData.source,
     opportunityRank: candidateData.customText23,
@@ -228,6 +229,7 @@ export const fetchCandidateForPrescreen = async (url: string, BhRestToken: strin
     teamWorkExperience: candidatePrescreenData?.textBlock3,
     agreeToBeResponsive: candidatePrescreenData?.textBlock4,
     clearanceStatus: candidateData.customEncryptedText1,
+    submissions: candidateData.submissions.data,
   };
 
   if (prescreenData.expectedDegree || prescreenData.expectedGraduationDate) prescreenData['isStudent'] = 'Yes';
@@ -488,8 +490,9 @@ export const savePrescreenData = async (
 
   // TODO: retire customText26 after retire google form prescreen
   const updateData = {
-    ...(prescreenForm.newRelocation?.answer && { customText25: prescreenForm.newRelocation.answer }),
+    ...(prescreenForm.relocation?.answer && { customText25: prescreenForm.relocation.answer }),
     ...(prescreenForm.expectedDegree?.answer && { degreeList: prescreenForm.expectedDegree.answer }),
+    ...(prescreenForm.major?.answer && { customText38: prescreenForm.major.answer }),
     ...(prescreenForm.expectedGraduationDate?.answer && {
       customDate3: new Date(
         new Date(prescreenForm.expectedGraduationDate.answer).getTime() +
