@@ -37,9 +37,11 @@ export interface ApplicationProcessingRequest {
     id: number;
     fields: {
       status: string;
+      deviceType: string;
       utmSource?: string;
       utmMedium?: string;
       utmCampaign?: string;
+      utmTerm?:string;
     };
   };
   candidate: {

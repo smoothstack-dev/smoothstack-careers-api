@@ -88,8 +88,19 @@ const staffAugApply = async (event: APIGatewayProxyEvent) => {
 };
 
 const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
-  const { firstName, lastName, email, format, phone, utmSource, utmMedium, utmCampaign, ...extraFields } =
-    event.queryStringParameters;
+  const {
+    firstName,
+    lastName,
+    email,
+    format,
+    phone,
+    utmSource,
+    utmMedium,
+    utmCampaign,
+    utmTerm,
+    deviceType,
+    ...extraFields
+  } = event.queryStringParameters;
   const { resume } = parse(event, true);
   const { restUrl, BhRestToken } = await getSessionData();
 
@@ -141,9 +152,11 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
     } as any;
     const submissionFields = {
       status: KNOCKOUT_STATUS[knockout].submissionStatus,
+      deviceType,
       ...(utmSource && { utmSource }),
       ...(utmMedium && { utmMedium }),
       ...(utmCampaign && { utmCampaign }),
+      ...(utmTerm && { utmTerm }),
     };
 
     let candidateId: number, submissionId: number;
@@ -234,11 +247,12 @@ const saveApplicationData = async (
   const { status: subStatus } = await fetchSubmission(url, BhRestToken, submissionId);
   await saveSubmissionFields(url, BhRestToken, submissionId, {
     status: subStatus,
-    customText25: candidateFields.workAuthorization,
+    comments: submissionFields.deviceType,
     ...(subStatus === 'New Lead' && { status: KNOCKOUT_STATUS[knockout].submissionStatus }),
     ...(submissionFields.utmSource && { source: submissionFields.utmSource }),
     ...(submissionFields.utmMedium && { customText24: submissionFields.utmMedium }),
     ...(submissionFields.utmCampaign && { customText6: submissionFields.utmCampaign }),
+    ...(submissionFields.utmTerm && { customText25: submissionFields.utmTerm }),
   });
 };
 
