@@ -57,7 +57,6 @@ export const createApplication = async (
   }
 ) => {
   const { candidateFields, submissionFields } = application;
-  const { workAuthorization } = candidateFields;
   const candidateId = await createCandidate(url, BhRestToken, candidateFields);
   const submissionId = await createSubmission(
     url,
@@ -65,7 +64,7 @@ export const createApplication = async (
     candidateId,
     jobId,
     submissionFields,
-    workAuthorization
+
   );
   return { candidateId, submissionId };
 };
@@ -143,17 +142,17 @@ const createSubmission = async (
   candidateId: number,
   jobOrderId: number,
   submissionFields: ApplicationProcessingRequest['submission']['fields'],
-  workAuthorization: String
 ) => {
   const submissionUrl = `${url}entity/JobSubmission`;
   const { data } = await axios.put(
     submissionUrl,
     {
       status: submissionFields.status,
-      customText25: workAuthorization,
+      comments: submissionFields.deviceType,
       ...(submissionFields.utmSource && { source: submissionFields.utmSource }),
       ...(submissionFields.utmMedium && { customText24: submissionFields.utmMedium }),
       ...(submissionFields.utmCampaign && { customText6: submissionFields.utmCampaign }),
+      ...(submissionFields.utmTerm && { customText25: submissionFields.utmTerm }),
       candidate: { id: candidateId },
       jobOrder: { id: jobOrderId },
     },
