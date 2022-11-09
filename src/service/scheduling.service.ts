@@ -12,12 +12,13 @@ import {
 import { saveSchedulingDataByEmail } from './careers.service';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { getSquareSpaceSecrets } from './secrets.service';
-import { SchedulingType, SchedulingTypeId } from '../model/SchedulingType';
+import { SchedulingType, SchedulingTypeId, UTMData } from '../model/SchedulingType';
 import { cancelWebinarRegistration, generateWebinarRegistration } from './webinar.service';
 import { publishAppointmentGenerationRequest } from './sns.service';
 import { cancelCalendarInvite } from './calendar.service';
 import { AppointmentType } from 'src/model/AppointmentGenerationRequest';
 import { updateSubmissionStatus } from 'src/util/status.util';
+import { fetchSFDCLeadByApptId, getSFDCConnection, saveSFDCLead } from './sfdc.service';
 
 const baseUrl = 'https://acuityscheduling.com/api/v1';
 
@@ -33,6 +34,9 @@ export const processSchedulingEvent = async (event: SchedulingEvent) => {
       break;
     case SchedulingTypeId.TECHSCREEN:
       await processTechScreenScheduling(event);
+      break;
+    case SchedulingTypeId['30_MIN']:
+      await process30MinScheduling(event);
       break;
   }
 };
@@ -277,6 +281,74 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
   }
 };
 
+const process30MinScheduling = async (event: SchedulingEvent) => {
+  const sfdcConnection = await getSFDCConnection();
+  const { apiKey, userId } = await getSquareSpaceSecrets();
+  const appointment = await fetchAppointment(apiKey, userId, event.id);
+  const eventType = event.action.split('.')[1];
+  switch (eventType) {
+    case 'scheduled': {
+      const existingAppointment = await findExistingAppointment(apiKey, userId, appointment);
+      const status = existingAppointment ? 'rescheduled' : 'scheduled';
+      const { email: calendarEmail, name: calendarName } = await findCalendar(apiKey, userId, appointment.calendarID);
+      if (existingAppointment) {
+        const { teamsMeetingId } = await fetchSFDCLeadByApptId(sfdcConnection, appointment.id);
+        const cancelAppReq = cancelAppointment(apiKey, userId, existingAppointment.id);
+        const cancelCalReq = cancelCalendarInvite(teamsMeetingId);
+        await Promise.all([cancelAppReq, cancelCalReq]);
+      }
+      const utmData: UTMData = appointment.forms
+        .find((f) => f.id === 2223757)
+        .values.reduce((acc, v) => {
+          return {
+            ...acc,
+            ...(v.fieldID === 12450695 && { utmSource: v.value }),
+            ...(v.fieldID === 12442560 && { utmTerm: v.value }),
+            ...(v.fieldID === 12450693 && { utmMedium: v.value }),
+            ...(v.fieldID === 12450694 && { utmCampaign: v.value }),
+            ...(v.fieldID === 12450696 && { utmContent: v.value }),
+          };
+        }, {});
+      const company = appointment.forms.find((f) => f.id === 2223757).values.find((v) => v.fieldID === 12450688).value;
+      const { id: leadId } = await saveSFDCLead(sfdcConnection, appointment, status, company, utmData);
+      await publishAppointmentGenerationRequest(
+        {
+          leadId,
+          calendarEmail,
+          calendarName,
+          appointment,
+        },
+        AppointmentType.THIRTYMIN
+      );
+      break;
+    }
+    case 'rescheduled': {
+      const { email, name } = await findCalendar(apiKey, userId, appointment.calendarID);
+      const { id: leadId, teamsMeetingId } = await saveSFDCLead(sfdcConnection, appointment, eventType);
+      if (teamsMeetingId) {
+        await cancelCalendarInvite(teamsMeetingId);
+      }
+      await publishAppointmentGenerationRequest(
+        {
+          leadId,
+          calendarEmail: email,
+          calendarName: name,
+          appointment,
+        },
+        AppointmentType.THIRTYMIN
+      );
+      break;
+    }
+    case 'canceled': {
+      const { teamsMeetingId } = await saveSFDCLead(sfdcConnection, appointment, eventType);
+      if (teamsMeetingId) {
+        await cancelCalendarInvite(teamsMeetingId);
+      }
+      break;
+    }
+  }
+};
+
 const fetchAppointment = async (apiKey: string, userId: string, appointmentId: string): Promise<Appointment> => {
   const url = `${baseUrl}/appointments/${appointmentId}`;
 
@@ -342,6 +414,19 @@ const findCalendarEmail = async (apiKey: string, userId: string, calendarId: num
   });
 
   return data.find((c: any) => c.id === calendarId).email;
+};
+
+const findCalendar = async (apiKey: string, userId: string, calendarId: number): Promise<any> => {
+  const url = `${baseUrl}/calendars`;
+
+  const { data } = await axios.get(url, {
+    auth: {
+      username: userId,
+      password: apiKey,
+    },
+  });
+
+  return data.find((c: any) => c.id === calendarId);
 };
 
 const hasFailedPreviousChallenge = async (

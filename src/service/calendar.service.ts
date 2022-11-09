@@ -58,7 +58,7 @@ export const sendTechScreenCalendarInvite = async (
 ): Promise<string> => {
   const { token } = await getMSAuthData();
   const eventId = await createTechScreenEvent(token, submission, appointment);
-  resumeFile && await attachResumeToEvent(token, eventId, submission.candidate, resumeFile);
+  resumeFile && (await attachResumeToEvent(token, eventId, submission.candidate, resumeFile));
   await addAttendeesToEvent(token, eventId, submission.candidate, screenerEmail);
   return eventId;
 };
@@ -99,6 +99,40 @@ const createTechScreenEvent = async (
   return data.id;
 };
 
+export const send30MinCalendarInvite = async (
+  calendarEmail: string,
+  calendarName: string,
+  appointment: Appointment
+): Promise<string> => {
+  const { token } = await getMSAuthData();
+  const eventId = await create30MinEvent(token, calendarName, appointment);
+  await add30MinAttendeesToEvent(token, eventId, appointment, calendarEmail);
+  return eventId;
+};
+
+const create30MinEvent = async (authToken: string, calendarName: string, appointment: Appointment): Promise<string> => {
+  const event = {
+    subject: `${calendarName.split(' ')[0].split("'")[0]}/${appointment.firstName} - 30 Minute Meeting (Smoothstack)`,
+    start: {
+      dateTime: appointment.datetime,
+      timeZone: 'Eastern Standard Time',
+    },
+    end: {
+      dateTime: new Date(+new Date(appointment.datetime) + appointment.duration * 60000).toISOString(),
+      timeZone: 'Eastern Standard Time',
+    },
+    isOnlineMeeting: true,
+    onlineMeetingProvider: 'teamsForBusiness',
+  };
+
+  const { data } = await axios.post(`${BASE_URL}/events`, event, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+  return data.id;
+};
+
 const addAttendeesToEvent = async (authToken: string, eventId: string, candidate: Candidate, screenerEmail: string) => {
   const update = {
     attendees: [
@@ -120,6 +154,36 @@ const addAttendeesToEvent = async (authToken: string, eventId: string, candidate
           address: candidate.owner.email,
         },
         type: 'optional',
+      },
+    ],
+  };
+  await axios.patch(`${BASE_URL}/events/${eventId}`, update, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+};
+
+const add30MinAttendeesToEvent = async (
+  authToken: string,
+  eventId: string,
+  appointment: Appointment,
+  calendarEmail: string
+) => {
+  const update = {
+    attendees: [
+      {
+        emailAddress: {
+          address: appointment.email,
+          name: `${appointment.firstName} ${appointment.lastName}`,
+        },
+        type: 'required',
+      },
+      {
+        emailAddress: {
+          address: calendarEmail,
+        },
+        type: 'required',
       },
     ],
   };
