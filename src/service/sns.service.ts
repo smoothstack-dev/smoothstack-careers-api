@@ -5,6 +5,7 @@ import {
   AppointmentType,
   ChallengeAppointmentData,
   TechScreenAppointmentData,
+  ThirtyMinAppointmentData,
 } from 'src/model/AppointmentGenerationRequest';
 import { LinksGenerationRequest, LinksGenerationType } from 'src/model/Links';
 import { DocumentGenerationRequest } from 'src/model/DocumentGenerationRequest';
@@ -56,7 +57,7 @@ export const publishWebinarProcesingRequest = async (data: any) => {
 };
 
 export const publishAppointmentGenerationRequest = async (
-  appointmentData: TechScreenAppointmentData | ChallengeAppointmentData,
+  appointmentData: TechScreenAppointmentData | ChallengeAppointmentData | ThirtyMinAppointmentData,
   type: AppointmentType
 ) => {
   const sns = new AWS.SNS(getSNSConfig(process.env.ENV));

@@ -8,6 +8,9 @@ import { getStateName } from 'src/util/states.util';
 import { JobOrder } from 'src/model/JobOrder';
 import { SFDCCohort, SFDCCohortParticipant } from 'src/model/SFDCCohort';
 import { toTitleCase } from 'src/util/misc.util';
+import { Appointment } from 'src/model/Appointment';
+import { UTMData } from 'src/model/SchedulingType';
+import { SFDCLead } from 'src/model/SFDCLead';
 
 const INSTANCE_URL = 'https://smoothstack.my.salesforce.com';
 
@@ -43,6 +46,7 @@ export const fetchSFDCUser = async (conn: any, userId: string): Promise<SFDCUser
     smoothstackEmail: Email,
   };
 };
+
 export const fetchSFDCUserByEmail = async (conn: any, email: string): Promise<SFDCUser> => {
   const { records } = await conn.query(
     `SELECT Id, Temp_MS_Password__c,Home_email__c,MS_Subscription_ID__c FROM Contact WHERE AccountId='001f400000lD8yoAAC' AND email = '${email}'`
@@ -54,6 +58,30 @@ export const fetchSFDCUserByEmail = async (conn: any, email: string): Promise<SF
         homeEmail: records[0].Home_email__c,
         tempMSPassword: records[0].Temp_MS_Password__c,
         msSubscriptionId: records[0].MS_Subscription_ID__c,
+      }
+    : undefined;
+};
+
+export const fetchSFDCLeadByEmail = async (conn: any, email: string): Promise<SFDCLead> => {
+  const { records } = await conn.query(`SELECT Id, Teams_Meeting_ID__c FROM Lead WHERE email = '${email}'`);
+
+  return records.length
+    ? {
+        id: records[0].Id,
+        teamsMeetingId: records[0].Teams_Meeting_ID__c,
+      }
+    : undefined;
+};
+
+export const fetchSFDCLeadByApptId = async (conn: any, appointmentId: number): Promise<SFDCLead> => {
+  const { records } = await conn.query(
+    `SELECT Id, Teams_Meeting_ID__c FROM Lead WHERE Appointment_ID__c = '${appointmentId}'`
+  );
+
+  return records.length
+    ? {
+        id: records[0].Id,
+        teamsMeetingId: records[0].Teams_Meeting_ID__c,
       }
     : undefined;
 };
@@ -161,6 +189,47 @@ const insertSDFCUser = async (conn: any, insertFields: any): Promise<string> => 
 
 export const updateSFDCUser = async (conn: any, userId: string, updateFields: any) => {
   await conn.sobject('Contact').update({ Id: userId, ...updateFields });
+};
+
+export const saveSFDCLead = async (
+  conn: any,
+  appointment: Appointment,
+  eventType: string,
+  company?: string,
+  utmData?: UTMData
+): Promise<SFDCLead> => {
+  const dataFields = {
+    FirstName: appointment.firstName,
+    LastName: appointment.lastName,
+    Email: appointment.email,
+    MobilePhone: appointment.phone,
+    Appointment_ID__c: appointment.id,
+    Appointment_Status__c: eventType.charAt(0).toUpperCase() + eventType.slice(1),
+    Appointment_Date_Time__c: appointment.datetime,
+    ...(company && { Company: company }),
+    ...(utmData?.utmSource && { UTM_Source__c: utmData.utmSource }),
+    ...(utmData?.utmMedium && { UTM_Medium__c: utmData.utmMedium }),
+    ...(utmData?.utmCampaign && { UTM_Campaign__c: utmData.utmCampaign }),
+    ...(utmData?.utmTerm && { UTM_Term__c: utmData.utmTerm }),
+    ...(utmData?.utmContent && { UTM_Content__c: utmData.utmContent }),
+  };
+  const existingLead = await fetchSFDCLeadByEmail(conn, appointment.email);
+  if (existingLead) {
+    await updateSFDCLead(conn, existingLead.id, dataFields);
+    return existingLead;
+  } else {
+    const id = await insertSDFCLead(conn, dataFields);
+    return { id };
+  }
+};
+
+const insertSDFCLead = async (conn: any, insertFields: any): Promise<string> => {
+  const { id } = await conn.sobject('Lead').create(insertFields);
+  return id;
+};
+
+export const updateSFDCLead = async (conn: any, userId: string, updateFields: any) => {
+  await conn.sobject('Lead').update({ Id: userId, ...updateFields });
 };
 
 export const saveSFDCUserFiles = async (conn: any, sdfcUserID: string, files: CandidateFile[]) => {

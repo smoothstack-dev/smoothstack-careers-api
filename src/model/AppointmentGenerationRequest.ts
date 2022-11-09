@@ -3,7 +3,7 @@ import { JobSubmission } from './JobSubmission';
 
 export interface AppointmentGenerationRequest {
   type: string;
-  appointmentData: TechScreenAppointmentData | ChallengeAppointmentData;
+  appointmentData: TechScreenAppointmentData | ChallengeAppointmentData | ThirtyMinAppointmentData;
 }
 
 export interface TechScreenAppointmentData {
@@ -17,7 +17,15 @@ export interface ChallengeAppointmentData {
   appointment: Appointment;
 }
 
+export interface ThirtyMinAppointmentData {
+  leadId: string;
+  calendarEmail: string;
+  calendarName: string;
+  appointment: Appointment;
+}
+
 export enum AppointmentType {
   TECHSCREEN = 'techscreen',
   CHALLENGE = 'challenge',
+  THIRTYMIN = 'thirtyMin',
 }
