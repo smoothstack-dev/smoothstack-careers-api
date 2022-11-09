@@ -58,14 +58,7 @@ export const createApplication = async (
 ) => {
   const { candidateFields, submissionFields } = application;
   const candidateId = await createCandidate(url, BhRestToken, candidateFields);
-  const submissionId = await createSubmission(
-    url,
-    BhRestToken,
-    candidateId,
-    jobId,
-    submissionFields,
-
-  );
+  const submissionId = await createSubmission(url, BhRestToken, candidateId, jobId, submissionFields);
   return { candidateId, submissionId };
 };
 
@@ -133,6 +126,15 @@ const getCommonCandidateFields = (
     customText2: fields.militaryStatus,
     ...(fields.militaryBranch && { customText10: fields.militaryBranch }),
     ...(fields.major && { customText38: fields.major }),
+
+    ...((fields.linkedin || fields.instagram) && {
+      customObject2s: [
+        {
+          ...(fields.linkedin && { text9: fields.linkedin }),
+          ...(fields.instagram && { text10: fields.instagram }),
+        },
+      ],
+    }),
   };
 };
 
@@ -141,7 +143,7 @@ const createSubmission = async (
   BhRestToken: string,
   candidateId: number,
   jobOrderId: number,
-  submissionFields: ApplicationProcessingRequest['submission']['fields'],
+  submissionFields: ApplicationProcessingRequest['submission']['fields']
 ) => {
   const submissionUrl = `${url}entity/JobSubmission`;
   const { data } = await axios.put(
@@ -168,7 +170,9 @@ const createSubmission = async (
 export const fetchCandidateForPrescreen = async (url: string, BhRestToken: string, candidateId: number) => {
   const candidatesUrl = `${url}entity/Candidate/${candidateId}`;
   const fields =
-    'id,firstName,lastName,nickName,email,customText25,degreeList,customText38,customDate3,customText9,educationDegree,customDate10,customInt15,customText24,source,customText23,customText14,customText8,customText6,customText5,customText1,customText31,customText27,customInt14,customEncryptedText1,address(address1,address2,city,state,zip),customTextBlock5,customTextBlock9,customText11,customTextBlock2,customText4,customText33,customText26,customText20,customObject2s(text1,dateLastModified,text2,text3,text4,text5,text6,text7,text8,textBlock1,textBlock2,textBlock3,textBlock4),submissions(id,jobOrder(id,title,customText5,willRelocate),status)';
+    'id,firstName,lastName,nickName,email,customText25,degreeList,customText38,customDate3,customText9,educationDegree,customDate10,customInt15,customText24,source,customText23,customText14,customText8,customText6,customText5,customText1,customText31,customText27,customInt14,customEncryptedText1,address(address1,address2,city,state,zip),customTextBlock5,customTextBlock9,customText11,customTextBlock2,customText4,customText33,customText26,customText20,customTextBlock8,' +
+    'customObject2s(text1,dateLastModified,text2,text3,text4,text5,text6,text7,text8,textBlock1,textBlock2,textBlock3,textBlock4),' +
+    'submissions(id,jobOrder(id,title,customText5,willRelocate),status)';
   const { data } = await axios.get(candidatesUrl, {
     params: {
       BhRestToken,
@@ -215,6 +219,7 @@ export const fetchCandidateForPrescreen = async (url: string, BhRestToken: strin
     questions: candidateData.customTextBlock9,
     candidateRank: candidateData.customInt14?.toString(),
     showOnTime: candidateData.customText20,
+    hobbies: candidateData.customTextBlock8,
     updatedTime: new Date(candidatePrescreenData?.dateLastModified),
     backgroundCheck: candidatePrescreenData?.text2,
     referFriend: candidatePrescreenData?.text3,
@@ -233,7 +238,7 @@ export const fetchCandidateForPrescreen = async (url: string, BhRestToken: strin
 
   if (prescreenData.expectedDegree || prescreenData.expectedGraduationDate) prescreenData['isStudent'] = 'Yes';
   if (prescreenData.highestDegree || prescreenData.graduationDate) prescreenData['isStudent'] = 'No';
-
+  console.log('prescreenData', prescreenData);
   return prescreenData;
 };
 
@@ -547,6 +552,9 @@ export const savePrescreenData = async (
     ...(prescreenForm.showOnTime?.answer && { customText20: prescreenForm.showOnTime.answer }),
     ...(prescreenForm.monthsOfProjectExperience?.answer && {
       customText26: prescreenForm.monthsOfProjectExperience.answer,
+    }),
+    ...(prescreenForm.hobbies?.answer && {
+      customTextBlock8: prescreenForm.hobbies.answer,
     }),
     customObject2s: [
       {

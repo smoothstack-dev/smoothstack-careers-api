@@ -56,6 +56,7 @@ export interface PrescreenForm {
   teamWorkExperience: FormEntry;
   agreeToBeResponsive: FormEntry;
   major: FormEntry;
+  hobbies: FormEntry;
 }
 
 export interface TechScreenForm {

@@ -28,10 +28,12 @@ interface CandidateFields extends Partial<WebResponseFields> {
   major?: string;
   techSelection: string;
   hardwareDesign: string;
+  instagram?: string;
+  linkedin?: string;
 }
 export interface ApplicationProcessingRequest {
   webResponse?: {
-    fields: WebResponseFields
+    fields: WebResponseFields;
   };
   submission: {
     id: number;
@@ -41,12 +43,12 @@ export interface ApplicationProcessingRequest {
       utmSource?: string;
       utmMedium?: string;
       utmCampaign?: string;
-      utmTerm?:string;
+      utmTerm?: string;
     };
   };
   candidate: {
     id: number;
-    fields: CandidateFields
+    fields: CandidateFields;
   };
   knockout: Knockout;
   corpType: CORP_TYPE;
