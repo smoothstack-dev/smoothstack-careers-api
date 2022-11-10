@@ -6,7 +6,11 @@ import { JobSubmission } from 'src/model/JobSubmission';
 import { getTechScreeningLink } from 'src/util/links';
 import { getMSAuthData } from './auth/microsoft.oauth.service';
 
-const BASE_URL = `https://graph.microsoft.com/v1.0/users/info@smoothstack.com/calendar`;
+const BASE_URL = 'https://graph.microsoft.com/v1.0/users/info@smoothstack.com/calendar';
+
+const getBaseURLbySender = (senderEmail: string) => {
+  return `https://graph.microsoft.com/v1.0/users/${senderEmail}/calendar`;
+};
 
 export const sendChallengeCalendarInvite = async (
   candidate: Candidate,
@@ -105,14 +109,23 @@ export const send30MinCalendarInvite = async (
   appointment: Appointment
 ): Promise<string> => {
   const { token } = await getMSAuthData();
-  const eventId = await create30MinEvent(token, calendarName, appointment);
+  const eventId = await create30MinEvent(token, calendarName, calendarEmail, appointment);
   await add30MinAttendeesToEvent(token, eventId, appointment, calendarEmail);
   return eventId;
 };
 
-const create30MinEvent = async (authToken: string, calendarName: string, appointment: Appointment): Promise<string> => {
+const create30MinEvent = async (
+  authToken: string,
+  calendarName: string,
+  calendarEmail: string,
+  appointment: Appointment
+): Promise<string> => {
   const event = {
     subject: `${calendarName.split(' ')[0].split("'")[0]}/${appointment.firstName} - 30 Minute Meeting (Smoothstack)`,
+    body: {
+      contentType: 'HTML',
+      content: `Hi ${appointment.firstName},<br/><br/>The purpose of this meeting is to talk about your Software Engineering hiring needs and how Smoothstack can address those needs through our Hire, Train, Deploy (HTD) model.<br/><br/>I'm looking forward to meeting with you.<br/><br/>- ${calendarName}<br/><br/>Need to make changes to this event?<br/><a href="${appointment.confirmationPage}">Reschedule/Cancel</a>`,
+    },
     start: {
       dateTime: appointment.datetime,
       timeZone: 'Eastern Standard Time',
@@ -125,7 +138,7 @@ const create30MinEvent = async (authToken: string, calendarName: string, appoint
     onlineMeetingProvider: 'teamsForBusiness',
   };
 
-  const { data } = await axios.post(`${BASE_URL}/events`, event, {
+  const { data } = await axios.post(`${getBaseURLbySender(calendarEmail)}/events`, event, {
     headers: {
       Authorization: `Bearer ${authToken}`,
     },
@@ -187,7 +200,7 @@ const add30MinAttendeesToEvent = async (
       },
     ],
   };
-  await axios.patch(`${BASE_URL}/events/${eventId}`, update, {
+  await axios.patch(`${getBaseURLbySender(calendarEmail)}/events/${eventId}`, update, {
     headers: {
       Authorization: `Bearer ${authToken}`,
     },
@@ -213,9 +226,10 @@ const attachResumeToEvent = async (
   });
 };
 
-export const cancelCalendarInvite = async (eventId: string) => {
+export const cancelCalendarInvite = async (eventId: string, senderEmail?: string) => {
   const { token } = await getMSAuthData();
-  const url = `${BASE_URL}/events/${eventId}/cancel`;
+  const baseUrl = senderEmail ? getBaseURLbySender(senderEmail) : BASE_URL;
+  const url = `${baseUrl}/events/${eventId}/cancel`;
   eventId &&
     (await axios.post(
       url,

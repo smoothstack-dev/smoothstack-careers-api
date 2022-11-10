@@ -326,7 +326,7 @@ const process30MinScheduling = async (event: SchedulingEvent) => {
       const { email, name } = await findCalendar(apiKey, userId, appointment.calendarID);
       const { id: leadId, teamsMeetingId } = await saveSFDCLead(sfdcConnection, appointment, eventType);
       if (teamsMeetingId) {
-        await cancelCalendarInvite(teamsMeetingId);
+        await cancelCalendarInvite(teamsMeetingId, email);
       }
       await publishAppointmentGenerationRequest(
         {
@@ -340,9 +340,10 @@ const process30MinScheduling = async (event: SchedulingEvent) => {
       break;
     }
     case 'canceled': {
+      const { email } = await findCalendar(apiKey, userId, appointment.calendarID);
       const { teamsMeetingId } = await saveSFDCLead(sfdcConnection, appointment, eventType);
       if (teamsMeetingId) {
-        await cancelCalendarInvite(teamsMeetingId);
+        await cancelCalendarInvite(teamsMeetingId, email);
       }
       break;
     }
