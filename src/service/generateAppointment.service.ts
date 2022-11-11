@@ -10,6 +10,7 @@ import { getSessionData } from './auth/bullhorn.oauth.service';
 import { send30MinCalendarInvite, sendTechScreenCalendarInvite } from './calendar.service';
 import { sendChallengeCalendarInvite } from './calendar.service';
 import { fetchCandidateFiles, saveSubmissionFields } from './careers.service';
+import { send30MinNotification } from './email.service';
 import { generateChallengeLinks } from './links.service';
 import { getSFDCConnection, updateSFDCLead } from './sfdc.service';
 
@@ -55,5 +56,6 @@ const generate30MinAppointment = async (appointmentData: ThirtyMinAppointmentDat
   const sfdcConnection = await getSFDCConnection();
   const { leadId, calendarEmail, calendarName, appointment } = appointmentData;
   const eventId = await send30MinCalendarInvite(calendarEmail, calendarName, appointment);
+  await send30MinNotification(appointment, calendarEmail);
   await updateSFDCLead(sfdcConnection, leadId, { Teams_Meeting_ID__C: eventId });
 };
