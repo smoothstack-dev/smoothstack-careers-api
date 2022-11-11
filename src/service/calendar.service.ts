@@ -121,7 +121,7 @@ const create30MinEvent = async (
   appointment: Appointment
 ): Promise<string> => {
   const event = {
-    subject: `${calendarName.split(' ')[0].split("'")[0]}/${appointment.firstName} - 30 Minute Meeting (Smoothstack)`,
+    subject: `${calendarName.split(' ')[0].split("'")[0]} & ${appointment.firstName} - 30 Minute Meeting (Smoothstack)`,
     body: {
       contentType: 'HTML',
       content: `Hi ${appointment.firstName},<br/><br/>The purpose of this meeting is to talk about your Software Engineering hiring needs and how Smoothstack can address those needs through our Hire, Train, Deploy (HTD) model.<br/><br/>I'm looking forward to meeting with you.<br/><br/>- ${calendarName}<br/><br/>Need to make changes to this event?<br/><a href="${appointment.confirmationPage}">Reschedule/Cancel</a>`,

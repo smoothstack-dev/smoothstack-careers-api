@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Appointment } from 'src/model/Appointment';
 import { Candidate, SACandidate } from 'src/model/Candidate';
 import { JobSubmission } from 'src/model/JobSubmission';
 import { getMSAuthData } from './auth/microsoft.oauth.service';
@@ -428,6 +429,36 @@ export const sendLicenseAssignmentNotification = async (candidate: Candidate, ne
         {
           emailAddress: {
             address: 'hr@smoothstack.com',
+          },
+        },
+      ],
+    },
+  };
+  await axios.post(`${BASE_URL}`, message, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+export const send30MinNotification = async (appointment: Appointment, calendarEmail: string): Promise<void> => {
+  const company = appointment.forms.find((f) => f.id === 2223757).values.find((v) => v.fieldID === 12450688).value;
+  const { token } = await getMSAuthData();
+  const message = {
+    message: {
+      subject: `Prospect Appointment: ${appointment.firstName} ${appointment.lastName}`,
+      body: {
+        contentType: 'HTML',
+        content: `Greetings,<br/><br/>A prospect has scheduled a meeting with you!<br/><br/>Information Below:<br/><br/>Name: ${appointment.firstName} ${appointment.lastName}<br/>Company: ${company}<br/>Email: ${appointment.email}<br/>Date & Time: ${new Date(appointment.datetime).toLocaleString('en-US', {
+          timeZone: 'America/New_York',
+          dateStyle: 'long',
+          timeStyle: 'short',
+        })} EST`,
+      },
+      toRecipients: [
+        {
+          emailAddress: {
+            address: calendarEmail,
           },
         },
       ],
