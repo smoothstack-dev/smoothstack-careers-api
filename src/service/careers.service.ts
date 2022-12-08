@@ -126,15 +126,8 @@ const getCommonCandidateFields = (
     customText2: fields.militaryStatus,
     ...(fields.militaryBranch && { customText10: fields.militaryBranch }),
     ...(fields.major && { customText38: fields.major }),
-
-    ...((fields.linkedin || fields.instagram) && {
-      customObject2s: [
-        {
-          ...(fields.linkedin && { text9: fields.linkedin }),
-          ...(fields.instagram && { text10: fields.instagram }),
-        },
-      ],
-    }),
+    ...(fields.linkedin && { customText5: fields.linkedin }),
+    ...(fields.instagram && { customText34: fields.instagram }),
   };
 };
 
