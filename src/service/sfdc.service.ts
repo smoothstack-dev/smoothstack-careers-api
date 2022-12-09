@@ -265,7 +265,6 @@ export const saveCohort = async (conn: any, jobOrder: JobOrder): Promise<SFDCCoh
   const dataFields = {
     Name: `${year}_${numberMonth}_${dayOfMonth}_${technology}`,
     Training_Start_Date__c: jobOrder.evaluationStartDate,
-    Technology__c: jobOrder.batchType,
     BH_Job_Id__c: jobOrder.id,
   };
   const existingCohort = await fetchCohortByJobId(conn, jobOrder.id);
