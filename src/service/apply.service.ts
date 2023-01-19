@@ -25,7 +25,7 @@ import { CORPORATION, CORP_TYPE } from 'src/model/Corporation';
 import { toTitleCase } from 'src/util/misc.util';
 import { resolveJobByKnockout } from 'src/util/jobOrder.util';
 
-const DAY_DIFF = 90;
+const DAY_DIFF = 60;
 
 export const apply = async (event: APIGatewayProxyEvent) => {
   console.log('Received Candidate Application Request: ', event.queryStringParameters);
