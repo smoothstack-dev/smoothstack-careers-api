@@ -109,9 +109,11 @@ const getCommonCandidateFields = (
   return {
     ...(fields.nickName && { nickName: fields.nickName }),
     status: fields.status,
-    city: fields.city,
-    state: fields.state,
-    zip: fields.zip,
+    address: {
+      city: fields.city,
+      state: fields.state,
+      zip: fields.zip,
+    },
     phone: fields.phone,
     customText4: fields.workAuthorization,
     customText25: fields.relocation,
