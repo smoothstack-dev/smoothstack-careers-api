@@ -198,6 +198,7 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
           SchedulingTypeId.CHALLENGE,
           submissionId
         ),
+        jobOrder,
       }),
     };
   }
