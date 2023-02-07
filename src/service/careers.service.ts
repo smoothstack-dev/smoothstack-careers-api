@@ -948,13 +948,16 @@ const generateApplicationComments = (application: any): any => ({
   'Willingness to relocate': application.relocation,
   'How would you rank your coding ability? (0 - lowest, 10 - highest)': application.codingAbility,
   'Strongest Language': application.techSelection,
-  'Interest in Hardware Design/Architecture?': application.hardwareDesign,
-  'Years of Experience (Including Personal/Educational Projects)': application.yearsOfExperience,
+  ...(application.hardwareDesign && { 'Interest in Hardware Design/Architecture?': application.hardwareDesign }),
+  ...(application.hardwareSkills && {
+    'Do you have at least 1 Hardware Design/Architecture Skill?': application.hardwareSkills,
+  }),
   'Are you currently a student?': application.currentlyStudent,
   ...(application.graduationDate && { 'Expected Graduation Date': application.graduationDate }),
   ...(application.degreeExpected && { 'Degree Expected': application.degreeExpected }),
   ...(application.highestDegree && { 'Highest Degree Achieved': application.highestDegree }),
   ...(application.major && { Major: application.major }),
+  'Years of Experience (Including Personal/Educational Projects)': application.yearsOfExperience,
   'Military Status': application.militaryStatus,
   ...(application.militaryBranch && { 'Military Branch': application.militaryBranch }),
 });
