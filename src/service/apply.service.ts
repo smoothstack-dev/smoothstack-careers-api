@@ -122,6 +122,7 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       codingAbility,
       techSelection,
       hardwareDesign,
+      hardwareSkills,
     } = extraFields;
 
     const activeJobOrders = await findActiveJobOrders(restUrl, BhRestToken);
@@ -135,6 +136,7 @@ const apprenticeshipApply = async (event: APIGatewayProxyEvent) => {
       codingAbility: +codingAbility,
       techSelection,
       hardwareDesign,
+      hardwareSkills,
     };
     const jobOrder = resolveJobByKnockout(knockoutFields, activeJobOrders);
     const knockout = calculateKnockout(jobOrder.knockout, knockoutFields);
