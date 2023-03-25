@@ -124,7 +124,7 @@ export const saveSFDCUser = async (
   const dataFields = {
     AccountId: '001f400000lD8yoAAC',
     RecordTypeId: '012f4000001MbodAAC',
-    Candidate_Primary_Status__c: 'Engaged',
+    Candidate_Primary_Status__c: 'Quick Course',
     FirstName: candidate.firstName,
     LastName: candidate.lastName,
     Nickname__c: candidate.nickName,
