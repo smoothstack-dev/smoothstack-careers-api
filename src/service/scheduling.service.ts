@@ -45,6 +45,10 @@ const processChallengeScheduling = async (event: SchedulingEvent) => {
   const { restUrl, BhRestToken } = await getSessionData();
   const { apiKey, userId } = await getSquareSpaceSecrets();
   const appointment = await fetchAppointment(apiKey, userId, event.id);
+  const source = appointment.forms.find((f) => f.id === 2075339).values.find((v) => v.fieldID === 13195611).value;
+  if (source === 'sfdc') {
+    return;
+  }
   const eventType = event.action.split('.')[1];
   const schedulingType = SchedulingType.CHALLENGE;
   switch (eventType) {
@@ -127,6 +131,10 @@ const processWebinarScheduling = async (event: SchedulingEvent) => {
   const { restUrl, BhRestToken } = await getSessionData();
   const { apiKey, userId } = await getSquareSpaceSecrets();
   const appointment = await fetchAppointment(apiKey, userId, event.id);
+  const source = appointment.forms.find((f) => f.id === 2075339).values.find((v) => v.fieldID === 13195611).value;
+  if (source === 'sfdc') {
+    return;
+  }
   const eventType = event.action.split('.')[1];
   const schedulingType = SchedulingType.WEBINAR;
   switch (eventType) {
@@ -201,6 +209,10 @@ const processTechScreenScheduling = async (event: SchedulingEvent) => {
   const { restUrl, BhRestToken } = await getSessionData();
   const { apiKey, userId } = await getSquareSpaceSecrets();
   const appointment = await fetchAppointment(apiKey, userId, event.id);
+  const source = appointment.forms.find((f) => f.id === 2075339).values.find((v) => v.fieldID === 13195611).value;
+  if (source === 'sfdc') {
+    return;
+  }
   const eventType = event.action.split('.')[1];
   const schedulingType = SchedulingType.TECHSCREEN;
   switch (eventType) {

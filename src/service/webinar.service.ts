@@ -14,8 +14,8 @@ const BASE_URL = 'https://api.zoom.us/v2';
 export const generateWebinarRegistration = async (appointment: Appointment): Promise<WebinarRegistration> => {
   const token = await generateZoomToken();
   const webinarId = await findWebinarId(token, appointment.datetime);
-  const ocurrenceId = await findWebinarOcurrenceId(token, webinarId, appointment.datetime);
-  return registerCandidate(token, webinarId, ocurrenceId, appointment);
+  const occurrenceId = await findWebinarOccurrenceId(token, webinarId, appointment.datetime);
+  return registerCandidate(token, webinarId, occurrenceId, appointment);
 };
 
 export const cancelWebinarRegistration = async (registrantId: string): Promise<void> => {
@@ -61,14 +61,14 @@ const findWebinarId = async (token: string, date: string): Promise<number> => {
       return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
     })
     .find((w: any) => {
-      const lastOcurrenceDate = new Date(w.start_time).toISOString();
-      return w.type === WEBINAR_TYPE && w.topic === WEBINAR_TOPIC && appointmentDate <= lastOcurrenceDate;
+      const lastOccurrenceDate = new Date(w.start_time).toISOString();
+      return w.type === WEBINAR_TYPE && w.topic === WEBINAR_TOPIC && appointmentDate <= lastOccurrenceDate;
     });
 
   return webinar.id;
 };
 
-const findWebinarOcurrenceId = async (token: string, webinarId: number, date: string): Promise<string> => {
+const findWebinarOccurrenceId = async (token: string, webinarId: number, date: string): Promise<string> => {
   const url = `${BASE_URL}/webinars/${webinarId}`;
 
   const { data } = await axios.get(url, {
