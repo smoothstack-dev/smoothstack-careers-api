@@ -8,9 +8,8 @@ const webinarEvents = async (event: APIGatewayEvent) => {
   try {
     switch (event.httpMethod) {
       case 'POST':
-        return axios.post(
-           'https://4328-185-238-231-77.eu.ngrok.io/local/webinar-events', event.body
-        );
+        const { data } = await axios.post('https://4328-185-238-231-77.eu.ngrok.io/local/webinar-events', event.body);
+        return data;
         await publishWebinarProcesingRequest(event.body as any);
     }
   } catch (e) {
