@@ -7,7 +7,7 @@ import { getSessionData } from './auth/bullhorn.oauth.service';
 import { generateZoomToken } from './auth/zoom.jwt.service';
 import { saveWebinarDataByEmail } from './careers.service';
 
-export const WEBINAR_TOPIC = 'SFDC Test Webinar';
+export const WEBINAR_TOPIC = 'Candidate Information Session / Learn about Smoothstack';
 export const WEBINAR_TYPE = 9;
 const BASE_URL = 'https://api.zoom.us/v2';
 
