@@ -6,6 +6,8 @@ import { WebinarRegistration } from '../model/WebinarRegistration';
 import { getSessionData } from './auth/bullhorn.oauth.service';
 import { generateZoomToken } from './auth/zoom.jwt.service';
 import { saveWebinarDataByEmail } from './careers.service';
+import { getZoomSecrets } from './secrets.service';
+import { createHmac } from 'crypto';
 
 export const WEBINAR_TOPIC = 'Candidate Information Session / Learn about Smoothstack';
 export const WEBINAR_TYPE = 9;
@@ -185,4 +187,12 @@ const getPollAnswers = async (token: string, webinarUUID: string): Promise<any[]
   });
 
   return data.questions;
+};
+
+export const validateWebinarUrl = async (event: any) => {
+  const { WEBINAR_SECRET_KEY } = await getZoomSecrets();
+  return {
+    plainToken: event.payload.plainToken,
+    encryptedToken: createHmac('sha256', WEBINAR_SECRET_KEY).update(event.payload.plainToken).digest('hex'),
+  };
 };
