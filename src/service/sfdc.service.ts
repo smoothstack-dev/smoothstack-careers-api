@@ -34,28 +34,28 @@ export const getSFDCConnection = async () => {
 
 export const findSFDCNameAlikeUsers = async (conn: any, prefix: string) => {
   const data = await conn.query(
-    `SELECT Email FROM Contact WHERE AccountId='001f400000lD8yoAAC' AND email LIKE '${prefix}%@smoothstack.com'`
+    `SELECT Smoothstack_Email__c FROM Contact WHERE AccountId='001f400000lD8yoAAC' AND Smoothstack_Email__c LIKE '${prefix}%@smoothstack.com'`
   );
-  return data.records.map((r: any) => ({ userPrincipalName: r.Email }));
+  return data.records.map((r: any) => ({ userPrincipalName: r.Smoothstack_Email__c }));
 };
 
 export const fetchSFDCUser = async (conn: any, userId: string): Promise<SFDCUser> => {
-  const { Id, Email } = await conn.sobject('Contact').retrieve(userId);
+  const { Id, Smoothstack_Email__c } = await conn.sobject('Contact').retrieve(userId);
   return {
     id: Id,
-    smoothstackEmail: Email,
+    smoothstackEmail: Smoothstack_Email__c,
   };
 };
 
 export const fetchSFDCUserByEmail = async (conn: any, email: string): Promise<SFDCUser> => {
   const { records } = await conn.query(
-    `SELECT Id, Temp_MS_Password__c,Home_email__c,MS_Subscription_ID__c FROM Contact WHERE AccountId='001f400000lD8yoAAC' AND email = '${email}'`
+    `SELECT Id, Email, Temp_MS_Password__c, MS_Subscription_ID__c FROM Contact WHERE AccountId='001f400000lD8yoAAC' AND Smoothstack_Email__c = '${email}'`
   );
 
   return records.length
     ? {
         id: records[0].Id,
-        homeEmail: records[0].Home_email__c,
+        homeEmail: records[0].Email,
         tempMSPassword: records[0].Temp_MS_Password__c,
         msSubscriptionId: records[0].MS_Subscription_ID__c,
       }
@@ -103,13 +103,13 @@ export const fetchCohortParticipantByUserId = async (conn: any, userId: string):
 
 export const fetchSFDCUserByCandidateId = async (conn: any, candidateId: number): Promise<SFDCUser> => {
   const { records } = await conn.query(
-    `SELECT Id, Email FROM Contact WHERE AccountId='001f400000lD8yoAAC' AND BH_Candidate_ID__c = '${candidateId}'`
+    `SELECT Id, Smoothstack_Email__c FROM Contact WHERE AccountId='001f400000lD8yoAAC' AND BH_Candidate_ID__c = '${candidateId}'`
   );
 
   return records.length
     ? {
         id: records[0].Id,
-        smoothstackEmail: records[0].Email,
+        smoothstackEmail: records[0].Smoothstack_Email__c,
       }
     : undefined;
 };
@@ -128,11 +128,11 @@ export const saveSFDCUser = async (
     FirstName: candidate.firstName,
     LastName: candidate.lastName,
     Nickname__c: candidate.nickName,
-    Email: newAccountEmail,
+    Smoothstack_Email__c: newAccountEmail,
     BH_Candidate_ID__c: candidate.id,
     Inactive_Status__c: null,
     ...(tempMSPassword && { Temp_MS_Password__c: tempMSPassword }),
-    Home_email__c: candidate.email,
+    Email: candidate.email,
     MobilePhone: candidate.phone,
     MailingCity: candidate.address.city?.trim(),
     MailingCountry: candidate.address.countryName?.trim(),
